@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Next.js: デバッグしてブラウザーを開く（Googleログイン対応）",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/next/dist/bin/next",
+      "runtimeArgs": ["--inspect"],
+      "args": ["dev", "--hostname", "127.0.0.1", "--port", "3000"],
+      "cwd": "${workspaceFolder}",
+      "skipFiles": ["<node_internals>/**"],
+      "serverReadyAction": {
+        "action": "openExternally",
+        "killOnServerStop": true,
+        "pattern": "- Local:.+(https?://\\S+)",
+        "uriFormat": "%s"
+      }
+    }
+  ]
+}

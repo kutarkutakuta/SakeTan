@@ -1,0 +1,40 @@
+{
+  "name": "saketan",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --hostname 127.0.0.1 --port 3000",
+    "build": "next build",
+    "start": "next start --hostname 127.0.0.1 --port 3000",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write src scripts tests package.json tsconfig.json next.config.ts README.md",
+    "db:migrate": "tsx --env-file=.env.local scripts/migrate.ts",
+    "test": "tsx --test tests/*.test.ts",
+    "import:sakenowa": "tsx --env-file=.env.local scripts/import-sakenowa.ts",
+    "import:sakeno-shops": "tsx --env-file=.env.local scripts/import-sakeno-shops.ts",
+    "seed": "tsx --env-file=.env.local scripts/seed.ts"
+  },
+  "dependencies": {
+    "@fontsource/noto-sans-jp": "^5.2.0",
+    "@googlemaps/js-api-loader": "^2.1.1",
+    "@supabase/ssr": "^0.8.0",
+    "@supabase/supabase-js": "^2.89.0",
+    "lucide-react": "^0.577.0",
+    "next": "^16.0.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "^4.3.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.3.14",
+    "@types/google.maps": "^3.66.2",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "cheerio": "^1.2.0",
+    "postgres": "^3.4.9",
+    "prettier": "^3.9.6",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.0"
+  }
+}

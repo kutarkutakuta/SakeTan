@@ -1,0 +1,593 @@
+import { test, before, after } from "node:test";
+import assert from "node:assert/strict";
+import { readFile, readdir } from "node:fs/promises";
+import { PGlite } from "@electric-sql/pglite";
+const db = new PGlite();
+const alice = "10000000-0000-4000-8000-000000000001",
+  bob = "10000000-0000-4000-8000-000000000002",
+  admin = "10000000-0000-4000-8000-000000000003",
+  guest = "10000000-0000-4000-8000-000000000004";
+let shop: string,
+  brand: string,
+  otherBrand: string,
+  thirdBrand: string,
+  invalidBrand: string,
+  brewery: string,
+  sighting: string,
+  brandRequest: string;
+async function scalar<T = string>(
+  sql: string,
+  params: unknown[] = [],
+): Promise<T> {
+  const { rows } = await db.query<Record<string, T>>(sql, params);
+  return Object.values(rows[0])[0];
+}
+async function asUser(id: string | null) {
+  await db.exec("reset role");
+  await db.query("select set_config('request.jwt.claim.sub',$1,false)", [
+    id ?? "",
+  ]);
+  await db.exec("set role " + (id ? "authenticated" : "anon"));
+}
+before(async () => {
+  await db.exec(
+    `create role anon;create role authenticated;create role service_role;create schema auth;create table auth.users(id uuid primary key,email text,raw_user_meta_data jsonb default '{}',is_anonymous boolean not null default false);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;grant usage on schema public,auth to anon,authenticated,service_role;`,
+  );
+  const directory = new URL("../supabase/migrations/", import.meta.url);
+  for (const file of (await readdir(directory))
+    .filter((name) => name.endsWith(".sql"))
+    .sort()) {
+    const migration = await readFile(new URL(file, directory), "utf8");
+    await db.exec(
+      migration.replace("create extension if not exists pgcrypto;", ""),
+    );
+  }
+  for (const [id, name] of [
+    [alice, "Alice"],
+    [bob, "Bob"],
+    [admin, "Admin"],
+    [guest, "Guest"],
+  ])
+    await db.query(
+      "insert into auth.users(id,email,raw_user_meta_data) values($1,$2,$3)",
+      [
+        id,
+        name + "@example.invalid",
+        JSON.stringify({ full_name: name, role: "admin" }),
+      ],
+    );
+  await db.query("update auth.users set is_anonymous=true where id=$1", [
+    guest,
+  ]);
+  await db.query("update public.users set role='admin' where id=$1", [admin]);
+  await db.exec("reset role");
+  brewery = await scalar(
+    "insert into public.breweries(name,name_kana,prefecture,source,source_id) values('試験酒造','しけんしゅぞう','長野県','sakenowa','brewery-1') returning id",
+  );
+  brand = await scalar(
+    "insert into public.brands(name,name_kana,brewery_id,source,source_id) values('試験の酒','しけんのさけ',$1,'sakenowa','brand-1') returning id",
+    [brewery],
+  );
+  otherBrand = await scalar(
+    "insert into public.brands(name,source,source_id) values('別の試験酒','sakenowa','brand-2') returning id",
+  );
+  thirdBrand = await scalar(
+    "insert into public.brands(name,source,source_id) values('三つ目の試験酒','sakenowa','brand-3') returning id",
+  );
+  invalidBrand = await scalar(
+    "insert into public.brands(name,source,source_id) values('誤情報の試験酒','sakenowa','brand-4') returning id",
+  );
+  await asUser(alice);
+  shop = await scalar("select public.save_master('shop',null,$1)", [
+    JSON.stringify({
+      name: "【テスト】酒屋",
+      name_kana: "てすとさかや",
+      prefecture: "東京都",
+      city: "千代田区",
+      latitude: 35.68,
+      longitude: 139.76,
+    }),
+  ]);
+});
+after(() => db.close());
+test("Google metadata cannot promote users; email is not public; raw writes denied", async () => {
+  await asUser(alice);
+  assert.equal(await scalar<boolean>("select public.is_admin()"), false);
+  await assert.rejects(db.query("select email from public.users"));
+  await assert.rejects(
+    db.query("update public.users set role='admin' where id=$1", [alice]),
+  );
+  await assert.rejects(
+    db.query("insert into public.brands(name) values('不正')"),
+  );
+});
+test("anonymous browsing allowed, posting and master changes denied", async () => {
+  await asUser(null);
+  assert.equal(
+    await scalar<number>("select count(*)::int from public.shops"),
+    1,
+  );
+  await assert.rejects(
+    db.query("select public.post_sighting($1,$2,'2026-01-02',null)", [
+      shop,
+      brand,
+    ]),
+  );
+  await assert.rejects(
+    db.query("select public.save_master('brand',null,'{\"name\":\"不正\"}')"),
+  );
+});
+test("anonymous sessions can report availability and missing brands, but not edit masters or comment", async () => {
+  await asUser(guest);
+  await db.query(
+    "select public.set_shop_brand_status($1,$2,'available','店頭で確認')",
+    [shop, otherBrand],
+  );
+  assert.equal(
+    await scalar<number>(
+      "select count(*)::int from public.sightings s join public.shop_brands sb on sb.id=s.shop_brand_id where sb.shop_id=$1 and sb.brand_id=$2",
+      [shop, otherBrand],
+    ),
+    0,
+  );
+  await db.query(
+    "select public.set_shop_brand_status($1,$2,'unavailable','店頭で確認')",
+    [shop, otherBrand],
+  );
+  assert.equal(
+    await scalar(
+      "select status from public.shop_brands where shop_id=$1 and brand_id=$2",
+      [shop, otherBrand],
+    ),
+    "unavailable",
+  );
+  brandRequest = await scalar(
+    "select public.submit_brand_request('未登録酒','未登録酒造','店頭で確認',$1)",
+    [shop],
+  );
+  assert.equal(
+    await scalar("select status from public.brand_requests where id=$1", [
+      brandRequest,
+    ]),
+    "pending",
+  );
+  await assert.rejects(
+    db.query("select public.save_master('shop',null,'{\"name\":\"不正\"}')"),
+  );
+  await assert.rejects(
+    db.query("select public.post_shop_comment($1,'匿名コメント')", [shop]),
+  );
+});
+test("display names remain custom after provider metadata refresh", async () => {
+  await asUser(alice);
+  assert.equal(
+    await scalar("select public.update_display_name('  好みの名前  ')"),
+    "好みの名前",
+  );
+  await db.exec("reset role");
+  await db.query(
+    'update auth.users set raw_user_meta_data=\'{"full_name":"Provider Name"}\' where id=$1',
+    [alice],
+  );
+  assert.equal(
+    await scalar("select name from public.users where id=$1", [alice]),
+    "好みの名前",
+  );
+});
+test("even admins cannot create local brand masters", async () => {
+  await asUser(admin);
+  await assert.rejects(
+    db.query(
+      "select public.save_master('brand',null,'{\"name\":\"ローカル銘柄\"}')",
+    ),
+  );
+});
+test("posting creates relation atomically, out-of-order posts aggregate min/max without duplicates", async () => {
+  await asUser(alice);
+  sighting = await scalar(
+    "select public.post_sighting($1,$2,'2026-01-10','発見しました')",
+    [shop, brand],
+  );
+  await db.query("select public.post_sighting($1,$2,'2026-01-02',null)", [
+    shop,
+    brand,
+  ]);
+  await db.query("select public.post_sighting($1,$2,'2026-01-20',null)", [
+    shop,
+    brand,
+  ]);
+  const { rows } = await db.query<{
+    first: string;
+    last: string;
+    count: number;
+  }>(
+    "select min(first_seen_at)::text first,max(last_seen_at)::text last,count(*)::int count from public.shop_brands where shop_id=$1 and brand_id=$2",
+    [shop, brand],
+  );
+  assert.deepEqual(rows[0], {
+    first: "2026-01-02",
+    last: "2026-01-20",
+    count: 1,
+  });
+});
+test("invalid sighting rolls back relation and audit history", async () => {
+  await asUser(alice);
+  const count = await scalar<number>(
+    "select count(*)::int from public.change_histories",
+  );
+  const relationCount = await scalar<number>(
+    "select count(*)::int from public.shop_brands where brand_id=$1",
+    [otherBrand],
+  );
+  await assert.rejects(
+    db.query("select public.post_sighting($1,$2,'2026-01-10',$3)", [
+      shop,
+      otherBrand,
+      "x".repeat(1001),
+    ]),
+  );
+  assert.equal(
+    await scalar<number>(
+      "select count(*)::int from public.shop_brands where brand_id=$1",
+      [otherBrand],
+    ),
+    relationCount,
+  );
+  assert.equal(
+    await scalar("select status from public.shop_brands where brand_id=$1", [
+      otherBrand,
+    ]),
+    "unavailable",
+  );
+  assert.equal(
+    await scalar<number>("select count(*)::int from public.change_histories"),
+    count,
+  );
+  await assert.rejects(
+    db.query("select public.post_sighting($1,$2,'2999-01-01',null)", [
+      shop,
+      brand,
+    ]),
+  );
+});
+test("brand, kana, brewery and shop search; bounds and brand filters", async () => {
+  await asUser(null);
+  assert.equal(
+    (await db.query("select * from public.search_brands('しけんしゅぞう')"))
+      .rows.length,
+    1,
+  );
+  assert.equal(
+    (await db.query("select * from public.search_brands('しけんのさけ')")).rows
+      .length,
+    1,
+  );
+  assert.equal(
+    (await db.query("select * from public.search_shops('てすと')")).rows.length,
+    1,
+  );
+  assert.equal(
+    (await db.query("select * from public.search_shops('', $1)", [brand])).rows
+      .length,
+    1,
+  );
+  assert.equal(
+    (await db.query("select * from public.search_shops('', $1)", [otherBrand]))
+      .rows.length,
+    0,
+  );
+  assert.equal(
+    (
+      await db.query(
+        "select * from public.search_shops('', null, 40, 41, 139, 140)",
+      )
+    ).rows.length,
+    0,
+  );
+});
+test("only owner/admin can edit sighting; dates recompute on edit and soft delete", async () => {
+  await asUser(bob);
+  await assert.rejects(
+    db.query("select public.edit_sighting($1,'2026-01-01','不正',false)", [
+      sighting,
+    ]),
+  );
+  await asUser(alice);
+  await db.query("select public.edit_sighting($1,'2026-01-01','修正',false)", [
+    sighting,
+  ]);
+  assert.equal(
+    await scalar(
+      "select first_seen_at::text from public.shop_brands where brand_id=$1",
+      [brand],
+    ),
+    "2026-01-01",
+  );
+  await db.query("select public.edit_sighting($1,'2026-01-01','修正',true)", [
+    sighting,
+  ]);
+  assert.equal(
+    await scalar(
+      "select first_seen_at::text from public.shop_brands where brand_id=$1",
+      [brand],
+    ),
+    "2026-01-02",
+  );
+  await asUser(null);
+  assert.equal(
+    (await db.query("select * from public.sightings where id=$1", [sighting]))
+      .rows.length,
+    0,
+  );
+});
+test("master edits append history; source metadata and unsupported entity fields rejected", async () => {
+  await asUser(alice);
+  await db.query(
+    "select public.save_master('shop',$1,'{\"name\":\"更新したテスト酒屋\"}','名前を修正')",
+    [shop],
+  );
+  assert.equal(
+    await scalar(
+      "select after_data->>'name' from public.change_histories where entity_id=$1 order by created_at desc limit 1",
+      [shop],
+    ),
+    "更新したテスト酒屋",
+  );
+  await assert.rejects(
+    db.query("select public.save_master('brand',$1,'{\"source\":\"fake\"}')", [
+      brand,
+    ]),
+  );
+  await assert.rejects(
+    db.query(
+      "select public.save_master('shop_brand',$1,'{\"is_active\":false}')",
+      [shop],
+    ),
+  );
+});
+test("admin restore adds immutable history, ordinary users denied", async () => {
+  const history = await scalar(
+    "select id from public.change_histories where entity_id=$1 and action='create'",
+    [shop],
+  );
+  await asUser(alice);
+  await assert.rejects(
+    db.query("select public.restore_history($1)", [history]),
+  );
+  await asUser(admin);
+  await db.query("select public.restore_history($1)", [history]);
+  assert.equal(
+    await scalar("select name from public.shops where id=$1", [shop]),
+    "【テスト】酒屋",
+  );
+  assert.equal(
+    await scalar(
+      "select action from public.change_histories where entity_id=$1 order by created_at desc limit 1",
+      [shop],
+    ),
+    "restore",
+  );
+  await assert.rejects(
+    db.query("delete from public.change_histories where id=$1", [history]),
+  );
+  await db.exec("reset role");
+  await assert.rejects(
+    db.query("delete from public.change_histories where id=$1", [history]),
+  );
+});
+test("deactivated masters cannot receive posts, and disappear from search", async () => {
+  await asUser(admin);
+  await db.query(
+    "select public.save_master('brand',$1,'{\"is_active\":false}')",
+    [brand],
+  );
+  assert.equal(
+    (await db.query("select * from public.search_shops('', $1)", [brand])).rows
+      .length,
+    0,
+  );
+  await assert.rejects(
+    db.query("select public.post_sighting($1,$2,'2026-01-15',null)", [
+      shop,
+      brand,
+    ]),
+  );
+  await db.query(
+    "select public.save_master('brand',$1,'{\"is_active\":true}')",
+    [brand],
+  );
+});
+test("posting reactivates an existing relation and keeps unique identity", async () => {
+  await db.exec("reset role");
+  await db.query(
+    "update public.shop_brands set is_active=false,status='unavailable' where brand_id=$1",
+    [brand],
+  );
+  const id = await scalar(
+    "select id from public.shop_brands where brand_id=$1",
+    [brand],
+  );
+  await asUser(alice);
+  await db.query("select public.post_sighting($1,$2,'2026-01-25',null)", [
+    shop,
+    brand,
+  ]);
+  assert.equal(
+    await scalar(
+      "select id from public.shop_brands where brand_id=$1 and is_active",
+      [brand],
+    ),
+    id,
+  );
+});
+
+test("any authenticated session can set the three shop-brand statuses", async () => {
+  await asUser(null);
+  await assert.rejects(
+    db.query("select public.set_shop_brand_status($1,$2,'unavailable')", [
+      shop,
+      brand,
+    ]),
+  );
+  await asUser(bob);
+  await db.query(
+    "select public.set_shop_brand_status($1,$2,'unavailable','現在は見当たらない')",
+    [shop, brand],
+  );
+  assert.deepEqual(
+    (
+      await db.query(
+        "select status,is_active from public.shop_brands where shop_id=$1 and brand_id=$2",
+        [shop, brand],
+      )
+    ).rows[0],
+    { status: "unavailable", is_active: false },
+  );
+  await asUser(guest);
+  await db.query(
+    "select public.set_shop_brand_status($1,$2,'incorrect','誤登録')",
+    [shop, brand],
+  );
+  assert.equal(
+    await scalar(
+      "select status from public.shop_brands where shop_id=$1 and brand_id=$2",
+      [shop, brand],
+    ),
+    "incorrect",
+  );
+  await asUser(alice);
+  await db.query("select public.set_shop_brand_status($1,$2,'available')", [
+    shop,
+    brand,
+  ]);
+});
+
+test("account contribution summary excludes incorrect data and finds favorite shops", async () => {
+  await asUser(alice);
+  await db.query("select public.set_shop_brand_status($1,$2,'available')", [
+    shop,
+    thirdBrand,
+  ]);
+  await db.query("select public.set_shop_brand_status($1,$2,'available')", [
+    shop,
+    invalidBrand,
+  ]);
+  await db.query("select public.set_shop_brand_status($1,$2,'incorrect')", [
+    shop,
+    invalidBrand,
+  ]);
+  const summary = await scalar<{
+    shop_brand_count: number;
+    shop_count: number;
+    resolved_brand_request_count: number;
+    favorite_shops: Array<{
+      shop_id: string;
+      shop_name: string;
+      contribution_count: number;
+    }>;
+  }>("select public.get_my_contribution_summary()");
+  assert.equal(summary.shop_brand_count, 2);
+  assert.equal(summary.shop_count, 1);
+  assert.equal(summary.resolved_brand_request_count, 0);
+  assert.deepEqual(summary.favorite_shops, [
+    {
+      shop_id: shop,
+      shop_name: "【テスト】酒屋",
+      contribution_count: 2,
+    },
+  ]);
+
+  await asUser(admin);
+  await db.query("select public.review_brand_request($1,'resolved')", [
+    brandRequest,
+  ]);
+  await asUser(guest);
+  const guestSummary = await scalar<{
+    shop_brand_count: number;
+    resolved_brand_request_count: number;
+    favorite_shops: unknown[];
+  }>("select public.get_my_contribution_summary()");
+  assert.equal(guestSummary.shop_brand_count, 1);
+  assert.equal(guestSummary.resolved_brand_request_count, 1);
+  assert.deepEqual(guestSummary.favorite_shops, []);
+  await asUser(null);
+  await assert.rejects(db.query("select public.get_my_contribution_summary()"));
+});
+
+test("source shops without required search fields stay out of search results", async () => {
+  await db.exec("reset role");
+  await db.query(
+    "insert into public.shops(name,prefecture,city,latitude,longitude,source,source_id,source_url) values('取込酒店','北海道',null,null,null,'sakeno.com','999','https://www.sakeno.com/sakaya/999/')",
+  );
+  await asUser(null);
+  assert.equal(
+    (await db.query("select * from public.search_shops('取込酒店')")).rows
+      .length,
+    0,
+  );
+  assert.equal(
+    (
+      await db.query(
+        "select * from public.search_shops('',null,34,36,138,140) where name='取込酒店'",
+      )
+    ).rows.length,
+    0,
+  );
+});
+
+test("Google geocodes receive a server timestamp and expire from bounded map results", async () => {
+  await asUser(alice);
+  const googleShop = await scalar("select public.save_master('shop',null,$1)", [
+    JSON.stringify({
+      name: "Google位置テスト店",
+      name_kana: "ぐーぐるいちてすとてん",
+      prefecture: "東京都",
+      city: "千代田区",
+      latitude: 35.681,
+      longitude: 139.767,
+      website_url: null,
+      geocode_source: "google",
+      geocode_precision: "ROOFTOP",
+    }),
+  ]);
+  assert.equal(
+    await scalar<string>(
+      "select case when geocoded_at is not null then 'yes' else 'no' end from public.shops where id=$1",
+      [googleShop],
+    ),
+    "yes",
+  );
+  assert.equal(
+    (
+      await db.query(
+        "select * from public.search_shops('',null,35,36,139,140) where id=$1",
+        [googleShop],
+      )
+    ).rows.length,
+    1,
+  );
+  await db.exec("reset role");
+  await db.query(
+    "update public.shops set geocoded_at=now()-interval '31 days' where id=$1",
+    [googleShop],
+  );
+  await asUser(null);
+  assert.equal(
+    (
+      await db.query(
+        "select * from public.search_shops('',null,35,36,139,140) where id=$1",
+        [googleShop],
+      )
+    ).rows.length,
+    0,
+  );
+  assert.equal(
+    (
+      await db.query(
+        "select * from public.search_shops('Google位置テスト店') where id=$1",
+        [googleShop],
+      )
+    ).rows.length,
+    1,
+  );
+});
