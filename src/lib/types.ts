@@ -28,7 +28,6 @@ export type Shop = {
   city: string | null;
   latitude: number | null;
   longitude: number | null;
-  website_url: string | null;
   google_place_id?: string | null;
   source?: string | null;
   source_id?: string | null;
@@ -86,6 +85,13 @@ export type ShopComment = {
   commented_on: string;
   is_deleted: boolean;
   users: { name: string } | null;
+};
+export type LatestShopComment = {
+  id: string;
+  shop_id: string;
+  comment: string;
+  commented_on: string;
+  user_name: string | null;
 };
 export type Bounds = {
   south: number;

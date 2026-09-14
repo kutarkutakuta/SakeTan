@@ -77,13 +77,37 @@ export function ShopBrandList({ items }: { items: ShopBrandSummary[] }) {
         {visible.map((relation) => {
           const brand = relation.brands;
           const brewery = brand.breweries;
+          const prefecture = brewery?.prefecture;
           return (
             <div className="brand-item" key={relation.id}>
               <span className="brand-item-copy">
-                <small>
-                  {brewery?.prefecture && `${brewery.prefecture} · `}
-                  {brewery?.name ?? "酒蔵未登録"}
-                </small>
+                <span className="brand-item-meta">
+                  {prefecture && (
+                    <>
+                      <button
+                        type="button"
+                        aria-label={`${prefecture}で絞り込む`}
+                        onClick={() =>
+                          setSelectedPrefectures(new Set([prefecture]))
+                        }
+                      >
+                        {prefecture}
+                      </button>
+                      <span aria-hidden="true">·</span>
+                    </>
+                  )}
+                  {brewery?.name ? (
+                    <button
+                      type="button"
+                      aria-label={`${brewery.name}の銘柄に絞り込む`}
+                      onClick={() => setQuery(brewery.name)}
+                    >
+                      {brewery.name}
+                    </button>
+                  ) : (
+                    <span>酒蔵未登録</span>
+                  )}
+                </span>
                 <strong>{brand.name}</strong>
               </span>
             </div>

@@ -43,7 +43,7 @@ export default async function LoginPage({
           <p className="notice">ログインにはSupabaseの接続設定が必要です。</p>
         )}
         <p className="login-note">
-          取扱銘柄の追加と取扱状況の変更は、ログインなしでも利用できます。
+          取扱銘柄の編集は、ログインなしでも利用できます。
         </p>
       </section>
     </main>

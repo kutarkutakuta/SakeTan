@@ -72,7 +72,7 @@ export function ShopComments({
   }
 
   return (
-    <section className="comments-section">
+    <section id="comments" className="comments-section">
       <h2>
         コメント <span className="count">{comments.length}</span>
       </h2>
@@ -89,7 +89,7 @@ export function ShopComments({
             value={comment}
             onChange={(event) => setComment(event.target.value)}
             maxLength={1000}
-            placeholder="訪問時の様子や銘柄間違いの指摘など"
+            placeholder="訪問時の様子や取扱銘柄についてなど"
             required
           />
           <button

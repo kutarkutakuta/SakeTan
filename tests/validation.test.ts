@@ -112,7 +112,6 @@ test("validation rejects unsafe URL, invalid coordinates, future or nonexistent 
       city: "区",
       latitude: 91,
       longitude: 139,
-      website_url: null,
     }).success,
     false,
   );
@@ -124,7 +123,6 @@ test("validation rejects unsafe URL, invalid coordinates, future or nonexistent 
       city: null,
       latitude: null,
       longitude: null,
-      website_url: null,
     }).success,
     false,
   );
@@ -137,9 +135,20 @@ test("validation rejects unsafe URL, invalid coordinates, future or nonexistent 
       latitude: 35.68,
       longitude: 139.76,
       google_place_id: "place-1",
-      website_url: null,
     }).success,
     true,
+  );
+  assert.equal(
+    masterSchemas.shop.safeParse({
+      name: "地図酒店",
+      name_kana: "ちずさかてん",
+      prefecture: null,
+      city: null,
+      latitude: 35.68,
+      longitude: 139.76,
+      website_url: "https://example.com/",
+    }).success,
+    false,
   );
 });
 test("Google Maps shop links prefer a Place ID", () => {

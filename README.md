@@ -33,19 +33,17 @@ DATABASE_URL=
 NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3000
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=
 NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID=
-ALLOW_DEV_SEED=false
 ```
 
 | 変数                                   | 用途                                                                                                                            |
 | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `NEXT_PUBLIC_SUPABASE_URL`             | Supabase Project URL                                                                                                            |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key。旧 `anon` keyも同じ変数名で利用可能                                                                            |
-| `SUPABASE_SECRET_KEY`                  | import / seed専用。旧 `service_role` keyも利用可能。ブラウザには公開しない                                                      |
+| `SUPABASE_SECRET_KEY`                  | import専用。旧 `service_role` keyも利用可能。ブラウザには公開しない                                                             |
 | `DATABASE_URL`                         | 自動migration用。Supabase Connectの **Session pooler** 接続文字列。DBパスワードを含むため非公開。SQL Editorで適用する場合は不要 |
 | `NEXT_PUBLIC_SITE_URL`                 | アプリの正規origin。末尾スラッシュなし                                                                                          |
 | `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`      | Maps JavaScript API・Places API (New)用の公開キー。Webサイト制限とAPI制限を設定                                                 |
 | `NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID`       | Advanced Markerを使うGoogle Map ID                                                                                              |
-| `ALLOW_DEV_SEED`                       | 開発用DBにseedするときだけ `true`                                                                                               |
 
 通常のアプリ実行にはサーバー用Secret keyやDBパスワードを使いません。認証とDB権限・RLSで書き込みを保護します。
 
@@ -116,19 +114,7 @@ Google Cloudで課金を有効にし、**Maps JavaScript API** と **Places API 
 
 Googleから取得した店舗座標には取得日時と精度を保存し、30日を超えた座標は地図とエリア検索から除外します。継続表示する場合は期限内に再取得してください。料金、保存期間、表示条件は運用開始前にも最新のGoogle Maps Platform規約を確認してください。
 
-### 7. 開発用seed
-
-`.env.local` の `ALLOW_DEV_SEED=true` を設定して実行します。
-
-```bash
-npm run seed
-```
-
-「【デモ】」と明示した東京都内の架空酒屋4件、取扱関係12件、サンプル投稿12件を追加します。銘柄はインポート済みマスタから選び、実在酒屋へ架空の情報を付けません。固定UUIDによる再実行が可能です。デモ投稿者はログインを禁止した開発用Authユーザーです。
-
-「まちかど」または「デモ」で酒屋検索すると確認を始められます。本番DBではseedしないでください。
-
-### 8. 匿名操作とソーシャルログイン
+### 7. 匿名操作とソーシャルログイン
 
 1. Supabase AuthenticationでAnonymous Sign-Insを有効にします。画面上はログインを求めませんが、初回の取扱操作時に匿名ユーザーを自動作成し、DB権限と更新履歴の主体にします。
 2. Authentication → ProvidersでGoogle、X、Facebookを有効化し、各サービスで発行したClient ID / Secretを設定します。Secretはアプリの環境変数には置きません。
@@ -174,7 +160,7 @@ npm start
 
 ピンだけでは遷移せず、ピン → 地図下部のカード → 酒屋詳細の順です。位置情報が使えない場合は日本の広域表示。地図移動後は「このエリアを検索」で更新します。エリア検索は最大200店、候補は銘柄40件・酒屋200件・酒蔵40件。密集地域ではエリアを狭めてください。最近の投稿は最大50件です。
 
-酒屋の登録・編集では、最初にPlaces API (New)で店舗を選び、座標・Place ID・店舗名・都道府県・市区町村を自動設定します。店舗名・かな・緯度・経度は必須、都道府県・市区町村・公式サイトは任意で、住所は保存しません。Googleマップのクリックまたはピンのドラッグでも位置を調整できます。店舗詳細から営業時間・電話番号などをGoogleマップで確認できます。
+酒屋の登録・編集では、最初にPlaces API (New)で店舗を選び、座標・Place ID・店舗名・都道府県・市区町村を自動設定します。店舗名・かな・緯度・経度は必須、都道府県・市区町村は任意で、住所と公式サイトは保存しません。Googleマップのクリックまたはピンのドラッグでも位置を調整できます。店舗詳細から営業時間・電話番号などをGoogleマップで確認できます。
 
 ## DB・権限・仕様判断
 
@@ -215,13 +201,12 @@ PGlite（実PostgreSQLエンジン）にSupabaseの認証スキーマ・ロー�
 
 ホストされたSupabaseとGoogle OAuthへの実接続は別途必要です。初回接続後に次を確認してください。
 
-1. migration → さけのわimportと日本酒物語importを2回 → Googleジオコーディング → seedを2回実行して件数が重複しない。
-2. 銘柄検索・選択で該当するデモ店舗のみ表示される。
-3. ピン → カード → 酒屋詳細で取扱銘柄と投稿を確認できる。
-4. ログイン画面を出さずに、既存銘柄の追加と3つの取扱状況の変更ができる。
-5. 見つからない銘柄はマスタ登録ではなく管理者向け報告になる。
-6. 匿名操作後にGoogle / X / Facebookを連携し、履歴を保ったまま表示名を変更できる。
-7. 別ユーザーは他人の投稿を変更できない。
-8. マスタ変更・管理者復元で新しい差分履歴が残る。
+1. migration → さけのわimportと日本酒物語importを2回 → Googleジオコーディングを実行して件数が重複しない。
+2. ピン → カード → 酒屋詳細で取扱銘柄と投稿を確認できる。
+3. ログイン画面を出さずに、既存銘柄の追加と3つの取扱状況の変更ができる。
+4. 見つからない銘柄はマスタ登録ではなく管理者向け報告になる。
+5. 匿名操作後にGoogle / X / Facebookを連携し、履歴を保ったまま表示名を変更できる。
+6. 別ユーザーは他人の投稿を変更できない。
+7. マスタ変更・管理者復元で新しい差分履歴が残る。
 
 銘柄詳細、写真投稿、いいね、ランキング、EC等は実装対象外です。

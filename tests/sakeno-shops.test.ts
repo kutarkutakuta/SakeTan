@@ -15,7 +15,6 @@ import {
   parseCity,
   parsePrefectureHtml,
   parseShopKana,
-  parseWebsiteUrl,
 } from "../scripts/sakeno/parser";
 
 const tokyo = prefectures[12];
@@ -53,7 +52,6 @@ test("current table markup parses semantic shop fields", () => {
     prefecture: "東京都",
     city: "千代田区",
     address: "東京都千代田区丸の内1-1-1",
-    websiteUrl: "https://example.com/shop",
   });
 });
 
@@ -63,7 +61,6 @@ test("label and heading fallbacks parse table and definition-list variations", (
   const block = findShopBlocks($)[0];
   assert.equal(parseShopKana($, block), "しけんさけてん");
   assert.equal(parseAddress($, block, tokyo), "東京都横浜市ではない区1-2");
-  assert.equal(parseWebsiteUrl($, block), "https://example.jp/");
 });
 
 test("normalization is comparison-only and city extraction covers designated cities and counties", () => {

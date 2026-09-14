@@ -11,8 +11,7 @@
     "db:migrate": "tsx --env-file=.env.local scripts/migrate.ts",
     "test": "tsx --test tests/*.test.ts",
     "import:sakenowa": "tsx --env-file=.env.local scripts/import-sakenowa.ts",
-    "import:sakeno-shops": "tsx --env-file=.env.local scripts/import-sakeno-shops.ts",
-    "seed": "tsx --env-file=.env.local scripts/seed.ts"
+    "import:sakeno-shops": "tsx --env-file=.env.local scripts/import-sakeno-shops.ts"
   },
   "dependencies": {
     "@fontsource/noto-sans-jp": "^5.2.0",

@@ -120,22 +120,6 @@ export function parseAddress(
   return match ? cleanText(match[0].split(/(?:TEL|電話|FAX)/i)[0]) : "";
 }
 
-export function parseWebsiteUrl($: CheerioAPI, block: Cheerio<AnyNode>) {
-  const labeled = valueByLabel($, block, ["ホームページ", "URL", "Web"]);
-  const candidates: string[] = [];
-  if (labeled) candidates.push(labeled);
-  block.find("a[href]").each((_, element) => {
-    candidates.push($(element).attr("href") ?? "");
-  });
-  for (const candidate of candidates) {
-    const href = absoluteUrl(candidate);
-    if (!href) continue;
-    const hostname = new URL(href).hostname.replace(/^www\./, "");
-    if (hostname !== "sakeno.com") return href;
-  }
-  return null;
-}
-
 export function parseSourceUrl($: CheerioAPI, block: Cheerio<AnyNode>) {
   return absoluteUrl(detailAnchor($, block).attr("href"));
 }
@@ -186,7 +170,6 @@ export function parseShop(
     prefecture: prefecture.name,
     city: parseCity(address, prefecture),
     address,
-    websiteUrl: parseWebsiteUrl($, block),
   };
 }
 

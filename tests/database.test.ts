@@ -101,6 +101,23 @@ test("Google metadata cannot promote users; email is not public; raw writes deni
     db.query("insert into public.brands(name) values('不正')"),
   );
 });
+test("shops do not store website URLs", async () => {
+  await db.exec("reset role");
+  assert.equal(
+    await scalar<number>(
+      "select count(*)::int from information_schema.columns where table_schema='public' and table_name='shops' and column_name='website_url'",
+    ),
+    0,
+  );
+  await asUser(alice);
+  await assert.rejects(
+    db.query("select public.save_master('shop',$1,$2)", [
+      shop,
+      JSON.stringify({ website_url: "https://example.com/" }),
+    ]),
+    /変更できない項目です: website_url/,
+  );
+});
 test("anonymous browsing allowed, posting and master changes denied", async () => {
   await asUser(null);
   assert.equal(
@@ -156,6 +173,47 @@ test("anonymous sessions can report availability and missing brands, but not edi
   );
   await assert.rejects(
     db.query("select public.post_shop_comment($1,'匿名コメント')", [shop]),
+  );
+});
+test("latest shop comments are returned once per shop and omit deleted comments", async () => {
+  await asUser(alice);
+  const first = await scalar(
+    "select public.post_shop_comment($1,'最初のコメント')",
+    [shop],
+  );
+  await asUser(bob);
+  const latest = await scalar(
+    "select public.post_shop_comment($1,'最新のコメント')",
+    [shop],
+  );
+  await db.exec("reset role");
+  await db.query(
+    "update public.shop_comments set created_at=case when id=$1 then now()-interval '1 day' else now() end where id in ($1,$2)",
+    [first, latest],
+  );
+  await asUser(null);
+  assert.deepEqual(
+    (
+      await db.query(
+        "select comment,user_name from public.latest_shop_comments(array[$1::uuid])",
+        [shop],
+      )
+    ).rows,
+    [{ comment: "最新のコメント", user_name: "Bob" }],
+  );
+  await asUser(bob);
+  await db.query("select public.edit_shop_comment($1,'最新のコメント',true)", [
+    latest,
+  ]);
+  await asUser(null);
+  assert.deepEqual(
+    (
+      await db.query(
+        "select comment,user_name from public.latest_shop_comments(array[$1::uuid])",
+        [shop],
+      )
+    ).rows,
+    [{ comment: "最初のコメント", user_name: "Alice" }],
   );
 });
 test("display names remain custom after provider metadata refresh", async () => {
@@ -545,7 +603,6 @@ test("Google geocodes receive a server timestamp and expire from bounded map res
       city: "千代田区",
       latitude: 35.681,
       longitude: 139.767,
-      website_url: null,
       geocode_source: "google",
       geocode_precision: "ROOFTOP",
     }),

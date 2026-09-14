@@ -267,7 +267,6 @@ city
 address
 latitude
 longitude
-website_url nullable
 created_by nullable → users
 is_active
 created_at
@@ -638,7 +637,6 @@ status と is_active を同時更新
 市区町村
 緯度
 経度
-公式サイト nullable
 ```
 
 ---

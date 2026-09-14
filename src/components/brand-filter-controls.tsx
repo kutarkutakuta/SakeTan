@@ -1,3 +1,6 @@
+"use client";
+
+import { useId, useState } from "react";
 import {
   kanaGroups,
   prefectures,
@@ -49,10 +52,48 @@ export function BrandFilterControls({
   totalCount: number;
   sortOptions?: Array<[BrandCatalogSort, string]>;
 }) {
+  const [prefecturesOpen, setPrefecturesOpen] = useState(false);
+  const prefectureOptionsId = useId();
   const hasFilters = selectedPrefectures.size > 0 || selectedKana.size > 0;
+  const selectedPrefectureNames = prefectures.filter((value) =>
+    selectedPrefectures.has(value),
+  );
+  const prefectureSummary =
+    selectedPrefectureNames.length === 0
+      ? "すべて"
+      : selectedPrefectureNames.length <= 2
+        ? selectedPrefectureNames.map(shortPrefecture).join("・")
+        : `${selectedPrefectureNames
+            .slice(0, 2)
+            .map(shortPrefecture)
+            .join("・")}ほか${selectedPrefectureNames.length - 2}`;
   return (
     <div className="brand-filter-panel">
-      <div className="filter-links prefecture-links" aria-label="県で絞り込む">
+      <button
+        type="button"
+        className="prefecture-filter-toggle"
+        aria-expanded={prefecturesOpen}
+        aria-controls={prefectureOptionsId}
+        aria-label={`都道府県フィルター、${
+          selectedPrefectureNames.join("、") || "すべて"
+        }、${prefecturesOpen ? "閉じる" : "開く"}`}
+        onClick={() => setPrefecturesOpen((open) => !open)}
+      >
+        <span>都道府県</span>
+        <span className="prefecture-filter-selection">{prefectureSummary}</span>
+        <span className="prefecture-filter-action">
+          {prefecturesOpen
+            ? "閉じる"
+            : selectedPrefectureNames.length
+              ? "変更"
+              : "選ぶ"}
+        </span>
+      </button>
+      <div
+        id={prefectureOptionsId}
+        className={`filter-links prefecture-links${prefecturesOpen ? " open" : ""}`}
+        aria-label="県で絞り込む"
+      >
         {prefectures.map((value) => (
           <button
             type="button"

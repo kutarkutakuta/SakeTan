@@ -231,9 +231,6 @@ export function PostForm({
 
   return (
     <div className="quick-post">
-      <p className="notice availability-explainer">
-        ログインなしで変更できます。過去の投稿と更新履歴は削除されません。
-      </p>
       <label className="searchbox brand-search">
         <Search size={20} />
         <input
@@ -283,13 +280,41 @@ export function PostForm({
         {visibleBrands.map((brand) => {
           const isWorking = working.has(brand.id);
           const relationStatus = relationStatuses.get(brand.id);
+          const resolvedBreweryName = breweryName(brand);
+          const prefecture = brandPrefecture(brand);
           return (
             <div className="brand-option" key={brand.id}>
               <span>
-                <small>
-                  {breweryName(brand)}
-                  {brandPrefecture(brand) ? ` · ${brandPrefecture(brand)}` : ""}
-                </small>
+                <span className="brand-option-meta">
+                  {resolvedBreweryName === "酒蔵未登録" ? (
+                    <span>{resolvedBreweryName}</span>
+                  ) : (
+                    <button
+                      type="button"
+                      aria-label={`${resolvedBreweryName}の銘柄に絞り込む`}
+                      onClick={() => {
+                        setQuery(resolvedBreweryName);
+                        setRequestOpen(false);
+                      }}
+                    >
+                      {resolvedBreweryName}
+                    </button>
+                  )}
+                  {prefecture && (
+                    <>
+                      <span aria-hidden="true">·</span>
+                      <button
+                        type="button"
+                        aria-label={`${prefecture}で絞り込む`}
+                        onClick={() =>
+                          setSelectedPrefectures(new Set([prefecture]))
+                        }
+                      >
+                        {prefecture}
+                      </button>
+                    </>
+                  )}
+                </span>
                 <strong>{brand.name}</strong>
               </span>
               {relationStatus ? (

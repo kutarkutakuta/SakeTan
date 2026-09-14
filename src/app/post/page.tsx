@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Store } from "lucide-react";
 import { supabase } from "@/lib/supabase/server";
 import { PostForm } from "@/components/post-form";
+import { AvailabilityInfo } from "@/components/availability-info";
 import type { ShopBrand } from "@/lib/types";
 export default async function PostPage({
   searchParams,
@@ -58,7 +59,10 @@ export default async function PostPage({
         酒屋に戻る
       </Link>
       <div className="page-head post-page-head">
-        <h1>取扱状況を変更</h1>
+        <div className="post-page-title">
+          <h1>取扱銘柄の編集</h1>
+          <AvailabilityInfo />
+        </div>
         <Link className="post-shop" href={"/shops/" + shop.id}>
           <Store size={18} />
           {shop.name}

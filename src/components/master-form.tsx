@@ -72,7 +72,7 @@ export function MasterForm({
       if (type === "brand") data.brewery_id = selectedBrewery;
       else {
         data.prefecture = nullable("prefecture");
-        data.website_url = nullable("website_url");
+        if (type === "brewery") data.website_url = nullable("website_url");
       }
       if (type === "shop") {
         const latitude = text("latitude");
@@ -263,15 +263,17 @@ export function MasterForm({
               </label>
             </>
           )}
-          <label>
-            公式サイト <span className="muted">任意</span>
-            <input
-              name="website_url"
-              type="url"
-              defaultValue={value("website_url")}
-              placeholder="https://"
-            />
-          </label>
+          {type === "brewery" && (
+            <label>
+              公式サイト <span className="muted">任意</span>
+              <input
+                name="website_url"
+                type="url"
+                defaultValue={value("website_url")}
+                placeholder="https://"
+              />
+            </label>
+          )}
         </>
       )}
       {id && (

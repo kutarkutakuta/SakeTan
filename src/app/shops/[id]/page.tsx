@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import {
   ArrowLeft,
   MapPin,
-  Globe,
   Plus,
   Pencil,
   History,
@@ -86,23 +85,13 @@ export default async function ShopPage({
               営業時間等をGoogle マップで確認
               <ExternalLink size={14} />
             </a>
-            {shop.website_url && (
-              <a
-                className="text-link"
-                href={shop.website_url}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                公式サイト <ExternalLink size={14} />
-              </a>
-            )}
           </div>
         </div>
         <div className="actions">
           {shop.is_active && (
             <Link className="button small" href={"/post?shop_id=" + id}>
               <Plus size={17} />
-              取扱銘柄を追加
+              取扱銘柄の編集
             </Link>
           )}
           <Link className="button ghost small" href={"/edit/shop/" + id}>
@@ -158,7 +147,7 @@ export default async function ShopPage({
         <div className="sticky-post">
           <Link className="button full" href={"/post?shop_id=" + id}>
             <Plus size={20} />
-            取扱状況を変更
+            取扱銘柄の編集
           </Link>
         </div>
       )}

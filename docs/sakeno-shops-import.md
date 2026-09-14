@@ -112,8 +112,7 @@ data/sakeno/parsed/
   "nameKana": "...",
   "prefecture": "東京都",
   "city": "...",
-  "address": "...",
-  "websiteUrl": "..."
+  "address": "..."
 }
 ```
 
@@ -252,7 +251,6 @@ parseShop(block);
 parseShopName();
 parseShopKana();
 parseAddress();
-parseWebsiteUrl();
 parseSourceId();
 parseSourceUrl();
 ```
@@ -306,7 +304,6 @@ address    = 神奈川県横浜市中区○○1-2-3
 
 ```text
 nameKana
-websiteUrl
 city
 ```
 
@@ -368,7 +365,6 @@ city
 address
 latitude
 longitude
-website_url
 
 source
 source_id

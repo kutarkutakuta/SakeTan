@@ -7,7 +7,6 @@ export type ParsedShop = {
   prefecture: string;
   city: string | null;
   address: string;
-  websiteUrl: string | null;
 };
 
 export type ParseWarning = {

@@ -48,7 +48,6 @@ export const masterSchemas = {
           "USER_ADJUSTED",
         ])
         .optional(),
-      website_url: website,
       is_active: z.boolean().optional(),
     })
     .refine(

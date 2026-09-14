@@ -43,7 +43,6 @@ const parsedSchema = z.object({
       prefecture: z.string().min(1),
       city: z.string().nullable(),
       address: z.string().min(1),
-      websiteUrl: z.url().nullable(),
     }),
   ),
   warnings: z.array(
@@ -311,7 +310,6 @@ async function runImport(
           city: shop.city,
           latitude: null,
           longitude: null,
-          website_url: shop.websiteUrl,
           source: shop.source,
           source_id: shop.sourceId,
           source_url: shop.sourceUrl,
