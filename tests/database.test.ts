@@ -648,3 +648,42 @@ test("Google geocodes receive a server timestamp and expire from bounded map res
     1,
   );
 });
+
+test("anonymous contributions can be claimed by an existing account exactly once", async () => {
+  await asUser(guest);
+  const token = await scalar(
+    "select public.begin_anonymous_account_transfer()",
+  );
+  const historyCount = await scalar<number>(
+    "select count(*)::integer from public.change_histories",
+  );
+
+  await asUser(alice);
+  assert.equal(
+    await scalar("select public.claim_anonymous_account_transfer($1)", [token]),
+    guest,
+  );
+  assert.equal(
+    await scalar<number>(
+      "select count(*)::integer from public.change_histories",
+    ),
+    historyCount,
+  );
+  for (const [table, column] of [
+    ["shop_brands", "created_by"],
+    ["sightings", "user_id"],
+    ["change_histories", "changed_by"],
+    ["brand_requests", "submitted_by"],
+  ])
+    assert.equal(
+      await scalar<number>(
+        `select count(*)::integer from public.${table} where ${column}=$1`,
+        [guest],
+      ),
+      0,
+    );
+  await assert.rejects(
+    db.query("select public.claim_anonymous_account_transfer($1)", [token]),
+    /引き継ぎ情報が見つかりません/,
+  );
+});

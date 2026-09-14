@@ -1,33 +1,27 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import {
-  ArrowRight,
-  Search,
-  X,
-  LocateFixed,
-  MessageCircle,
-  Plus,
-  Store,
-} from "lucide-react";
+import { ArrowRight, Search, X, LocateFixed, Plus, Store } from "lucide-react";
 import Map from "./map";
-import type { Brand, Bounds, LatestShopComment, Shop } from "@/lib/types";
-import { dateLabel } from "@/lib/utils";
-
-type ShopBrandPreview = { brands: Brand[]; total: number };
+import { MapShopCard } from "./home/map-shop-card";
+import {
+  ShopCommentPopover,
+  useShopCommentPopover,
+} from "./home/shop-comment-popover";
+import { ShopListCard } from "./home/shop-list-card";
+import { useShopMetadata } from "./home/use-shop-metadata";
+import type { Brand, Bounds, Shop } from "@/lib/types";
 
 export function Home({
-  initialShops,
   ready,
   initialBrand,
   initialError,
 }: {
-  initialShops: Shop[];
   ready: boolean;
   initialBrand: Brand | null;
   initialError?: string;
 }) {
-  const [shops, setShops] = useState(initialShops);
+  const [shops, setShops] = useState<Shop[]>([]);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<{ brands: Brand[]; shops: Shop[] }>({
     brands: [],
@@ -35,57 +29,82 @@ export function Home({
   });
   const [brand, setBrand] = useState<Brand | null>(initialBrand);
   const [selected, setSelected] = useState<string | null>(null);
-  const [pinBrands, setPinBrands] = useState<Record<string, Brand[]>>({});
-  const [listBrands, setListBrands] = useState<
-    Record<string, ShopBrandPreview>
-  >({});
-  const [listComments, setListComments] = useState<
-    Record<string, LatestShopComment>
-  >({});
-  const [openComment, setOpenComment] = useState<string | null>(null);
+  const [focusedShop, setFocusedShop] = useState<string | null>(null);
   const [bounds, setBounds] = useState<Bounds>();
   const [center, setCenter] = useState<[number, number]>();
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [resolvingInitialArea, setResolvingInitialArea] = useState(ready);
   const [error, setError] = useState(initialError ?? "");
   const searchSequence = useRef(0);
   const areaSequence = useRef(0);
+  const requestedInitialArea = useRef(false);
   const searchAtLocation = useRef(false);
-  const commentPreviewRef = useRef<HTMLDivElement>(null);
-  const loadShops = useCallback(async (filter: Brand | null, area?: Bounds) => {
-    const seq = ++areaSequence.current;
-    setBusy(true);
-    setError("");
-    try {
-      const params = new URLSearchParams();
-      if (filter) params.set("brand_id", filter.id);
-      if (area)
-        Object.entries(area).forEach(([k, v]) => params.set(k, String(v)));
-      const res = await fetch("/api/shops?" + params);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      if (seq !== areaSequence.current) return;
-      setShops(data);
-      setSelected(null);
-      setDirty(false);
-    } catch (e) {
-      if (seq === areaSequence.current)
-        setError(e instanceof Error ? e.message : "検索できませんでした");
-    } finally {
-      if (seq === areaSequence.current) setBusy(false);
-    }
-  }, []);
+  const mapPanelRef = useRef<HTMLElement>(null);
+  const {
+    allBrands: allListBrands,
+    brandPreviews: listBrands,
+    collapseBrands,
+    expandedShopId: expandedBrandShop,
+    latestComments: listComments,
+    loadingShopId: loadingBrandShop,
+    toggleBrands: toggleShopBrands,
+  } = useShopMetadata(shops, setError);
+  const {
+    close: closeComment,
+    popoverRef: commentPreviewRef,
+    position: commentPopoverPosition,
+    shopId: openComment,
+    toggle: toggleShopComment,
+  } = useShopCommentPopover();
+  const loadShops = useCallback(
+    async (filter: Brand | null, area?: Bounds) => {
+      const seq = ++areaSequence.current;
+      setBusy(true);
+      setError("");
+      try {
+        const params = new URLSearchParams();
+        if (filter) params.set("brand_id", filter.id);
+        if (area)
+          Object.entries(area).forEach(([k, v]) => params.set(k, String(v)));
+        const res = await fetch("/api/shops?" + params);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        if (seq !== areaSequence.current) return;
+        setShops(data);
+        setSelected(null);
+        collapseBrands();
+        setDirty(false);
+      } catch (e) {
+        if (seq === areaSequence.current)
+          setError(e instanceof Error ? e.message : "検索できませんでした");
+      } finally {
+        if (seq === areaSequence.current) setBusy(false);
+      }
+    },
+    [collapseBrands],
+  );
   useEffect(() => {
-    if (!navigator.geolocation) return;
+    if (requestedInitialArea.current || !ready) return;
+    requestedInitialArea.current = true;
+    const loadDefaultShops = () => {
+      void loadShops(initialBrand).finally(() =>
+        setResolvingInitialArea(false),
+      );
+    };
+    if (!navigator.geolocation) {
+      loadDefaultShops();
+      return;
+    }
     navigator.geolocation.getCurrentPosition(
       (p) => {
         searchAtLocation.current = true;
         setCenter([p.coords.latitude, p.coords.longitude]);
       },
-      () => {},
+      loadDefaultShops,
       { timeout: 8000, maximumAge: 300000 },
     );
-  }, []);
+  }, [initialBrand, loadShops, ready]);
   useEffect(() => {
     const seq = ++searchSequence.current;
     if (!query.trim()) {
@@ -112,119 +131,6 @@ export function Home({
       abort.abort();
     };
   }, [query]);
-  useEffect(() => {
-    if (!selected || Object.hasOwn(pinBrands, selected)) return;
-    const abort = new AbortController();
-    void (async () => {
-      try {
-        const response = await fetch(`/api/shops/${selected}/brands`, {
-          signal: abort.signal,
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error);
-        setPinBrands((current) => ({ ...current, [selected]: data }));
-      } catch (reason) {
-        if (!abort.signal.aborted)
-          setError(
-            reason instanceof Error
-              ? reason.message
-              : "取扱銘柄を取得できませんでした",
-          );
-      }
-    })();
-    return () => abort.abort();
-  }, [pinBrands, selected]);
-  useEffect(() => {
-    const abort = new AbortController();
-    const ids = shops.map((shop) => shop.id);
-    if (!ids.length) {
-      setListBrands({});
-      return () => abort.abort();
-    }
-    setListBrands({});
-    void Promise.all(
-      Array.from({ length: Math.ceil(ids.length / 50) }, (_, index) =>
-        ids.slice(index * 50, index * 50 + 50),
-      ).map(async (chunk) => {
-        const response = await fetch(
-          `/api/shops/brands?ids=${encodeURIComponent(chunk.join(","))}`,
-          { signal: abort.signal },
-        );
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error);
-        return data as Record<string, ShopBrandPreview>;
-      }),
-    )
-      .then((parts) => setListBrands(Object.assign({}, ...parts)))
-      .catch((reason) => {
-        if (!abort.signal.aborted)
-          setError(
-            reason instanceof Error
-              ? reason.message
-              : "取扱銘柄を取得できませんでした",
-          );
-      });
-    return () => abort.abort();
-  }, [shops]);
-  useEffect(() => {
-    const abort = new AbortController();
-    const ids = shops.map((shop) => shop.id);
-    setOpenComment((current) =>
-      current && ids.includes(current) ? current : null,
-    );
-    if (!ids.length) {
-      setListComments({});
-      return () => abort.abort();
-    }
-    setListComments({});
-    void Promise.all(
-      Array.from({ length: Math.ceil(ids.length / 50) }, (_, index) =>
-        ids.slice(index * 50, index * 50 + 50),
-      ).map(async (chunk) => {
-        const response = await fetch(
-          `/api/shops/comments?ids=${encodeURIComponent(chunk.join(","))}`,
-          { signal: abort.signal },
-        );
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error);
-        return data as Record<string, LatestShopComment>;
-      }),
-    )
-      .then((parts) => setListComments(Object.assign({}, ...parts)))
-      .catch((reason) => {
-        if (!abort.signal.aborted)
-          setError(
-            reason instanceof Error
-              ? reason.message
-              : "最新コメントを取得できませんでした",
-          );
-      });
-    return () => abort.abort();
-  }, [shops]);
-  useEffect(() => {
-    if (!openComment) return;
-    function closeOnOutsidePointer(event: PointerEvent) {
-      if (
-        event.target instanceof Element &&
-        event.target.closest(".shop-comment-trigger")
-      )
-        return;
-      if (
-        event.target instanceof Node &&
-        !commentPreviewRef.current?.contains(event.target)
-      )
-        setOpenComment(null);
-    }
-    function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpenComment(null);
-    }
-    document.addEventListener("pointerdown", closeOnOutsidePointer);
-    document.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.removeEventListener("pointerdown", closeOnOutsidePointer);
-      document.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [openComment]);
   function chooseBrand(value: Brand | null) {
     setBrand(value);
     setQuery("");
@@ -234,10 +140,21 @@ export function Home({
     window.history.replaceState(null, "", url);
     void loadShops(value);
   }
-  function selectShop(shop: Shop) {
+  function selectShop(shop: Shop, scrollToMap = false) {
     setSelected(shop.id);
     if (typeof shop.latitude === "number" && typeof shop.longitude === "number")
       setCenter([shop.latitude, shop.longitude]);
+    if (scrollToMap && window.matchMedia("(max-width: 800px)").matches) {
+      window.requestAnimationFrame(() =>
+        mapPanelRef.current?.scrollIntoView({
+          behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
+            .matches
+            ? "auto"
+            : "smooth",
+          block: "start",
+        }),
+      );
+    }
   }
   const sorted = selected
     ? [
@@ -246,25 +163,52 @@ export function Home({
       ]
     : shops;
   const selectedShop = shops.find((shop) => shop.id === selected);
+  const selectedPreview = selected ? listBrands[selected] : undefined;
+  const selectedBrandsExpanded = expandedBrandShop === selected;
+  const selectedDisplayedBrands = selectedBrandsExpanded
+    ? selected
+      ? (allListBrands[selected] ?? selectedPreview?.brands)
+      : undefined
+    : selectedPreview?.brands;
+  const openCommentShop = shops.find((shop) => shop.id === openComment);
+  const openCommentData = openComment ? listComments[openComment] : undefined;
+
+  useEffect(() => {
+    if (openComment && !openCommentShop) closeComment();
+  }, [closeComment, openComment, openCommentShop]);
+
   return (
     <main id="main" className="explore">
       <div className="explore-grid">
         <aside className="explore-panel">
           <div className="search-area">
-            <label className="searchbox">
-              <Search size={21} />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="銘柄・酒屋を検索"
-                aria-label="銘柄・酒屋を検索"
-              />
-              {query && (
-                <button onClick={() => setQuery("")} aria-label="検索をクリア">
-                  <X size={18} />
-                </button>
-              )}
-            </label>
+            <div className="search-row">
+              <label className="searchbox">
+                <Search size={21} />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="銘柄・酒屋を検索"
+                  aria-label="銘柄・酒屋を検索"
+                />
+                {query && (
+                  <button
+                    onClick={() => setQuery("")}
+                    aria-label="検索をクリア"
+                  >
+                    <X size={18} />
+                  </button>
+                )}
+              </label>
+              <Link
+                href="/edit/shop/new"
+                className="mobile-add-shop"
+                aria-label="新しい酒屋を登録"
+                title="新しい酒屋を登録"
+              >
+                <Plus size={22} />
+              </Link>
+            </div>
             {query.trim() && (
               <div className="search-results" aria-live="polite">
                 <h3>銘柄</h3>
@@ -311,7 +255,9 @@ export function Home({
             <div>
               <h2>
                 {brand ? `「${brand.name}」を扱う酒屋` : "地図の酒屋"}{" "}
-                <span className="count">{shops.length}</span>
+                <span className="count">
+                  {resolvingInitialArea ? "…" : shops.length}
+                </span>
               </h2>
             </div>
             {brand && (
@@ -329,123 +275,79 @@ export function Home({
           <div className="shop-list" aria-live="polite">
             {sorted.map((s) => {
               const latestComment = listComments[s.id];
+              const preview = listBrands[s.id];
+              const expanded = expandedBrandShop === s.id;
+              const displayedBrands = expanded
+                ? (allListBrands[s.id] ?? preview?.brands)
+                : preview?.brands;
               return (
-                <div
+                <ShopListCard
                   key={s.id}
-                  className={"shop-card " + (selected === s.id ? "active" : "")}
-                >
-                  <button
-                    type="button"
-                    className="shop-card-main"
-                    aria-pressed={selected === s.id}
-                    onClick={() => selectShop(s)}
-                  >
-                    <span className="store-icon" aria-hidden="true">
-                      <Store size={18} strokeWidth={1.7} />
-                    </span>
-                    <span className="shop-card-copy">
-                      <h3>{s.name}</h3>
-                      {listBrands[s.id]?.brands.length ? (
-                        <span className="shop-card-brands">
-                          {listBrands[s.id].brands.map((item) => (
-                            <span className="shop-card-brand" key={item.id}>
-                              {item.name}
-                            </span>
-                          ))}
-                          {listBrands[s.id].total > 10 && (
-                            <span className="shop-card-more">
-                              ほか{listBrands[s.id].total - 10}銘柄
-                            </span>
-                          )}
-                        </span>
-                      ) : listBrands[s.id] ? (
-                        <span className="shop-card-empty">
-                          取扱銘柄は未登録
-                        </span>
-                      ) : null}
-                    </span>
-                  </button>
-                  {latestComment && (
-                    <button
-                      type="button"
-                      className={
-                        "shop-comment-trigger " +
-                        (openComment === s.id ? "active" : "")
-                      }
-                      aria-label={`${s.name}の最新コメントを表示`}
-                      aria-expanded={openComment === s.id}
-                      aria-controls={
-                        openComment === s.id ? "latest-shop-comment" : undefined
-                      }
-                      onClick={() =>
-                        setOpenComment((current) =>
-                          current === s.id ? null : s.id,
-                        )
-                      }
-                    >
-                      <MessageCircle size={17} strokeWidth={1.8} />
-                    </button>
-                  )}
-                </div>
+                  brands={displayedBrands}
+                  commentOpen={openComment === s.id}
+                  expanded={expanded}
+                  latestComment={latestComment}
+                  loading={loadingBrandShop === s.id}
+                  onCommentToggle={(anchor) => toggleShopComment(s.id, anchor)}
+                  onHighlight={setFocusedShop}
+                  onSelect={() => selectShop(s, true)}
+                  onToggleBrands={() => void toggleShopBrands(s.id)}
+                  preview={preview}
+                  selected={selected === s.id}
+                  shop={s}
+                />
               );
             })}
             {shops.length === 0 && (
               <div className="empty">
-                <Store size={32} />
+                {resolvingInitialArea ? (
+                  <LocateFixed size={32} />
+                ) : (
+                  <Store size={32} />
+                )}
                 <h3>
-                  {ready
-                    ? "このエリアの酒屋はまだありません"
-                    : "酒屋との出会いは、ここから。"}
+                  {resolvingInitialArea
+                    ? "現在地周辺の酒屋を探しています"
+                    : ready
+                      ? "このエリアの酒屋はまだありません"
+                      : "酒屋との出会いは、ここから。"}
                 </h3>
                 <p>
-                  {ready
-                    ? "地図を動かしてエリアを広げるか、知っている酒屋を登録してみましょう。"
-                    : "接続設定後、銘柄を検索したり、酒屋での発見を記録できます。"}
+                  {resolvingInitialArea
+                    ? "位置情報を確認しています。"
+                    : ready
+                      ? "地図を動かしてエリアを広げるか、知っている酒屋を登録してみましょう。"
+                      : "接続設定後、銘柄を検索したり、酒屋での発見を記録できます。"}
                 </p>
               </div>
             )}
           </div>
-          {openComment && listComments[openComment] && (
-            <div
-              ref={commentPreviewRef}
-              id="latest-shop-comment"
-              className="shop-comment-preview"
-              role="region"
-              aria-live="polite"
-              aria-label={`${shops.find((shop) => shop.id === openComment)?.name ?? "酒屋"}の最新コメント`}
-            >
-              <div className="shop-comment-preview-head">
-                <div>
-                  <strong>
-                    {shops.find((shop) => shop.id === openComment)?.name}
-                  </strong>
-                  <span>
-                    {listComments[openComment].user_name ?? "ユーザー"}・
-                    {dateLabel(listComments[openComment].commented_on)}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  aria-label="コメントを閉じる"
-                  onClick={() => setOpenComment(null)}
-                >
-                  <X size={18} />
-                </button>
-              </div>
-              <p>{listComments[openComment].comment}</p>
-              <Link href={`/shops/${openComment}#comments`}>
-                店舗ページで見る
-              </Link>
-            </div>
-          )}
+          {openComment &&
+            openCommentShop &&
+            commentPopoverPosition &&
+            openCommentData && (
+              <ShopCommentPopover
+                comment={openCommentData}
+                onClose={closeComment}
+                popoverRef={commentPreviewRef}
+                position={commentPopoverPosition}
+                shopId={openComment}
+                shopName={openCommentShop.name}
+              />
+            )}
           <Link href="/edit/shop/new" className="add-shop">
             <Plus size={18} /> 新しい酒屋を登録
           </Link>
         </aside>
-        <section className="map-panel" aria-label="酒屋マップ">
+        <section
+          ref={mapPanelRef}
+          className="map-panel"
+          aria-label="酒屋マップ"
+        >
           <Map
             shops={shops}
             selected={selected}
+            highlighted={focusedShop}
             onSelect={(id) => {
               const shop = shops.find((item) => item.id === id);
               if (shop) selectShop(shop);
@@ -455,7 +357,9 @@ export function Home({
               setDirty(true);
               if (searchAtLocation.current) {
                 searchAtLocation.current = false;
-                void loadShops(brand, b);
+                void loadShops(brand, b).finally(() =>
+                  setResolvingInitialArea(false),
+                );
               }
             }}
             center={center}
@@ -481,30 +385,32 @@ export function Home({
           </div>
           <button
             className={"button area-button " + (dirty ? "" : "ghost")}
-            disabled={busy}
+            disabled={busy || resolvingInitialArea}
             onClick={() => void loadShops(brand, bounds)}
           >
             <Search size={17} />
-            {busy ? "検索しています…" : "このエリアを検索"}
+            {resolvingInitialArea
+              ? "現在地を確認しています…"
+              : busy
+                ? "検索しています…"
+                : "このエリアを検索"}
           </button>
           {selected && selectedShop && (
-            <Link className="map-selected" href={"/shops/" + selected}>
-              <div className="map-selected-copy">
-                <div className="map-selected-heading">
-                  <strong>{selectedShop.name}</strong>
-                  <span className="map-selected-destination">店舗ページへ</span>
-                </div>
-                {pinBrands[selected]?.length > 0 && (
-                  <div className="pin-brands">
-                    {pinBrands[selected].map((item) => (
-                      <span className="pin-brand" key={item.id}>
-                        {item.name}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </Link>
+            <MapShopCard
+              brands={selectedDisplayedBrands}
+              commentOpen={openComment === selected}
+              expanded={selectedBrandsExpanded}
+              latestComment={listComments[selected]}
+              loading={loadingBrandShop === selected}
+              onClose={() => {
+                setSelected(null);
+                collapseBrands();
+              }}
+              onCommentToggle={(anchor) => toggleShopComment(selected, anchor)}
+              onToggleBrands={() => void toggleShopBrands(selected)}
+              preview={selectedPreview}
+              shop={selectedShop}
+            />
           )}
         </section>
       </div>

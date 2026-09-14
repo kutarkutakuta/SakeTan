@@ -6,7 +6,7 @@ import "./globals.css";
 import { Header } from "@/components/header";
 export const metadata: Metadata = {
   title: {
-    default: "さけたん | 日本酒と酒屋をつなぐ地図",
+    default: "さけたん｜酒と酒屋をつなぐ地図",
     template: "%s | さけたん",
   },
   description:
@@ -24,7 +24,9 @@ export default function Layout({
         <Header />
         {children}
         <footer>
+          <p className="footer-tagline">酒が見つかる。店が見つかる。</p>
           <a
+            className="footer-source"
             href="https://sakenowa.com"
             target="_blank"
             rel="noopener noreferrer"

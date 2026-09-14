@@ -1,0 +1,128 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
+import type { Brand, LatestShopComment, Shop } from "@/lib/types";
+
+export type ShopBrandPreview = { brands: Brand[]; total: number };
+
+export function useShopMetadata(
+  shops: Shop[],
+  setError: Dispatch<SetStateAction<string>>,
+) {
+  const [brandPreviews, setBrandPreviews] = useState<
+    Record<string, ShopBrandPreview>
+  >({});
+  const [allBrands, setAllBrands] = useState<Record<string, Brand[]>>({});
+  const [expandedShopId, setExpandedShopId] = useState<string | null>(null);
+  const [loadingShopId, setLoadingShopId] = useState<string | null>(null);
+  const [latestComments, setLatestComments] = useState<
+    Record<string, LatestShopComment>
+  >({});
+
+  useEffect(() => {
+    const abort = new AbortController();
+    const ids = shops.map((shop) => shop.id);
+    if (!ids.length) {
+      setBrandPreviews({});
+      return () => abort.abort();
+    }
+    setBrandPreviews({});
+    void fetchInChunks<ShopBrandPreview>(
+      ids,
+      (chunk) => `/api/shops/brands?ids=${encodeURIComponent(chunk.join(","))}`,
+      abort.signal,
+    )
+      .then(setBrandPreviews)
+      .catch((reason) => {
+        if (!abort.signal.aborted)
+          setError(errorMessage(reason, "取扱銘柄を取得できませんでした"));
+      });
+    return () => abort.abort();
+  }, [setError, shops]);
+
+  useEffect(() => {
+    const abort = new AbortController();
+    const ids = shops.map((shop) => shop.id);
+    if (!ids.length) {
+      setLatestComments({});
+      return () => abort.abort();
+    }
+    setLatestComments({});
+    void fetchInChunks<LatestShopComment>(
+      ids,
+      (chunk) =>
+        `/api/shops/comments?ids=${encodeURIComponent(chunk.join(","))}`,
+      abort.signal,
+    )
+      .then(setLatestComments)
+      .catch((reason) => {
+        if (!abort.signal.aborted)
+          setError(errorMessage(reason, "最新コメントを取得できませんでした"));
+      });
+    return () => abort.abort();
+  }, [setError, shops]);
+
+  const toggleBrands = useCallback(
+    async (shopId: string) => {
+      if (expandedShopId === shopId) {
+        setExpandedShopId(null);
+        return;
+      }
+      if (allBrands[shopId]) {
+        setExpandedShopId(shopId);
+        return;
+      }
+      setLoadingShopId(shopId);
+      setError("");
+      try {
+        const response = await fetch(`/api/shops/${shopId}/brands`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error);
+        setAllBrands((current) => ({ ...current, [shopId]: data }));
+        setExpandedShopId(shopId);
+      } catch (reason) {
+        setError(errorMessage(reason, "取扱銘柄を取得できませんでした"));
+      } finally {
+        setLoadingShopId((current) => (current === shopId ? null : current));
+      }
+    },
+    [allBrands, expandedShopId, setError],
+  );
+
+  const collapseBrands = useCallback(() => setExpandedShopId(null), []);
+
+  return {
+    allBrands,
+    brandPreviews,
+    collapseBrands,
+    expandedShopId,
+    latestComments,
+    loadingShopId,
+    toggleBrands,
+  };
+}
+
+async function fetchInChunks<T>(
+  ids: string[],
+  endpoint: (ids: string[]) => string,
+  signal: AbortSignal,
+) {
+  const chunks = Array.from(
+    { length: Math.ceil(ids.length / 50) },
+    (_, index) => ids.slice(index * 50, index * 50 + 50),
+  );
+  const parts = await Promise.all(
+    chunks.map(async (chunk) => {
+      const response = await fetch(endpoint(chunk), { signal });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      return data as Record<string, T>;
+    }),
+  );
+  return Object.assign({}, ...parts) as Record<string, T>;
+}
+
+function errorMessage(reason: unknown, fallback: string) {
+  return reason instanceof Error ? reason.message : fallback;
+}

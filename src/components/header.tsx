@@ -9,7 +9,10 @@ export async function Header() {
         <span className="logo-icon">
           <MapPin size={23} strokeWidth={1.8} />
         </span>
-        <span>さけたん</span>
+        <span className="logo-copy">
+          <span>さけたん</span>
+          <span className="logo-subtitle">次の一杯を探そう。</span>
+        </span>
       </Link>
       <nav>
         <Link href="/history" className="nav-map">
