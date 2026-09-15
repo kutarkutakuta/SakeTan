@@ -18,6 +18,7 @@ export default function ShopMap({
   onSelect,
   onBounds,
   center,
+  preserveZoom = false,
   mobileSelectionOffsetY = 0,
   compact = false,
 }: {
@@ -27,6 +28,7 @@ export default function ShopMap({
   onSelect?: (id: string) => void;
   onBounds?: (bounds: Bounds) => void;
   center?: [number, number];
+  preserveZoom?: boolean;
   mobileSelectionOffsetY?: number;
   locate?: number;
   compact?: boolean;
@@ -100,19 +102,24 @@ export default function ShopMap({
   useEffect(() => {
     let animationFrame: number | undefined;
     if (center && map.current) {
-      map.current.moveCamera({
-        center: { lat: center[0], lng: center[1] },
-        zoom: compact ? 17 : 14,
-      });
       const selectedShop = shopsRef.current.find(
         (shop) => shop.id === selected,
       );
-      const shouldOffsetSelectedShop =
-        mobileSelectionOffsetY > 0 &&
+      const isSelectedShopCenter = Boolean(
         selectedShop &&
         hasUsableCoordinates(selectedShop) &&
         Math.abs(selectedShop.latitude - center[0]) < 0.000001 &&
-        Math.abs(selectedShop.longitude - center[1]) < 0.000001 &&
+        Math.abs(selectedShop.longitude - center[1]) < 0.000001,
+      );
+      map.current.moveCamera({
+        center: { lat: center[0], lng: center[1] },
+        ...(preserveZoom && isSelectedShopCenter
+          ? {}
+          : { zoom: compact ? 17 : 14 }),
+      });
+      const shouldOffsetSelectedShop =
+        mobileSelectionOffsetY > 0 &&
+        isSelectedShopCenter &&
         window.matchMedia("(max-width: 800px)").matches;
       if (shouldOffsetSelectedShop) {
         animationFrame = window.requestAnimationFrame(() =>
@@ -124,7 +131,7 @@ export default function ShopMap({
       if (animationFrame !== undefined)
         window.cancelAnimationFrame(animationFrame);
     };
-  }, [center, compact, mobileSelectionOffsetY, selected]);
+  }, [center, compact, mobileSelectionOffsetY, preserveZoom, selected]);
 
   useEffect(() => {
     if (!libraries || !map.current) return;

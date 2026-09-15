@@ -63,6 +63,7 @@ export function Home({
   const [focusedShop, setFocusedShop] = useState<string | null>(null);
   const [bounds, setBounds] = useState<Bounds>();
   const [center, setCenter] = useState<[number, number]>();
+  const [preserveMapZoom, setPreserveMapZoom] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [resolvingInitialArea, setResolvingInitialArea] = useState(ready);
@@ -145,6 +146,7 @@ export function Home({
           return;
         }
         searchAtLocation.current = true;
+        setPreserveMapZoom(false);
         setCenter([p.coords.latitude, p.coords.longitude]);
       },
       loadDefaultShops,
@@ -204,7 +206,7 @@ export function Home({
     const url = new URL(window.location.href);
     url.searchParams.delete("brand_id");
     window.history.replaceState(null, "", url);
-    selectShop(shop);
+    selectShop(shop, false);
   }
 
   function revealMobileResults(
@@ -224,10 +226,15 @@ export function Home({
     });
   }
 
-  function selectShop(shop: Shop) {
+  function selectShop(shop: Shop, preserveZoom = true) {
     setSelected(shop.id);
-    if (typeof shop.latitude === "number" && typeof shop.longitude === "number")
+    if (
+      typeof shop.latitude === "number" &&
+      typeof shop.longitude === "number"
+    ) {
+      setPreserveMapZoom(preserveZoom);
       setCenter([shop.latitude, shop.longitude]);
+    }
     revealMobileResults("half");
   }
 
@@ -535,6 +542,7 @@ export function Home({
               }
             }}
             center={center}
+            preserveZoom={preserveMapZoom}
             mobileSelectionOffsetY={56}
           />
           <div className="map-top">
@@ -544,6 +552,7 @@ export function Home({
               onClick={() =>
                 navigator.geolocation?.getCurrentPosition(
                   (p) => {
+                    setPreserveMapZoom(false);
                     setCenter([p.coords.latitude, p.coords.longitude]);
                   },
                   () =>
