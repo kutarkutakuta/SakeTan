@@ -33,6 +33,10 @@ export function MasterForm({
     String(initial.prefecture ?? ""),
   );
   const [shopCity, setShopCity] = useState(String(initial.city ?? ""));
+  const [duplicateState, setDuplicateState] = useState({
+    blocking: false,
+    pending: false,
+  });
   useEffect(() => {
     if (type !== "brand" || !query.trim()) {
       setResults([]);
@@ -87,6 +91,10 @@ export function MasterForm({
     const text = (key: string) => String(f.get(key) ?? "").trim();
     const nullable = (key: string) => text(key) || null;
     try {
+      if (type === "shop" && !id && duplicateState.pending)
+        throw new Error("登録済み店舗の確認が終わるまでお待ちください");
+      if (type === "shop" && !id && duplicateState.blocking)
+        throw new Error("この店舗はすでに登録されています");
       let selectedBrewery = brewery?.id ?? null;
       const data: Record<string, unknown> = {
         name: text("name"),
@@ -215,6 +223,8 @@ export function MasterForm({
               ? initial.google_place_id
               : null
           }
+          duplicateCheckEnabled={!id}
+          onDuplicateStateChange={setDuplicateState}
           onPlaceDetails={(details) => {
             if (details.name) setShopName(details.name);
             setShopPrefecture(details.prefecture ?? "");
@@ -385,12 +395,25 @@ export function MasterForm({
           {error}
         </p>
       )}
-      <button disabled={busy} type="submit" className="button full">
+      <button
+        disabled={
+          busy ||
+          (type === "shop" &&
+            !id &&
+            (duplicateState.pending || duplicateState.blocking))
+        }
+        type="submit"
+        className="button full"
+      >
         {busy
           ? "保存しています…"
-          : id
-            ? "変更を保存"
-            : entityLabels[type] + "を登録"}
+          : type === "shop" && !id && duplicateState.pending
+            ? "登録済み店舗を確認中…"
+            : type === "shop" && !id && duplicateState.blocking
+              ? "登録済みの店舗です"
+              : id
+                ? "変更を保存"
+                : entityLabels[type] + "を登録"}
       </button>
     </form>
   );

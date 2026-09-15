@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties, RefObject } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { X } from "lucide-react";
 import type { LatestShopComment } from "@/lib/types";
@@ -84,7 +85,7 @@ export function ShopCommentPopover({
   shopId: string;
   shopName: string;
 }) {
-  return (
+  return createPortal(
     <div
       ref={popoverRef}
       id="latest-shop-comment"
@@ -108,7 +109,8 @@ export function ShopCommentPopover({
       </div>
       <p>{comment.comment}</p>
       <Link href={`/shops/${shopId}#comments`}>店舗ページで見る</Link>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

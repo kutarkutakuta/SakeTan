@@ -68,7 +68,7 @@ export default async function ShopPage({
 
   return (
     <main id="main" className="page shop-page">
-      <Link href="/" className="back">
+      <Link href={`/?shop_id=${id}`} className="back">
         <ArrowLeft size={17} />
         地図に戻る
       </Link>

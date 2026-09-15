@@ -79,6 +79,7 @@ export function ShopListCard({
             className="shop-page-link"
             href={`/shops/${shop.id}`}
             aria-label={`${shop.name}の店舗ページへ`}
+            onClick={onSelect}
           >
             店舗ページへ
           </Link>

@@ -2,6 +2,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
@@ -46,23 +47,37 @@ function nextSheetSnap(
 export function Home({
   ready,
   initialBrand,
+  initialShop,
   initialError,
 }: {
   ready: boolean;
   initialBrand: Brand | null;
+  initialShop: Shop | null;
   initialError?: string;
 }) {
-  const [shops, setShops] = useState<Shop[]>([]);
+  const initialShopPosition = useMemo(
+    () =>
+      typeof initialShop?.latitude === "number" &&
+      typeof initialShop.longitude === "number"
+        ? ([initialShop.latitude, initialShop.longitude] as [number, number])
+        : undefined,
+    [initialShop],
+  );
+  const [shops, setShops] = useState<Shop[]>(initialShop ? [initialShop] : []);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<{ brands: Brand[]; shops: Shop[] }>({
     brands: [],
     shops: [],
   });
   const [brand, setBrand] = useState<Brand | null>(initialBrand);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(
+    initialShopPosition ? (initialShop?.id ?? null) : null,
+  );
   const [focusedShop, setFocusedShop] = useState<string | null>(null);
   const [bounds, setBounds] = useState<Bounds>();
-  const [center, setCenter] = useState<[number, number]>();
+  const [center, setCenter] = useState<[number, number] | undefined>(
+    initialShopPosition,
+  );
   const [preserveMapZoom, setPreserveMapZoom] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -76,6 +91,7 @@ export function Home({
   const requestedInitialArea = useRef(false);
   const searchAtLocation = useRef(false);
   const manualMapFocus = useRef(false);
+  const selectedRef = useRef(selected);
   const shopListRef = useRef<HTMLDivElement>(null);
   const shopSheetRef = useRef<HTMLElement>(null);
   const sheetDragStart = useRef<number | null>(null);
@@ -96,8 +112,19 @@ export function Home({
     shopId: openComment,
     toggle: toggleShopComment,
   } = useShopCommentPopover();
+  selectedRef.current = selected;
+  const syncSelectedShopUrl = useCallback((shopId: string | null) => {
+    const url = new URL(window.location.href);
+    if (shopId) url.searchParams.set("shop_id", shopId);
+    else url.searchParams.delete("shop_id");
+    window.history.replaceState(null, "", url);
+  }, []);
   const loadShops = useCallback(
-    async (filter: Brand | null, area?: Bounds) => {
+    async (
+      filter: Brand | null,
+      area?: Bounds,
+      selectedShopId: string | null = null,
+    ) => {
       const seq = ++areaSequence.current;
       setBusy(true);
       setError("");
@@ -110,8 +137,14 @@ export function Home({
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
         if (seq !== areaSequence.current) return;
-        setShops(data);
-        setSelected(null);
+        const nextShops = data as Shop[];
+        const nextSelected =
+          selectedShopId && nextShops.some((shop) => shop.id === selectedShopId)
+            ? selectedShopId
+            : null;
+        setShops(nextShops);
+        setSelected(nextSelected);
+        syncSelectedShopUrl(nextSelected);
         collapseBrands();
         setDirty(false);
       } catch (e) {
@@ -121,11 +154,15 @@ export function Home({
         if (seq === areaSequence.current) setBusy(false);
       }
     },
-    [collapseBrands],
+    [collapseBrands, syncSelectedShopUrl],
   );
   useEffect(() => {
     if (requestedInitialArea.current || !ready) return;
     requestedInitialArea.current = true;
+    if (initialShopPosition) {
+      searchAtLocation.current = true;
+      return;
+    }
     const loadDefaultShops = () => {
       if (manualMapFocus.current) {
         setResolvingInitialArea(false);
@@ -152,7 +189,7 @@ export function Home({
       loadDefaultShops,
       { timeout: 8000, maximumAge: 300000 },
     );
-  }, [initialBrand, loadShops, ready]);
+  }, [initialBrand, initialShopPosition, loadShops, ready]);
   useEffect(() => {
     const seq = ++searchSequence.current;
     if (!query.trim()) {
@@ -181,11 +218,13 @@ export function Home({
   }, [query]);
   function chooseBrand(value: Brand | null) {
     setBrand(value);
+    setSelected(null);
     setQuery("");
     setResults({ brands: [], shops: [] });
     const url = new URL(window.location.href);
     if (value) url.searchParams.set("brand_id", value.id);
     else url.searchParams.delete("brand_id");
+    url.searchParams.delete("shop_id");
     window.history.replaceState(null, "", url);
     if (value) revealMobileResults();
     void loadShops(value, value ? undefined : bounds);
@@ -228,6 +267,7 @@ export function Home({
 
   function selectShop(shop: Shop, preserveZoom = true) {
     setSelected(shop.id);
+    syncSelectedShopUrl(shop.id);
     if (
       typeof shop.latitude === "number" &&
       typeof shop.longitude === "number"
@@ -536,7 +576,7 @@ export function Home({
               setDirty(true);
               if (searchAtLocation.current) {
                 searchAtLocation.current = false;
-                void loadShops(brand, b).finally(() =>
+                void loadShops(brand, b, selectedRef.current).finally(() =>
                   setResolvingInitialArea(false),
                 );
               }
@@ -568,7 +608,7 @@ export function Home({
           <button
             className={"button area-button " + (dirty ? "" : "ghost")}
             disabled={busy || resolvingInitialArea}
-            onClick={() => void loadShops(brand, bounds)}
+            onClick={() => void loadShops(brand, bounds, selectedRef.current)}
           >
             <Search size={17} />
             {resolvingInitialArea

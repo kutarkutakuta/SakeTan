@@ -39,6 +39,7 @@ export default function ShopMap({
   const onBoundsRef = useRef(onBounds);
   const onSelectRef = useRef(onSelect);
   const centerRef = useRef(center);
+  const selectedRef = useRef(selected);
   const compactRef = useRef(compact);
   const shopsRef = useRef(shops);
   const [libraries, setLibraries] = useState<GoogleLibraries | null>(null);
@@ -46,6 +47,7 @@ export default function ShopMap({
   onBoundsRef.current = onBounds;
   onSelectRef.current = onSelect;
   centerRef.current = center;
+  selectedRef.current = selected;
   compactRef.current = compact;
   shopsRef.current = shops;
 
@@ -103,7 +105,7 @@ export default function ShopMap({
     let animationFrame: number | undefined;
     if (center && map.current) {
       const selectedShop = shopsRef.current.find(
-        (shop) => shop.id === selected,
+        (shop) => shop.id === selectedRef.current,
       );
       const isSelectedShopCenter = Boolean(
         selectedShop &&
@@ -131,7 +133,7 @@ export default function ShopMap({
       if (animationFrame !== undefined)
         window.cancelAnimationFrame(animationFrame);
     };
-  }, [center, compact, mobileSelectionOffsetY, preserveZoom, selected]);
+  }, [center, compact, mobileSelectionOffsetY, preserveZoom]);
 
   useEffect(() => {
     if (!libraries || !map.current) return;

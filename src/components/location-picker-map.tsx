@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import {
   googleMapId,
   loadGoogleMaps,
@@ -53,10 +53,12 @@ export default function LocationPickerMap({
   position,
   onChange,
   onPlaceSelect,
+  children,
 }: {
   position: Position | null;
   onChange: (position: Position) => void;
   onPlaceSelect: (place: PlaceSelection) => void;
+  children: ReactNode;
 }) {
   const element = useRef<HTMLDivElement>(null);
   const searchElement = useRef<HTMLDivElement>(null);
@@ -237,6 +239,7 @@ export default function LocationPickerMap({
           {error}
         </p>
       )}
+      {children}
       <div
         ref={element}
         className="location-picker-map google-map"
