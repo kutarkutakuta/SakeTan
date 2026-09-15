@@ -18,6 +18,7 @@ export default function ShopMap({
   onSelect,
   onBounds,
   center,
+  mobileSelectionOffsetY = 0,
   compact = false,
 }: {
   shops: Shop[];
@@ -26,6 +27,7 @@ export default function ShopMap({
   onSelect?: (id: string) => void;
   onBounds?: (bounds: Bounds) => void;
   center?: [number, number];
+  mobileSelectionOffsetY?: number;
   locate?: number;
   compact?: boolean;
 }) {
@@ -36,12 +38,14 @@ export default function ShopMap({
   const onSelectRef = useRef(onSelect);
   const centerRef = useRef(center);
   const compactRef = useRef(compact);
+  const shopsRef = useRef(shops);
   const [libraries, setLibraries] = useState<GoogleLibraries | null>(null);
   const [error, setError] = useState("");
   onBoundsRef.current = onBounds;
   onSelectRef.current = onSelect;
   centerRef.current = center;
   compactRef.current = compact;
+  shopsRef.current = shops;
 
   useEffect(() => {
     let cancelled = false;
@@ -94,13 +98,33 @@ export default function ShopMap({
   }, []);
 
   useEffect(() => {
+    let animationFrame: number | undefined;
     if (center && map.current) {
       map.current.moveCamera({
         center: { lat: center[0], lng: center[1] },
         zoom: compact ? 17 : 14,
       });
+      const selectedShop = shopsRef.current.find(
+        (shop) => shop.id === selected,
+      );
+      const shouldOffsetSelectedShop =
+        mobileSelectionOffsetY > 0 &&
+        selectedShop &&
+        hasUsableCoordinates(selectedShop) &&
+        Math.abs(selectedShop.latitude - center[0]) < 0.000001 &&
+        Math.abs(selectedShop.longitude - center[1]) < 0.000001 &&
+        window.matchMedia("(max-width: 800px)").matches;
+      if (shouldOffsetSelectedShop) {
+        animationFrame = window.requestAnimationFrame(() =>
+          map.current?.panBy(0, mobileSelectionOffsetY),
+        );
+      }
     }
-  }, [center, compact]);
+    return () => {
+      if (animationFrame !== undefined)
+        window.cancelAnimationFrame(animationFrame);
+    };
+  }, [center, compact, mobileSelectionOffsetY, selected]);
 
   useEffect(() => {
     if (!libraries || !map.current) return;

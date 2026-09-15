@@ -11,9 +11,17 @@ import {
   type KanaGroup,
   type ShopBrandSummary,
 } from "@/lib/brand-index";
-import { BrandFilterControls } from "./brand-filter-controls";
+import { BrandFilterControls, BrandFilterCount } from "./brand-filter-controls";
 
-export function ShopBrandList({ items }: { items: ShopBrandSummary[] }) {
+export function ShopBrandList({
+  description,
+  items,
+  title,
+}: {
+  description?: string;
+  items: ShopBrandSummary[];
+  title: string;
+}) {
   const [query, setQuery] = useState("");
   const [selectedPrefectures, setSelectedPrefectures] = useState<Set<string>>(
     new Set(),
@@ -43,6 +51,14 @@ export function ShopBrandList({ items }: { items: ShopBrandSummary[] }) {
 
   return (
     <>
+      <div className="shop-brands-heading">
+        <h2>{title}</h2>
+        <BrandFilterCount
+          visibleCount={visible.length}
+          totalCount={items.length}
+        />
+      </div>
+      {description && <p className="hint availability-note">{description}</p>}
       <label className="searchbox brand-list-search">
         <Search size={19} />
         <input
@@ -70,8 +86,6 @@ export function ShopBrandList({ items }: { items: ShopBrandSummary[] }) {
         onKanaChange={setSelectedKana}
         sort={sort}
         onSortChange={setSort}
-        visibleCount={visible.length}
-        totalCount={items.length}
       />
       <div className="brand-list" aria-live="polite">
         {visible.map((relation) => {

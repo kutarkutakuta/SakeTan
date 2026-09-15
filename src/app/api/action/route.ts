@@ -94,6 +94,13 @@ export async function POST(request: Request) {
       p_id: p.id,
       p_status: p.status,
     });
+  else if (p.kind === "master_kana")
+    result = await db.rpc("update_master_kana", {
+      p_type: p.type,
+      p_id: p.id,
+      p_name_kana: p.name_kana,
+      p_reason: p.reason,
+    });
   else {
     const valid = masterSchemas[p.type].safeParse(p.data);
     if (!valid.success)

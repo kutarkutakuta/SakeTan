@@ -2,7 +2,7 @@ import Link from "next/link";
 import { EditSearch } from "@/components/edit-search";
 import { viewer } from "@/lib/supabase/server";
 export default async function EditIndex() {
-  const { admin } = await viewer();
+  const { user, admin, anonymous } = await viewer();
   return (
     <main id="main" className="page narrow">
       <Link href="/" className="back">
@@ -14,7 +14,7 @@ export default async function EditIndex() {
           更新履歴
         </Link>
       </div>
-      <EditSearch admin={admin} />
+      <EditSearch admin={admin} signedIn={Boolean(user && !anonymous)} />
     </main>
   );
 }

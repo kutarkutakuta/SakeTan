@@ -91,22 +91,16 @@ export default async function EditPage({
             ここから新しい{entity.name}を登録することはできません。
           </p>
         </div>
-      ) : (type === "brand" || type === "brewery") && !admin ? (
-        <div className="card">
-          <h2>{entity.name}マスタは管理者のみ編集できます</h2>
-          <p className="hint">
-            掲載内容に誤りがある場合は、管理者へお知らせください。
-          </p>
-        </div>
       ) : db &&
         ((type === "shop" && user && !anonymous) ||
-          ((type === "brand" || type === "brewery") && admin)) ? (
+          ((type === "brand" || type === "brewery") && user && !anonymous)) ? (
         <MasterForm
           type={type}
           id={id}
           initial={initial}
           initialBrewery={brewery}
           shopId={q.shop_id}
+          kanaOnly={(type === "brand" || type === "brewery") && !admin}
         />
       ) : (
         <LoginRequired next={next} ready={configured()} />

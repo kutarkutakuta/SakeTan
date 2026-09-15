@@ -175,6 +175,55 @@ test("anonymous sessions can report availability and missing brands, but not edi
     db.query("select public.post_shop_comment($1,'匿名コメント')", [shop]),
   );
 });
+test("signed-in users can only update brand and brewery kana through the public kana action", async () => {
+  await asUser(null);
+  await assert.rejects(
+    db.query("select public.update_master_kana('brand',$1,'みっつめ','不正')", [
+      thirdBrand,
+    ]),
+  );
+  await asUser(guest);
+  await assert.rejects(
+    db.query("select public.update_master_kana('brand',$1,'みっつめ','不正')", [
+      thirdBrand,
+    ]),
+    /ログインしてください/,
+  );
+
+  await asUser(alice);
+  assert.equal(
+    await scalar(
+      "select public.update_master_kana('brand',$1,'  みっつめのしけんしゅ  ','読みを確認')",
+      [thirdBrand],
+    ),
+    thirdBrand,
+  );
+  assert.equal(
+    await scalar("select name_kana from public.brands where id=$1", [
+      thirdBrand,
+    ]),
+    "みっつめのしけんしゅ",
+  );
+  assert.equal(
+    await scalar(
+      "select reason from public.change_histories where entity_id=$1 order by created_at desc limit 1",
+      [thirdBrand],
+    ),
+    "読みを確認",
+  );
+
+  await asUser(bob);
+  await db.query(
+    "select public.update_master_kana('brewery',$1,'しけんしゅぞう','読みを確認')",
+    [brewery],
+  );
+  await assert.rejects(
+    db.query("select public.update_master_kana('shop',$1,'てすと','不正')", [
+      shop,
+    ]),
+    /かなを編集できるのは銘柄と酒蔵のみです/,
+  );
+});
 test("latest shop comments are returned once per shop and omit deleted comments", async () => {
   await asUser(alice);
   const first = await scalar(

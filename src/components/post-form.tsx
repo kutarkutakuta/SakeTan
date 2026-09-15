@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Search, X } from "lucide-react";
+import Link from "next/link";
+import { Plus, Search, Store, X } from "lucide-react";
 import { mutate } from "@/lib/client";
 import {
   brandPrefecture,
@@ -13,7 +14,8 @@ import {
   type KanaGroup,
 } from "@/lib/brand-index";
 import type { Brand, Shop, ShopBrand, ShopBrandStatus } from "@/lib/types";
-import { BrandFilterControls } from "./brand-filter-controls";
+import { AvailabilityInfo } from "./availability-info";
+import { BrandFilterControls, BrandFilterCount } from "./brand-filter-controls";
 
 const statusLabels: Record<ShopBrandStatus, string> = {
   available: "取扱あり",
@@ -231,6 +233,22 @@ export function PostForm({
 
   return (
     <div className="quick-post">
+      <div className="page-head post-page-head">
+        <div className="post-page-title">
+          <h1>取扱銘柄の編集</h1>
+          <AvailabilityInfo />
+        </div>
+        <div className="post-page-head-meta">
+          <BrandFilterCount
+            visibleCount={visibleBrands.length}
+            totalCount={catalog.length}
+          />
+          <Link className="post-shop" href={`/shops/${shop.id}`}>
+            <Store size={18} />
+            <span>{shop.name}</span>
+          </Link>
+        </div>
+      </div>
       <label className="searchbox brand-search">
         <Search size={20} />
         <input
@@ -262,8 +280,6 @@ export function PostForm({
         onKanaChange={setSelectedKana}
         sort={sort}
         onSortChange={setSort}
-        visibleCount={visibleBrands.length}
-        totalCount={catalog.length}
         sortOptions={[
           ["brand", "銘柄順"],
           ["brewery", "蔵元順"],

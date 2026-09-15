@@ -1,9 +1,25 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import Link from "next/link";
-import { ArrowRight, Search, X, LocateFixed, Plus, Store } from "lucide-react";
+import {
+  ArrowRight,
+  ChevronDown,
+  ChevronUp,
+  GripHorizontal,
+  Search,
+  MapPin,
+  X,
+  LocateFixed,
+  Plus,
+  Store,
+} from "lucide-react";
 import Map from "./map";
-import { MapShopCard } from "./home/map-shop-card";
 import {
   ShopCommentPopover,
   useShopCommentPopover,
@@ -11,6 +27,21 @@ import {
 import { ShopListCard } from "./home/shop-list-card";
 import { useShopMetadata } from "./home/use-shop-metadata";
 import type { Brand, Bounds, Shop } from "@/lib/types";
+
+type MobileSheetSnap = "peek" | "half" | "full";
+
+function nextSheetSnap(
+  current: MobileSheetSnap,
+  direction: "up" | "down",
+): MobileSheetSnap {
+  const snaps: MobileSheetSnap[] = ["peek", "half", "full"];
+  const currentIndex = snaps.indexOf(current);
+  const nextIndex =
+    direction === "up"
+      ? Math.min(currentIndex + 1, snaps.length - 1)
+      : Math.max(currentIndex - 1, 0);
+  return snaps[nextIndex];
+}
 
 export function Home({
   ready,
@@ -36,11 +67,18 @@ export function Home({
   const [busy, setBusy] = useState(false);
   const [resolvingInitialArea, setResolvingInitialArea] = useState(ready);
   const [error, setError] = useState(initialError ?? "");
+  const [mobileSheetSnap, setMobileSheetSnap] =
+    useState<MobileSheetSnap>("peek");
+  const [draggingSheet, setDraggingSheet] = useState(false);
   const searchSequence = useRef(0);
   const areaSequence = useRef(0);
   const requestedInitialArea = useRef(false);
   const searchAtLocation = useRef(false);
-  const mapPanelRef = useRef<HTMLElement>(null);
+  const manualMapFocus = useRef(false);
+  const shopListRef = useRef<HTMLDivElement>(null);
+  const shopSheetRef = useRef<HTMLElement>(null);
+  const sheetDragStart = useRef<number | null>(null);
+  const sheetDragMoved = useRef(false);
   const {
     allBrands: allListBrands,
     brandPreviews: listBrands,
@@ -88,6 +126,10 @@ export function Home({
     if (requestedInitialArea.current || !ready) return;
     requestedInitialArea.current = true;
     const loadDefaultShops = () => {
+      if (manualMapFocus.current) {
+        setResolvingInitialArea(false);
+        return;
+      }
       void loadShops(initialBrand).finally(() =>
         setResolvingInitialArea(false),
       );
@@ -98,6 +140,10 @@ export function Home({
     }
     navigator.geolocation.getCurrentPosition(
       (p) => {
+        if (manualMapFocus.current) {
+          setResolvingInitialArea(false);
+          return;
+        }
         searchAtLocation.current = true;
         setCenter([p.coords.latitude, p.coords.longitude]);
       },
@@ -134,27 +180,98 @@ export function Home({
   function chooseBrand(value: Brand | null) {
     setBrand(value);
     setQuery("");
+    setResults({ brands: [], shops: [] });
     const url = new URL(window.location.href);
     if (value) url.searchParams.set("brand_id", value.id);
     else url.searchParams.delete("brand_id");
     window.history.replaceState(null, "", url);
-    void loadShops(value);
+    if (value) revealMobileResults();
+    void loadShops(value, value ? undefined : bounds);
   }
-  function selectShop(shop: Shop, scrollToMap = false) {
+
+  function chooseShop(shop: Shop) {
+    manualMapFocus.current = true;
+    searchAtLocation.current = false;
+    areaSequence.current += 1;
+    setBrand(null);
+    setQuery("");
+    setResults({ brands: [], shops: [] });
+    setShops([shop]);
+    setBusy(false);
+    setResolvingInitialArea(false);
+    setDirty(true);
+    collapseBrands();
+    const url = new URL(window.location.href);
+    url.searchParams.delete("brand_id");
+    window.history.replaceState(null, "", url);
+    selectShop(shop);
+  }
+
+  function revealMobileResults(
+    mode: "at-least-half" | "half" = "at-least-half",
+  ) {
+    if (!window.matchMedia("(max-width: 800px)").matches) return;
+    setMobileSheetSnap((current) =>
+      mode === "half" || current === "peek" ? "half" : current,
+    );
+    window.requestAnimationFrame(() => {
+      shopListRef.current?.scrollTo({
+        top: 0,
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+      });
+    });
+  }
+
+  function selectShop(shop: Shop) {
     setSelected(shop.id);
     if (typeof shop.latitude === "number" && typeof shop.longitude === "number")
       setCenter([shop.latitude, shop.longitude]);
-    if (scrollToMap && window.matchMedia("(max-width: 800px)").matches) {
-      window.requestAnimationFrame(() =>
-        mapPanelRef.current?.scrollIntoView({
-          behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
-            .matches
-            ? "auto"
-            : "smooth",
-          block: "start",
-        }),
-      );
+    revealMobileResults("half");
+  }
+
+  function toggleMobileSheet() {
+    if (sheetDragMoved.current) {
+      sheetDragMoved.current = false;
+      return;
     }
+    setMobileSheetSnap((current) =>
+      current === "full" ? "peek" : nextSheetSnap(current, "up"),
+    );
+  }
+
+  function startSheetDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+    sheetDragStart.current = event.clientY;
+    sheetDragMoved.current = false;
+    setDraggingSheet(true);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function moveSheetDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+    if (sheetDragStart.current === null) return;
+    const delta = event.clientY - sheetDragStart.current;
+    if (Math.abs(delta) > 6) sheetDragMoved.current = true;
+    shopSheetRef.current?.style.setProperty(
+      "--shop-sheet-drag-offset",
+      `${delta}px`,
+    );
+  }
+
+  function finishSheetDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+    if (sheetDragStart.current === null) return;
+    const delta = event.clientY - sheetDragStart.current;
+    if (Math.abs(delta) >= 48) {
+      setMobileSheetSnap((current) =>
+        nextSheetSnap(current, delta < 0 ? "up" : "down"),
+      );
+      sheetDragMoved.current = true;
+    }
+    sheetDragStart.current = null;
+    setDraggingSheet(false);
+    shopSheetRef.current?.style.removeProperty("--shop-sheet-drag-offset");
+    if (event.currentTarget.hasPointerCapture(event.pointerId))
+      event.currentTarget.releasePointerCapture(event.pointerId);
   }
   const sorted = selected
     ? [
@@ -162,14 +279,6 @@ export function Home({
         ...shops.filter((s) => s.id !== selected),
       ]
     : shops;
-  const selectedShop = shops.find((shop) => shop.id === selected);
-  const selectedPreview = selected ? listBrands[selected] : undefined;
-  const selectedBrandsExpanded = expandedBrandShop === selected;
-  const selectedDisplayedBrands = selectedBrandsExpanded
-    ? selected
-      ? (allListBrands[selected] ?? selectedPreview?.brands)
-      : undefined
-    : selectedPreview?.brands;
   const openCommentShop = shops.find((shop) => shop.id === openComment);
   const openCommentData = openComment ? listComments[openComment] : undefined;
 
@@ -178,7 +287,7 @@ export function Home({
   }, [closeComment, openComment, openCommentShop]);
 
   return (
-    <main id="main" className="explore">
+    <main id="main" className={`explore mobile-sheet-${mobileSheetSnap}`}>
       <div className="explore-grid">
         <aside className="explore-panel">
           <div className="search-area">
@@ -209,6 +318,19 @@ export function Home({
                 <Plus size={22} />
               </Link>
             </div>
+            {brand && (
+              <div className="active-search-filter">
+                <button
+                  type="button"
+                  className="chip"
+                  aria-label={`${brand.name}の絞り込みを解除`}
+                  onClick={() => chooseBrand(null)}
+                >
+                  {brand.name}
+                  <X size={15} aria-hidden="true" />
+                </button>
+              </div>
+            )}
             {query.trim() && (
               <div className="search-results" aria-live="polite">
                 <h3>銘柄</h3>
@@ -230,10 +352,12 @@ export function Home({
                 ))}
                 <h3>酒屋</h3>
                 {results.shops.map((s) => (
-                  <Link
+                  <button
+                    type="button"
                     className="search-result"
                     key={s.id}
-                    href={"/shops/" + s.id}
+                    aria-label={`${s.name}を地図で表示`}
+                    onClick={() => chooseShop(s)}
                   >
                     <span>
                       <strong>{s.name}</strong>
@@ -242,8 +366,8 @@ export function Home({
                         {s.city ? ` ${s.city}` : ""}
                       </small>
                     </span>
-                    <ArrowRight size={18} />
-                  </Link>
+                    <MapPin size={18} />
+                  </button>
                 ))}
                 {!results.brands.length && !results.shops.length && (
                   <p className="muted">該当する銘柄・酒屋がありません</p>
@@ -251,99 +375,147 @@ export function Home({
               </div>
             )}
           </div>
-          <div className="result-heading">
-            <div>
-              <h2>
-                {brand ? `「${brand.name}」を扱う酒屋` : "地図の酒屋"}{" "}
-                <span className="count">
-                  {resolvingInitialArea ? "…" : shops.length}
-                </span>
-              </h2>
-            </div>
-            {brand && (
-              <button className="chip" onClick={() => chooseBrand(null)}>
-                {brand.name}
-                <X size={15} />
-              </button>
-            )}
-          </div>
-          {error && (
-            <p className="notice error" role="alert">
-              {error}
-            </p>
-          )}
-          <div className="shop-list" aria-live="polite">
-            {sorted.map((s) => {
-              const latestComment = listComments[s.id];
-              const preview = listBrands[s.id];
-              const expanded = expandedBrandShop === s.id;
-              const displayedBrands = expanded
-                ? (allListBrands[s.id] ?? preview?.brands)
-                : preview?.brands;
-              return (
-                <ShopListCard
-                  key={s.id}
-                  brands={displayedBrands}
-                  commentOpen={openComment === s.id}
-                  expanded={expanded}
-                  latestComment={latestComment}
-                  loading={loadingBrandShop === s.id}
-                  onCommentToggle={(anchor) => toggleShopComment(s.id, anchor)}
-                  onHighlight={setFocusedShop}
-                  onSelect={() => selectShop(s, true)}
-                  onToggleBrands={() => void toggleShopBrands(s.id)}
-                  preview={preview}
-                  selected={selected === s.id}
-                  shop={s}
-                />
-              );
-            })}
-            {shops.length === 0 && (
-              <div className="empty">
-                {resolvingInitialArea ? (
-                  <LocateFixed size={32} />
-                ) : (
-                  <Store size={32} />
-                )}
-                <h3>
-                  {resolvingInitialArea
-                    ? "現在地周辺の酒屋を探しています"
-                    : ready
-                      ? "このエリアの酒屋はまだありません"
-                      : "酒屋との出会いは、ここから。"}
-                </h3>
-                <p>
-                  {resolvingInitialArea
-                    ? "位置情報を確認しています。"
-                    : ready
-                      ? "地図を動かしてエリアを広げるか、知っている酒屋を登録してみましょう。"
-                      : "接続設定後、銘柄を検索したり、酒屋での発見を記録できます。"}
-                </p>
+          <section
+            ref={shopSheetRef}
+            className={`shop-sheet shop-sheet-${mobileSheetSnap} ${draggingSheet ? "dragging" : ""}`}
+            aria-label="地図内の酒屋一覧"
+          >
+            <div className="result-heading">
+              <div className="result-heading-copy">
+                <h2>
+                  {brand ? `「${brand.name}」を扱う酒屋` : "地図の酒屋"}{" "}
+                  <span className="count">
+                    {resolvingInitialArea ? "…" : shops.length}
+                  </span>
+                </h2>
               </div>
+              <button
+                type="button"
+                className="shop-sheet-toggle"
+                aria-controls="map-shop-list"
+                aria-expanded={mobileSheetSnap !== "peek"}
+                aria-label={
+                  mobileSheetSnap === "full"
+                    ? "酒屋一覧を小さくする"
+                    : "酒屋一覧を広げる"
+                }
+                onClick={toggleMobileSheet}
+                onPointerDown={startSheetDrag}
+                onPointerMove={moveSheetDrag}
+                onPointerUp={finishSheetDrag}
+                onPointerCancel={finishSheetDrag}
+              >
+                <GripHorizontal
+                  className="shop-sheet-grip"
+                  size={34}
+                  aria-hidden="true"
+                />
+                <span className="shop-sheet-label">
+                  <strong>
+                    {brand ? `「${brand.name}」を扱う酒屋` : "地図の酒屋"}
+                  </strong>
+                  <span className="count">
+                    {resolvingInitialArea ? "…" : shops.length}
+                  </span>
+                </span>
+                {mobileSheetSnap === "full" ? (
+                  <ChevronDown size={22} aria-hidden="true" />
+                ) : (
+                  <ChevronUp size={22} aria-hidden="true" />
+                )}
+              </button>
+            </div>
+            {error && (
+              <p className="notice error" role="alert">
+                {error}
+              </p>
             )}
-          </div>
-          {openComment &&
-            openCommentShop &&
-            commentPopoverPosition &&
-            openCommentData && (
-              <ShopCommentPopover
-                comment={openCommentData}
-                onClose={closeComment}
-                popoverRef={commentPreviewRef}
-                position={commentPopoverPosition}
-                shopId={openComment}
-                shopName={openCommentShop.name}
-              />
-            )}
-          <Link href="/edit/shop/new" className="add-shop">
-            <Plus size={18} /> 新しい酒屋を登録
-          </Link>
+            <div
+              ref={shopListRef}
+              id="map-shop-list"
+              className="shop-list"
+              aria-live="polite"
+            >
+              {sorted.map((s) => {
+                const latestComment = listComments[s.id];
+                const preview = listBrands[s.id];
+                const expanded = expandedBrandShop === s.id;
+                const displayedBrands = expanded
+                  ? (allListBrands[s.id] ?? preview?.brands)
+                  : preview?.brands;
+                return (
+                  <ShopListCard
+                    key={s.id}
+                    brands={displayedBrands}
+                    commentOpen={openComment === s.id}
+                    expanded={expanded}
+                    latestComment={latestComment}
+                    loading={loadingBrandShop === s.id}
+                    onCommentToggle={(anchor) =>
+                      toggleShopComment(s.id, anchor)
+                    }
+                    onHighlight={setFocusedShop}
+                    onSelect={() => selectShop(s)}
+                    onToggleBrands={() => void toggleShopBrands(s.id)}
+                    preview={preview}
+                    selected={selected === s.id}
+                    shop={s}
+                  />
+                );
+              })}
+              {shops.length === 0 && (
+                <div className="empty">
+                  {resolvingInitialArea ? (
+                    <LocateFixed size={32} />
+                  ) : (
+                    <Store size={32} />
+                  )}
+                  <h3>
+                    {resolvingInitialArea
+                      ? "現在地周辺の酒屋を探しています"
+                      : ready
+                        ? "このエリアの酒屋はまだありません"
+                        : "酒屋との出会いは、ここから。"}
+                  </h3>
+                  <p>
+                    {resolvingInitialArea
+                      ? "位置情報を確認しています。"
+                      : ready
+                        ? "地図を動かしてエリアを広げるか、知っている酒屋を登録してみましょう。"
+                        : "接続設定後、銘柄を検索したり、酒屋での発見を記録できます。"}
+                  </p>
+                </div>
+              )}
+              <div className="mobile-map-footer">
+                <p>酒が見つかる。店が見つかる。</p>
+                <a
+                  href="https://sakenowa.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  さけのわデータを利用しています ↗
+                </a>
+              </div>
+            </div>
+            {openComment &&
+              openCommentShop &&
+              commentPopoverPosition &&
+              openCommentData && (
+                <ShopCommentPopover
+                  comment={openCommentData}
+                  onClose={closeComment}
+                  popoverRef={commentPreviewRef}
+                  position={commentPopoverPosition}
+                  shopId={openComment}
+                  shopName={openCommentShop.name}
+                />
+              )}
+            <Link href="/edit/shop/new" className="add-shop">
+              <Plus size={18} /> 新しい酒屋を登録
+            </Link>
+          </section>
         </aside>
-        <section
-          ref={mapPanelRef}
-          className="map-panel"
-          aria-label="酒屋マップ"
-        >
+        <section className="map-panel" aria-label="酒屋マップ">
           <Map
             shops={shops}
             selected={selected}
@@ -363,6 +535,7 @@ export function Home({
               }
             }}
             center={center}
+            mobileSelectionOffsetY={56}
           />
           <div className="map-top">
             <button
@@ -395,23 +568,6 @@ export function Home({
                 ? "検索しています…"
                 : "このエリアを検索"}
           </button>
-          {selected && selectedShop && (
-            <MapShopCard
-              brands={selectedDisplayedBrands}
-              commentOpen={openComment === selected}
-              expanded={selectedBrandsExpanded}
-              latestComment={listComments[selected]}
-              loading={loadingBrandShop === selected}
-              onClose={() => {
-                setSelected(null);
-                collapseBrands();
-              }}
-              onCommentToggle={(anchor) => toggleShopComment(selected, anchor)}
-              onToggleBrands={() => void toggleShopBrands(selected)}
-              preview={selectedPreview}
-              shop={selectedShop}
-            />
-          )}
         </section>
       </div>
     </main>

@@ -36,8 +36,6 @@ export function BrandFilterControls({
   onKanaChange,
   sort,
   onSortChange,
-  visibleCount,
-  totalCount,
   sortOptions = defaultSortOptions,
 }: {
   selectedPrefectures: ReadonlySet<string>;
@@ -48,8 +46,6 @@ export function BrandFilterControls({
   onKanaChange: (value: Set<KanaGroup>) => void;
   sort: BrandCatalogSort;
   onSortChange: (value: BrandCatalogSort) => void;
-  visibleCount: number;
-  totalCount: number;
   sortOptions?: Array<[BrandCatalogSort, string]>;
 }) {
   const [prefecturesOpen, setPrefecturesOpen] = useState(false);
@@ -137,13 +133,10 @@ export function BrandFilterControls({
           aria-pressed={selectedKana.has("other")}
           onClick={() => onKanaChange(toggleValue(selectedKana, "other"))}
         >
-          その他
+          他
         </button>
       </div>
       <div className="filter-summary">
-        <span>
-          {visibleCount}件表示 <span className="muted">/ {totalCount}件</span>
-        </span>
         <div className="filter-summary-actions">
           {hasFilters && (
             <button
@@ -175,5 +168,19 @@ export function BrandFilterControls({
         </div>
       </div>
     </div>
+  );
+}
+
+export function BrandFilterCount({
+  visibleCount,
+  totalCount,
+}: {
+  visibleCount: number;
+  totalCount: number;
+}) {
+  return (
+    <span className="brand-filter-count" aria-live="polite">
+      {visibleCount}件表示 <span className="muted">/ {totalCount}件</span>
+    </span>
   );
 }

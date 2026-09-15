@@ -89,7 +89,10 @@ export default async function ShopPage({
         </div>
         <div className="actions">
           {shop.is_active && (
-            <Link className="button small" href={"/post?shop_id=" + id}>
+            <Link
+              className="button small shop-head-brand-edit"
+              href={"/post?shop_id=" + id}
+            >
               <Plus size={17} />
               取扱銘柄の編集
             </Link>
@@ -113,24 +116,25 @@ export default async function ShopPage({
 
       <div className="shop-content">
         <section className="card shop-brands-card">
-          <h2>
-            取扱銘柄 <span className="count">{available.length}</span>
-          </h2>
           {available.length ? (
-            <ShopBrandList items={brandSummaries} />
+            <ShopBrandList items={brandSummaries} title="取扱銘柄" />
           ) : (
-            <p className="muted">まだ取扱銘柄の登録がありません。</p>
+            <>
+              <div className="shop-brands-heading">
+                <h2>取扱銘柄</h2>
+                <span className="brand-filter-count">0件</span>
+              </div>
+              <p className="muted">まだ取扱銘柄の登録がありません。</p>
+            </>
           )}
         </section>
         {unavailable.length > 0 && (
           <section className="card shop-brands-card unavailable-brands-card">
-            <h2>
-              現在は取扱なし <span className="count">{unavailable.length}</span>
-            </h2>
-            <p className="hint availability-note">
-              以前の取扱情報です。入荷状況は酒屋へご確認ください。
-            </p>
-            <ShopBrandList items={unavailableSummaries} />
+            <ShopBrandList
+              description="以前の取扱情報です。入荷状況は酒屋へご確認ください。"
+              items={unavailableSummaries}
+              title="現在は取扱なし"
+            />
           </section>
         )}
       </div>

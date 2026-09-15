@@ -282,6 +282,30 @@ test("shop brand status action accepts only the three public statuses", () => {
   );
 });
 
+test("master kana action only accepts existing brand and brewery readings", () => {
+  const input = {
+    kind: "master_kana",
+    type: "brand",
+    id: "10000000-0000-4000-8000-000000000002",
+    name_kana: "ためしのさけ",
+    reason: null,
+  };
+  assert.equal(actionSchema.safeParse(input).success, true);
+  assert.equal(
+    actionSchema.safeParse({ ...input, type: "brewery", name_kana: null })
+      .success,
+    true,
+  );
+  assert.equal(
+    actionSchema.safeParse({ ...input, type: "shop" }).success,
+    false,
+  );
+  assert.equal(
+    actionSchema.safeParse({ ...input, name_kana: "あ".repeat(151) }).success,
+    false,
+  );
+});
+
 test("shop brands sort by Japanese catalog fields", () => {
   const item = (
     id: string,

@@ -13,12 +13,14 @@ export function MasterForm({
   initial,
   initialBrewery,
   shopId,
+  kanaOnly = false,
 }: {
   type: EntityType;
   id: string | null;
   initial: Record<string, unknown>;
   initialBrewery: Brewery | null;
   shopId?: string;
+  kanaOnly?: boolean;
 }) {
   const router = useRouter();
   const [error, setError] = useState("");
@@ -56,6 +58,28 @@ export function MasterForm({
     };
   }, [query, type]);
   const value = (key: string) => String(initial[key] ?? "");
+  async function saveKana(form: HTMLFormElement) {
+    if (!id || type === "shop") return;
+    setBusy(true);
+    setError("");
+    const f = new FormData(form);
+    const text = (key: string) => String(f.get(key) ?? "").trim();
+    try {
+      const result = await mutate({
+        kind: "master_kana",
+        type,
+        id,
+        name_kana: text("name_kana") || null,
+        reason: text("reason") || null,
+      });
+      router.push("/history?type=" + type + "&id=" + result.id);
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "保存できませんでした");
+    } finally {
+      setBusy(false);
+    }
+  }
   async function save(form: HTMLFormElement) {
     setBusy(true);
     setError("");
@@ -113,6 +137,60 @@ export function MasterForm({
       setBusy(false);
     }
   }
+  if (kanaOnly && id && type !== "shop")
+    return (
+      <form
+        className="card form-stack kana-only-form"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void saveKana(event.currentTarget);
+        }}
+      >
+        <div className="master-readonly-summary">
+          <span>{entityLabels[type]}名</span>
+          <strong>{value("name")}</strong>
+          {type === "brand" && initialBrewery && (
+            <small>
+              {initialBrewery.name}
+              {initialBrewery.prefecture
+                ? `・${initialBrewery.prefecture}`
+                : ""}
+            </small>
+          )}
+          {type === "brewery" && value("prefecture") && (
+            <small>{value("prefecture")}</small>
+          )}
+        </div>
+        <label className="master-kana-field">
+          かな <span className="muted">任意</span>
+          <input
+            name="name_kana"
+            defaultValue={value("name_kana")}
+            maxLength={150}
+            autoFocus
+          />
+          <small>
+            現在の読みを確認し、誤りや未登録の場合だけ修正してください。空欄で保存すると未登録に戻ります。
+          </small>
+        </label>
+        <label>
+          変更理由 <span className="muted">任意</span>
+          <textarea
+            name="reason"
+            maxLength={500}
+            placeholder="例：公式サイトの表記に合わせて修正"
+          />
+        </label>
+        {error && (
+          <p className="notice error" role="alert">
+            {error}
+          </p>
+        )}
+        <button disabled={busy} type="submit" className="button full">
+          {busy ? "保存しています…" : "かなを保存"}
+        </button>
+      </form>
+    );
   return (
     <form
       className="card form-stack"
@@ -160,7 +238,7 @@ export function MasterForm({
           maxLength={150}
         />
       </label>
-      <label>
+      <label className={type === "shop" ? undefined : "master-kana-field"}>
         かな{" "}
         {type === "shop" ? (
           <span className="required">必須</span>
@@ -173,6 +251,9 @@ export function MasterForm({
           required={type === "shop"}
           maxLength={150}
         />
+        {type !== "shop" && (
+          <small>現在の読みを確認し、必要な場合だけ修正してください。</small>
+        )}
       </label>
       {type === "brand" ? (
         <div>

@@ -110,6 +110,13 @@ export const actionSchema = z.discriminatedUnion("kind", [
     data: z.record(z.string(), z.unknown()),
     reason: z.string().trim().max(500).nullable(),
   }),
+  z.object({
+    kind: z.literal("master_kana"),
+    type: z.enum(["brand", "brewery"]),
+    id: z.uuid(),
+    name_kana: optionalText,
+    reason: z.string().trim().max(500).nullable(),
+  }),
   z.object({ kind: z.literal("restore"), id: z.uuid() }),
   z.object({
     kind: z.literal("profile"),

@@ -58,18 +58,20 @@ export default async function PostPage({
         <ArrowLeft size={17} />
         酒屋に戻る
       </Link>
-      <div className="page-head post-page-head">
-        <div className="post-page-title">
-          <h1>取扱銘柄の編集</h1>
-          <AvailabilityInfo />
-        </div>
-        <Link className="post-shop" href={"/shops/" + shop.id}>
-          <Store size={18} />
-          {shop.name}
-        </Link>
-      </div>
       {!shop.is_active ? (
-        <p className="notice">この酒屋は無効化されています。</p>
+        <>
+          <div className="page-head post-page-head">
+            <div className="post-page-title">
+              <h1>取扱銘柄の編集</h1>
+              <AvailabilityInfo />
+            </div>
+            <Link className="post-shop" href={"/shops/" + shop.id}>
+              <Store size={18} />
+              <span>{shop.name}</span>
+            </Link>
+          </div>
+          <p className="notice">この酒屋は無効化されています。</p>
+        </>
       ) : (
         <PostForm shop={shop} shopRelations={shopRelations} />
       )}

@@ -2,10 +2,11 @@ import { supabase } from "@/lib/supabase/server";
 export async function GET(request: Request) {
   const db = await supabase();
   if (!db) return Response.json({ brands: [], shops: [] });
-  const q =
-    new URL(request.url).searchParams.get("q")?.trim().slice(0, 150) ?? "";
-  const brandsOnly =
-    new URL(request.url).searchParams.get("scope") === "brands";
+  const searchParams = new URL(request.url).searchParams;
+  const q = searchParams.get("q")?.trim().slice(0, 150) ?? "";
+  const scope = searchParams.get("scope");
+  const brandsOnly = scope === "brands";
+  const shopsOnly = scope === "shops";
   if (brandsOnly) {
     const { data, error } = await db.rpc("search_brands", { p_query: q });
     return error
@@ -14,6 +15,15 @@ export async function GET(request: Request) {
           { status: 500 },
         )
       : Response.json({ brands: data, shops: [] });
+  }
+  if (shopsOnly) {
+    const { data, error } = await db.rpc("search_shops", { p_query: q });
+    return error
+      ? Response.json(
+          { error: "検索できませんでした。しばらくしてからお試しください。" },
+          { status: 500 },
+        )
+      : Response.json({ brands: [], shops: data });
   }
   const [b, s] = await Promise.all([
     db.rpc("search_brands", { p_query: q }),
