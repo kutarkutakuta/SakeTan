@@ -287,16 +287,10 @@ export function Home({
     const url = new URL(window.location.href);
     url.searchParams.delete("brand_id");
     window.history.replaceState(window.history.state, "", url);
-    selectShop(shop, false);
+    selectShop(shop, false, true);
   }
 
-  function revealMobileResults(
-    mode: "at-least-half" | "half" = "at-least-half",
-  ) {
-    if (!window.matchMedia("(max-width: 800px)").matches) return;
-    setMobileSheetSnap((current) =>
-      mode === "half" || current === "peek" ? "half" : current,
-    );
+  function scrollShopListToTop() {
     window.requestAnimationFrame(() => {
       shopListRef.current?.scrollTo({
         top: 0,
@@ -307,7 +301,22 @@ export function Home({
     });
   }
 
-  function selectShop(shop: Shop, preserveZoom = true) {
+  function revealMobileResults(
+    mode: "at-least-half" | "half" = "at-least-half",
+    scrollToTop = true,
+  ) {
+    if (!window.matchMedia("(max-width: 800px)").matches) return;
+    setMobileSheetSnap((current) =>
+      mode === "half" || current === "peek" ? "half" : current,
+    );
+    if (scrollToTop) scrollShopListToTop();
+  }
+
+  function selectShop(
+    shop: Shop,
+    preserveZoom = true,
+    scrollListToTop = false,
+  ) {
     setSelected(shop.id);
     syncSelectedShopUrl(shop.id);
     if (
@@ -317,7 +326,8 @@ export function Home({
       setPreserveMapZoom(preserveZoom);
       setCenter([shop.latitude, shop.longitude]);
     }
-    revealMobileResults("half");
+    revealMobileResults("half", false);
+    if (scrollListToTop) scrollShopListToTop();
   }
 
   function toggleMobileSheet() {
@@ -631,7 +641,7 @@ export function Home({
             highlighted={focusedShop}
             onSelect={(id) => {
               const shop = shops.find((item) => item.id === id);
-              if (shop) selectShop(shop);
+              if (shop) selectShop(shop, true, true);
             }}
             onBounds={(b) => {
               setBounds(b);
