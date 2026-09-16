@@ -29,6 +29,7 @@ import { ShopListCard } from "./home/shop-list-card";
 import { useShopMetadata } from "./home/use-shop-metadata";
 import { useToast } from "./toast-provider";
 import { mapAwareShopPath, mapReturnPath, type MapView } from "@/lib/map-view";
+import { mapBoundsCenter, orderMapShops } from "@/lib/shop-order";
 import type { Brand, Bounds, Shop } from "@/lib/types";
 
 type MobileSheetSnap = "peek" | "half" | "full";
@@ -87,6 +88,9 @@ export function Home({
     Boolean(initialMapView),
   );
   const [mapView, setMapView] = useState<MapView | undefined>(initialMapView);
+  const [shopListCenter, setShopListCenter] = useState<
+    [number, number] | undefined
+  >(initialMapView?.center ?? initialShopPosition);
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [resolvingInitialArea, setResolvingInitialArea] = useState(ready);
@@ -145,6 +149,7 @@ export function Home({
       filter: Brand | null,
       area?: Bounds,
       selectedShopId: string | null = null,
+      listCenter?: [number, number],
     ) => {
       const seq = ++areaSequence.current;
       setBusy(true);
@@ -164,6 +169,9 @@ export function Home({
             ? selectedShopId
             : null;
         setShops(nextShops);
+        setShopListCenter(
+          listCenter ?? (area ? mapBoundsCenter(area) : undefined),
+        );
         setSelected(nextSelected);
         syncSelectedShopUrl(nextSelected);
         collapseBrands();
@@ -189,9 +197,12 @@ export function Home({
         setResolvingInitialArea(false);
         return;
       }
-      void loadShops(initialBrand).finally(() =>
-        setResolvingInitialArea(false),
-      );
+      void loadShops(
+        initialBrand,
+        undefined,
+        null,
+        initialMapView?.center,
+      ).finally(() => setResolvingInitialArea(false));
     };
     if (!navigator.geolocation) {
       loadDefaultShops();
@@ -248,7 +259,12 @@ export function Home({
     url.searchParams.delete("shop_id");
     window.history.replaceState(window.history.state, "", url);
     if (value) revealMobileResults();
-    void loadShops(value, value ? undefined : bounds);
+    void loadShops(
+      value,
+      value ? undefined : bounds,
+      null,
+      mapView?.center ?? center,
+    );
   }
 
   function chooseShop(shop: Shop) {
@@ -259,6 +275,11 @@ export function Home({
     setQuery("");
     setResults({ brands: [], shops: [] });
     setShops([shop]);
+    setShopListCenter(
+      typeof shop.latitude === "number" && typeof shop.longitude === "number"
+        ? [shop.latitude, shop.longitude]
+        : undefined,
+    );
     setBusy(false);
     setResolvingInitialArea(false);
     setDirty(true);
@@ -341,12 +362,10 @@ export function Home({
     if (event.currentTarget.hasPointerCapture(event.pointerId))
       event.currentTarget.releasePointerCapture(event.pointerId);
   }
-  const sorted = selected
-    ? [
-        ...shops.filter((s) => s.id === selected),
-        ...shops.filter((s) => s.id !== selected),
-      ]
-    : shops;
+  const sorted = useMemo(
+    () => orderMapShops(shops, shopListCenter, selected),
+    [selected, shopListCenter, shops],
+  );
   const openCommentShop = shops.find((shop) => shop.id === openComment);
   const openCommentData = openComment ? listComments[openComment] : undefined;
   const returnPathForShop = useCallback(
