@@ -527,17 +527,32 @@ nav {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 2px;
   flex: 0 0 auto;
   width: auto;
   height: 44px;
   padding: 0 6px;
+  border-radius: 8px;
   color: var(--primary);
   font-size: 14px;
   font-weight: 600;
   line-height: 1.5;
   text-decoration: underline;
   text-underline-offset: 3px;
+  transition: background 0.15s ease;
   white-space: nowrap;
+}
+.shop-page-link:hover,
+.shop-page-link:focus-visible {
+  background: var(--tint);
+  text-decoration: none;
+}
+.shop-page-link svg {
+  transition: transform 0.15s ease;
+}
+.shop-page-link:hover svg,
+.shop-page-link:focus-visible svg {
+  transform: translateX(2px);
 }
 .shop-comment-preview {
   position: fixed;

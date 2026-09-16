@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MessageCircle, Store } from "lucide-react";
+import { ChevronRight, MessageCircle, Store } from "lucide-react";
 import type { Brand, LatestShopComment, Shop } from "@/lib/types";
 import { ShopBrandTags } from "./shop-brand-tags";
 import type { ShopBrandPreview } from "./use-shop-metadata";
@@ -82,11 +82,12 @@ export function ShopListCard({
           <Link
             className="shop-page-link"
             href={shopHref}
-            aria-label={`${shop.name}の店舗ページへ`}
+            aria-label={`${shop.name}の詳細を見る`}
             onClick={onSelect}
             onNavigate={onShopNavigate}
           >
-            店舗ページへ
+            詳細
+            <ChevronRight size={16} strokeWidth={2} aria-hidden="true" />
           </Link>
         </div>
       </div>
