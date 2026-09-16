@@ -2,24 +2,39 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft, BadgeCheck, Heart, Store, Trophy } from "lucide-react";
 import { LoginOptions } from "@/components/login-options";
+import {
+  IdentityManager,
+  type LinkedIdentity,
+} from "@/components/identity-manager";
 import { ProfileForm } from "@/components/profile-form";
 import {
   contributionAchievement,
   type ContributionSummary,
 } from "@/lib/contribution";
 import { supabase, viewer } from "@/lib/supabase/server";
-
-const providerNames: Record<string, string> = {
-  google: "Google",
-  x: "X",
-  facebook: "Facebook",
-};
+import {
+  isIdentityProvider,
+  loginProviderForIdentity,
+} from "@/lib/auth-identities";
 
 export default async function AccountPage() {
   const account = await viewer();
   if (!account.user || account.anonymous) redirect("/login?next=/account");
+  const identities = account.user.identities ?? [];
+  const linkedIdentities = identities.flatMap((identity): LinkedIdentity[] =>
+    isIdentityProvider(identity.provider)
+      ? [
+          {
+            identityId: identity.identity_id,
+            provider: identity.provider,
+          },
+        ]
+      : [],
+  );
   const linked = new Set(
-    (account.user.identities ?? []).map((identity) => identity.provider),
+    linkedIdentities.map((identity) =>
+      loginProviderForIdentity(identity.provider),
+    ),
   );
   const db = await supabase();
   const { data, error } = await db!.rpc("get_my_contribution_summary");
@@ -119,14 +134,10 @@ export default async function AccountPage() {
             複数のサービスを連携すると、どの方法でも同じアカウントを利用できます。
           </p>
         </div>
-        {linked.size > 0 && (
-          <p>
-            連携済み：
-            {[...linked]
-              .map((provider) => providerNames[provider] ?? provider)
-              .join("、")}
-          </p>
-        )}
+        <IdentityManager
+          identities={linkedIdentities}
+          totalIdentityCount={identities.length}
+        />
         <LoginOptions next="/account" exclude={[...linked]} linking />
       </section>
       <form action="/auth/signout" method="post">

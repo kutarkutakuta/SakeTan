@@ -28,6 +28,7 @@ import {
 import { ShopListCard } from "./home/shop-list-card";
 import { useShopMetadata } from "./home/use-shop-metadata";
 import { useToast } from "./toast-provider";
+import { mapAwareShopPath, mapReturnPath, type MapView } from "@/lib/map-view";
 import type { Brand, Bounds, Shop } from "@/lib/types";
 
 type MobileSheetSnap = "peek" | "half" | "full";
@@ -49,11 +50,13 @@ export function Home({
   ready,
   initialBrand,
   initialShop,
+  initialMapView,
   initialError,
 }: {
   ready: boolean;
   initialBrand: Brand | null;
   initialShop: Shop | null;
+  initialMapView?: MapView;
   initialError?: string;
 }) {
   const { showToast } = useToast();
@@ -78,9 +81,12 @@ export function Home({
   const [focusedShop, setFocusedShop] = useState<string | null>(null);
   const [bounds, setBounds] = useState<Bounds>();
   const [center, setCenter] = useState<[number, number] | undefined>(
-    initialShopPosition,
+    initialMapView?.center ?? initialShopPosition,
   );
-  const [preserveMapZoom, setPreserveMapZoom] = useState(false);
+  const [preserveMapZoom, setPreserveMapZoom] = useState(
+    Boolean(initialMapView),
+  );
+  const [mapView, setMapView] = useState<MapView | undefined>(initialMapView);
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [resolvingInitialArea, setResolvingInitialArea] = useState(ready);
@@ -122,7 +128,7 @@ export function Home({
     const url = new URL(window.location.href);
     if (shopId) url.searchParams.set("shop_id", shopId);
     else url.searchParams.delete("shop_id");
-    window.history.replaceState(null, "", url);
+    window.history.replaceState(window.history.state, "", url);
   }, []);
   const loadShops = useCallback(
     async (
@@ -230,7 +236,7 @@ export function Home({
     if (value) url.searchParams.set("brand_id", value.id);
     else url.searchParams.delete("brand_id");
     url.searchParams.delete("shop_id");
-    window.history.replaceState(null, "", url);
+    window.history.replaceState(window.history.state, "", url);
     if (value) revealMobileResults();
     void loadShops(value, value ? undefined : bounds);
   }
@@ -249,7 +255,7 @@ export function Home({
     collapseBrands();
     const url = new URL(window.location.href);
     url.searchParams.delete("brand_id");
-    window.history.replaceState(null, "", url);
+    window.history.replaceState(window.history.state, "", url);
     selectShop(shop, false);
   }
 
@@ -333,6 +339,24 @@ export function Home({
     : shops;
   const openCommentShop = shops.find((shop) => shop.id === openComment);
   const openCommentData = openComment ? listComments[openComment] : undefined;
+  const returnPathForShop = useCallback(
+    (shopId: string) =>
+      mapReturnPath({ brandId: brand?.id, shopId, view: mapView }),
+    [brand?.id, mapView],
+  );
+  const shopPagePath = useCallback(
+    (shopId: string) => mapAwareShopPath(shopId, returnPathForShop(shopId)),
+    [returnPathForShop],
+  );
+  const prepareShopNavigation = useCallback(
+    (shopId: string) =>
+      window.history.replaceState(
+        window.history.state,
+        "",
+        returnPathForShop(shopId),
+      ),
+    [returnPathForShop],
+  );
 
   useEffect(() => {
     if (openComment && !openCommentShop) closeComment();
@@ -508,10 +532,12 @@ export function Home({
                     }
                     onHighlight={setFocusedShop}
                     onSelect={() => selectShop(s)}
+                    onShopNavigate={() => prepareShopNavigation(s.id)}
                     onToggleBrands={() => void toggleShopBrands(s.id)}
                     preview={preview}
                     selected={selected === s.id}
                     shop={s}
+                    shopHref={shopPagePath(s.id)}
                   />
                 );
               })}
@@ -558,7 +584,8 @@ export function Home({
                   onClose={closeComment}
                   popoverRef={commentPreviewRef}
                   position={commentPopoverPosition}
-                  shopId={openComment}
+                  shopHref={`${shopPagePath(openComment)}#comments`}
+                  onShopNavigate={() => prepareShopNavigation(openComment)}
                   shopName={openCommentShop.name}
                 />
               )}
@@ -587,6 +614,8 @@ export function Home({
               }
             }}
             center={center}
+            initialZoom={initialMapView?.zoom}
+            onViewChange={setMapView}
             preserveZoom={preserveMapZoom}
             mobileSelectionOffsetY={56}
           />

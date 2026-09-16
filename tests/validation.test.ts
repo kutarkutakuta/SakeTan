@@ -16,6 +16,10 @@ import { featuredShopBrands } from "../src/lib/shop-brand-order";
 import { kanaGroup, sortShopBrands } from "../src/lib/brand-index";
 import { contributionAchievement } from "../src/lib/contribution";
 import {
+  loginProviderForIdentity,
+  unlinkIdentitySchema,
+} from "../src/lib/auth-identities";
+import {
   brandRow,
   breweryRow,
   brandSchema,
@@ -30,6 +34,23 @@ test("OAuth return path stays on origin", () => {
   ])
     assert.equal(safeNext(url), "/");
   assert.equal(safeNext("/post?shop_id=abc"), "/post?shop_id=abc");
+});
+test("identity unlink only accepts supported linked providers", () => {
+  assert.equal(
+    unlinkIdentitySchema.safeParse({
+      identity_id: "identity-1",
+      provider: "google",
+    }).success,
+    true,
+  );
+  assert.equal(
+    unlinkIdentitySchema.safeParse({
+      identity_id: "identity-1",
+      provider: "github",
+    }).success,
+    false,
+  );
+  assert.equal(loginProviderForIdentity("twitter"), "x");
 });
 test("mutation origin accepts configured proxies and browser same-origin metadata", () => {
   assert.equal(

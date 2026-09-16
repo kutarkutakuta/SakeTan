@@ -73,16 +73,18 @@ export function useShopCommentPopover() {
 export function ShopCommentPopover({
   comment,
   onClose,
+  onShopNavigate,
   popoverRef,
   position,
-  shopId,
+  shopHref,
   shopName,
 }: {
   comment: LatestShopComment;
   onClose: () => void;
+  onShopNavigate: () => void;
   popoverRef: RefObject<HTMLDivElement | null>;
   position: CommentPopoverPosition;
-  shopId: string;
+  shopHref: string;
   shopName: string;
 }) {
   return createPortal(
@@ -108,7 +110,9 @@ export function ShopCommentPopover({
         </button>
       </div>
       <p>{comment.comment}</p>
-      <Link href={`/shops/${shopId}#comments`}>店舗ページで見る</Link>
+      <Link href={shopHref} onNavigate={onShopNavigate}>
+        店舗ページで見る
+      </Link>
     </div>,
     document.body,
   );

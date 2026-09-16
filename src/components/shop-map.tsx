@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { googleMapId, loadGoogleMaps } from "@/lib/google-maps";
 import type { Bounds, Shop } from "@/lib/types";
 import { hasUsableCoordinates } from "@/lib/utils";
+import type { MapView } from "@/lib/map-view";
 
 type GoogleLibraries = Awaited<ReturnType<typeof loadGoogleMaps>>;
 type MarkerInstance = {
@@ -17,7 +18,9 @@ export default function ShopMap({
   highlighted,
   onSelect,
   onBounds,
+  onViewChange,
   center,
+  initialZoom,
   preserveZoom = false,
   mobileSelectionOffsetY = 0,
   compact = false,
@@ -27,7 +30,9 @@ export default function ShopMap({
   highlighted?: string | null;
   onSelect?: (id: string) => void;
   onBounds?: (bounds: Bounds) => void;
+  onViewChange?: (view: MapView) => void;
   center?: [number, number];
+  initialZoom?: number;
   preserveZoom?: boolean;
   mobileSelectionOffsetY?: number;
   locate?: number;
@@ -38,7 +43,9 @@ export default function ShopMap({
   const markerInstances = useRef<MarkerInstance[]>([]);
   const onBoundsRef = useRef(onBounds);
   const onSelectRef = useRef(onSelect);
+  const onViewChangeRef = useRef(onViewChange);
   const centerRef = useRef(center);
+  const initialZoomRef = useRef(initialZoom);
   const selectedRef = useRef(selected);
   const compactRef = useRef(compact);
   const shopsRef = useRef(shops);
@@ -46,6 +53,7 @@ export default function ShopMap({
   const [error, setError] = useState("");
   onBoundsRef.current = onBounds;
   onSelectRef.current = onSelect;
+  onViewChangeRef.current = onViewChange;
   centerRef.current = center;
   selectedRef.current = selected;
   compactRef.current = compact;
@@ -62,7 +70,9 @@ export default function ShopMap({
           center: initialCenter
             ? { lat: initialCenter[0], lng: initialCenter[1] }
             : { lat: 36.3, lng: 138.4 },
-          zoom: initialCenter ? (compactRef.current ? 17 : 14) : 5,
+          zoom:
+            initialZoomRef.current ??
+            (initialCenter ? (compactRef.current ? 17 : 14) : 5),
           mapId: googleMapId(),
           mapTypeControl: false,
           streetViewControl: false,
@@ -83,6 +93,13 @@ export default function ShopMap({
             west: southWest.lng(),
             east: northEast.lng(),
           });
+          const center = instance.getCenter();
+          const zoom = instance.getZoom();
+          if (center && typeof zoom === "number")
+            onViewChangeRef.current?.({
+              center: [center.lat(), center.lng()],
+              zoom,
+            });
         });
       })
       .catch((reason) =>

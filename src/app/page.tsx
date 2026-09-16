@@ -1,6 +1,7 @@
 import { Home } from "@/components/home";
 import { configured, supabase } from "@/lib/supabase/server";
 import type { Brand, Shop } from "@/lib/types";
+import { parseMapView } from "@/lib/map-view";
 export default async function Page({
   searchParams,
 }: {
@@ -8,6 +9,9 @@ export default async function Page({
     brand_id?: string;
     shop_id?: string;
     error?: string;
+    map_lat?: string;
+    map_lng?: string;
+    map_zoom?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -42,6 +46,7 @@ export default async function Page({
     <Home
       initialBrand={brand}
       initialShop={shop}
+      initialMapView={parseMapView(params)}
       ready={configured()}
       initialError={error}
     />

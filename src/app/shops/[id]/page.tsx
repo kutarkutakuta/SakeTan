@@ -14,13 +14,17 @@ import type { ShopBrandSummary } from "@/lib/brand-index";
 import { ShopBrandList } from "@/components/shop-brand-list";
 import { ShopComments } from "@/components/shop-comments";
 import { googleMapsShopUrl } from "@/lib/utils";
+import { safeMapReturnPath } from "@/lib/map-view";
 
 export default async function ShopPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ return_to?: string }>;
 }) {
   const { id } = await params;
+  const { return_to: returnTo } = await searchParams;
   const db = await supabase();
   if (!db)
     return (
@@ -68,7 +72,7 @@ export default async function ShopPage({
 
   return (
     <main id="main" className="page shop-page">
-      <Link href={`/?shop_id=${id}`} className="back">
+      <Link href={safeMapReturnPath(returnTo, id)} className="back">
         <ArrowLeft size={17} />
         地図に戻る
       </Link>

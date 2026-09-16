@@ -13,10 +13,12 @@ export function ShopListCard({
   onCommentToggle,
   onHighlight,
   onSelect,
+  onShopNavigate,
   onToggleBrands,
   preview,
   selected,
   shop,
+  shopHref,
 }: {
   brands?: Brand[];
   commentOpen: boolean;
@@ -26,10 +28,12 @@ export function ShopListCard({
   onCommentToggle: (anchor: HTMLElement) => void;
   onHighlight: (shopId: string | null) => void;
   onSelect: () => void;
+  onShopNavigate: () => void;
   onToggleBrands: () => void;
   preview?: ShopBrandPreview;
   selected: boolean;
   shop: Shop;
+  shopHref: string;
 }) {
   return (
     <div
@@ -77,9 +81,10 @@ export function ShopListCard({
           )}
           <Link
             className="shop-page-link"
-            href={`/shops/${shop.id}`}
+            href={shopHref}
             aria-label={`${shop.name}の店舗ページへ`}
             onClick={onSelect}
+            onNavigate={onShopNavigate}
           >
             店舗ページへ
           </Link>

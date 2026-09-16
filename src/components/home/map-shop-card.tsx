@@ -12,9 +12,11 @@ export function MapShopCard({
   loading,
   onClose,
   onCommentToggle,
+  onShopNavigate,
   onToggleBrands,
   preview,
   shop,
+  shopHref,
 }: {
   brands?: Brand[];
   commentOpen: boolean;
@@ -23,9 +25,11 @@ export function MapShopCard({
   loading: boolean;
   onClose: () => void;
   onCommentToggle: (anchor: HTMLElement) => void;
+  onShopNavigate: () => void;
   onToggleBrands: () => void;
   preview?: ShopBrandPreview;
   shop: Shop;
+  shopHref: string;
 }) {
   return (
     <section
@@ -34,8 +38,9 @@ export function MapShopCard({
     >
       <Link
         className="map-shop-card-link"
-        href={`/shops/${shop.id}`}
+        href={shopHref}
         aria-label={`${shop.name}の店舗ページへ`}
+        onNavigate={onShopNavigate}
       />
       <div className="map-shop-card-head">
         <strong>{shop.name}</strong>
