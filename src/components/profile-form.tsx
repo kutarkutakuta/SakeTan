@@ -3,27 +3,26 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { mutate } from "@/lib/client";
+import { useToast } from "@/components/toast-provider";
 
 export function ProfileForm({ initialName }: { initialName: string }) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [name, setName] = useState(initialName);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const [saved, setSaved] = useState(false);
 
   async function save() {
     setBusy(true);
-    setError("");
-    setSaved(false);
     try {
       await mutate({ kind: "profile", name });
-      setSaved(true);
+      showToast("表示名を変更しました");
       router.refresh();
     } catch (reason) {
-      setError(
+      showToast(
         reason instanceof Error
           ? reason.message
           : "表示名を変更できませんでした",
+        "error",
       );
     } finally {
       setBusy(false);
@@ -52,12 +51,6 @@ export function ProfileForm({ initialName }: { initialName: string }) {
           autoComplete="nickname"
         />
       </label>
-      {saved && <p className="quick-post-status">表示名を変更しました</p>}
-      {error && (
-        <p className="notice error" role="alert">
-          {error}
-        </p>
-      )}
       <button className="button" type="submit" disabled={busy || !name.trim()}>
         {busy ? "保存しています…" : "表示名を保存"}
       </button>

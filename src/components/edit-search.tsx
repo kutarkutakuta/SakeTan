@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronRight, Plus, Search, X } from "lucide-react";
 import { KanaEditDialog } from "@/components/kana-edit-dialog";
+import { useToast } from "@/components/toast-provider";
 import type { Brand, Brewery, EntityType, Shop } from "@/lib/types";
 
 type SearchItem = Brand | Brewery | Shop;
@@ -53,13 +54,13 @@ export function EditSearch({
   admin?: boolean;
   signedIn?: boolean;
 }) {
+  const { showToast } = useToast();
   const [target, setTarget] = useState<EntityType>("brand");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchItem[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [selected, setSelected] = useState<SelectedKanaItem | null>(null);
-  const [savedMessage, setSavedMessage] = useState("");
   const targetLabel =
     targets.find(({ type }) => type === target)?.label ?? "登録情報";
   const normalizedQuery = query.trim();
@@ -112,7 +113,6 @@ export function EditSearch({
       label: targetLabel,
       type: target,
     });
-    setSavedMessage("");
   }
 
   const closeQuickEdit = useCallback(() => setSelected(null), []);
@@ -128,7 +128,6 @@ export function EditSearch({
             onClick={() => {
               setTarget(type);
               setSelected(null);
-              setSavedMessage("");
             }}
           >
             {label}
@@ -144,7 +143,6 @@ export function EditSearch({
             value={query}
             onChange={(event) => {
               setQuery(event.target.value);
-              setSavedMessage("");
             }}
             placeholder={`${targetLabel}名・かな`}
           />
@@ -154,7 +152,6 @@ export function EditSearch({
               aria-label="検索をクリア"
               onClick={() => {
                 setQuery("");
-                setSavedMessage("");
               }}
             >
               <X size={18} />
@@ -243,12 +240,6 @@ export function EditSearch({
         </div>
       )}
 
-      {savedMessage && (
-        <p className="notice" role="status">
-          {savedMessage}
-        </p>
-      )}
-
       {!admin && signedIn && (
         <p className="notice master-source-note">
           銘柄と酒蔵は、かなのみ編集できます。名称・酒蔵の紐付けなどは、さけのわデータを利用しています。
@@ -274,7 +265,7 @@ export function EditSearch({
                 item.id === id ? { ...item, name_kana: nameKana } : item,
               ),
             );
-            setSavedMessage(`${selected.item.name}のかなを保存しました。`);
+            showToast(`${selected.item.name}のかなを保存しました`);
             setSelected(null);
           }}
         />

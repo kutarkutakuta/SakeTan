@@ -569,6 +569,142 @@ test("any authenticated session can set the three shop-brand statuses", async ()
   ]);
 });
 
+test("signed-in users can copy available brands without overwriting target data", async () => {
+  await db.exec("reset role");
+  const copyBrandOne = await scalar(
+    "insert into public.brands(name,source,source_id) values('コピー酒一','sakenowa','copy-brand-1') returning id",
+  );
+  const copyBrandTwo = await scalar(
+    "insert into public.brands(name,source,source_id) values('コピー酒二','sakenowa','copy-brand-2') returning id",
+  );
+  await asUser(bob);
+  const copySource = await scalar("select public.save_master('shop',null,$1)", [
+    JSON.stringify({
+      name: "コピー元酒店",
+      name_kana: "こぴーもとさけてん",
+      prefecture: "東京都",
+      city: "中央区",
+      latitude: 35.67,
+      longitude: 139.77,
+    }),
+  ]);
+  const copyTargetOne = await scalar(
+    "select public.save_master('shop',null,$1)",
+    [
+      JSON.stringify({
+        name: "コピー先一号店",
+        name_kana: "こぴーさきいちごうてん",
+        prefecture: "東京都",
+        city: "港区",
+        latitude: 35.66,
+        longitude: 139.75,
+      }),
+    ],
+  );
+  const copyTargetTwo = await scalar(
+    "select public.save_master('shop',null,$1)",
+    [
+      JSON.stringify({
+        name: "コピー先二号店",
+        name_kana: "こぴーさきにごうてん",
+        prefecture: "東京都",
+        city: "新宿区",
+        latitude: 35.69,
+        longitude: 139.7,
+      }),
+    ],
+  );
+
+  await db.query("select public.post_sighting($1,$2,'2026-09-01',null)", [
+    copySource,
+    copyBrandOne,
+  ]);
+  await db.query("select public.set_shop_brand_status($1,$2,'available')", [
+    copySource,
+    copyBrandTwo,
+  ]);
+  await db.query("select public.set_shop_brand_status($1,$2,'available')", [
+    copyTargetOne,
+    copyBrandOne,
+  ]);
+  await db.query("select public.set_shop_brand_status($1,$2,'incorrect')", [
+    copyTargetOne,
+    copyBrandOne,
+  ]);
+
+  const preview = await scalar<{
+    source_count: number;
+    target_count: number;
+    add_count: number;
+    skip_count: number;
+  }>("select public.preview_shop_brand_copy($1,$2)", [
+    copySource,
+    [copyTargetOne, copyTargetTwo],
+  ]);
+  assert.deepEqual(
+    {
+      source_count: preview.source_count,
+      target_count: preview.target_count,
+      add_count: preview.add_count,
+      skip_count: preview.skip_count,
+    },
+    { source_count: 2, target_count: 2, add_count: 3, skip_count: 1 },
+  );
+
+  const result = await scalar<{ copied_count: number; skip_count: number }>(
+    "select public.copy_shop_brands($1,$2)",
+    [copySource, [copyTargetOne, copyTargetTwo]],
+  );
+  assert.equal(result.copied_count, 3);
+  assert.equal(result.skip_count, 1);
+  assert.equal(
+    await scalar(
+      "select status from public.shop_brands where shop_id=$1 and brand_id=$2",
+      [copyTargetOne, copyBrandOne],
+    ),
+    "incorrect",
+  );
+  assert.deepEqual(
+    (
+      await db.query(
+        "select first_seen_at,last_seen_at from public.shop_brands where shop_id=$1 and brand_id=$2",
+        [copyTargetTwo, copyBrandOne],
+      )
+    ).rows[0],
+    { first_seen_at: null, last_seen_at: null },
+  );
+  assert.equal(
+    await scalar<number>(
+      "select count(*)::integer from public.sightings s join public.shop_brands sb on sb.id=s.shop_brand_id where sb.shop_id=any($1::uuid[])",
+      [[copyTargetOne, copyTargetTwo]],
+    ),
+    0,
+  );
+  assert.equal(
+    await scalar<number>(
+      "select count(*)::integer from public.change_histories where changed_by=$1 and reason='取扱銘柄一括コピー: コピー元酒店からコピー'",
+      [bob],
+    ),
+    3,
+  );
+
+  const repeated = await scalar<{ copied_count: number; skip_count: number }>(
+    "select public.copy_shop_brands($1,$2)",
+    [copySource, [copyTargetOne, copyTargetTwo]],
+  );
+  assert.equal(repeated.copied_count, 0);
+  assert.equal(repeated.skip_count, 4);
+
+  await asUser(guest);
+  await assert.rejects(
+    db.query("select public.copy_shop_brands($1,$2)", [
+      copySource,
+      [copyTargetOne],
+    ]),
+    /ログインしてください/,
+  );
+});
+
 test("account contribution summary excludes incorrect data and finds favorite shops", async () => {
   await asUser(alice);
   await db.query("select public.set_shop_brand_status($1,$2,'available')", [

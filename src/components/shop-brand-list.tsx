@@ -122,7 +122,12 @@ export function ShopBrandList({
                     <span>酒蔵未登録</span>
                   )}
                 </span>
-                <strong>{brand.name}</strong>
+                <span className="brand-item-name">
+                  <strong>{brand.name}</strong>
+                  {brand.name_kana && (
+                    <span className="brand-item-kana">{brand.name_kana}</span>
+                  )}
+                </span>
               </span>
             </div>
           );

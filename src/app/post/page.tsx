@@ -39,18 +39,22 @@ export default async function PostPage({
         </p>
       </main>
     );
-  const { data: shop } = await db
-    .from("shops")
-    .select("*")
-    .eq("id", q.shop_id)
-    .maybeSingle();
+  const [shopResult, relationsResult, authResult] = await Promise.all([
+    db.from("shops").select("*").eq("id", q.shop_id).maybeSingle(),
+    db
+      .from("shop_brands")
+      .select("*,brands(*,breweries(*))")
+      .eq("shop_id", q.shop_id),
+    db.auth.getUser(),
+  ]);
+  const shop = shopResult.data;
   if (!shop) notFound();
-  const { data: relations } = await db
-    .from("shop_brands")
-    .select("*,brands(*,breweries(*))")
-    .eq("shop_id", q.shop_id);
+  const relations = relationsResult.data;
   const shopRelations = ((relations ?? []) as ShopBrand[]).filter(
     (relation) => relation.brands?.is_active,
+  );
+  const copyAllowed = Boolean(
+    authResult.data.user && !authResult.data.user.is_anonymous,
   );
   return (
     <main id="main" className="page post-page">
@@ -73,7 +77,11 @@ export default async function PostPage({
           <p className="notice">この酒屋は無効化されています。</p>
         </>
       ) : (
-        <PostForm shop={shop} shopRelations={shopRelations} />
+        <PostForm
+          shop={shop}
+          shopRelations={shopRelations}
+          copyAllowed={copyAllowed}
+        />
       )}
     </main>
   );

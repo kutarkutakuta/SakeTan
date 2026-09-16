@@ -119,6 +119,11 @@ export const actionSchema = z.discriminatedUnion("kind", [
   }),
   z.object({ kind: z.literal("restore"), id: z.uuid() }),
   z.object({
+    kind: z.literal("shop_brand_copy"),
+    source_shop_id: z.uuid(),
+    target_shop_ids: z.array(z.uuid()).min(1).max(10),
+  }),
+  z.object({
     kind: z.literal("profile"),
     name: z.string().trim().min(1).max(30),
   }),

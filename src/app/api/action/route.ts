@@ -67,6 +67,11 @@ export async function POST(request: Request) {
       p_status: p.status,
       p_reason: p.reason,
     });
+  else if (p.kind === "shop_brand_copy")
+    result = await db.rpc("copy_shop_brands", {
+      p_source_shop_id: p.source_shop_id,
+      p_target_shop_ids: p.target_shop_ids,
+    });
   else if (p.kind === "brand_request")
     result = await db.rpc("submit_brand_request", {
       p_name: p.name,

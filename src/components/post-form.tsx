@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Plus, Search, Store, X } from "lucide-react";
+import { Copy, Plus, Search, Store, X } from "lucide-react";
 import { mutate } from "@/lib/client";
 import {
   brandPrefecture,
@@ -16,6 +16,11 @@ import {
 import type { Brand, Shop, ShopBrand, ShopBrandStatus } from "@/lib/types";
 import { AvailabilityInfo } from "./availability-info";
 import { BrandFilterControls, BrandFilterCount } from "./brand-filter-controls";
+import {
+  ShopBrandCopyDialog,
+  type ShopBrandCopyResult,
+} from "./shop-brand-copy-dialog";
+import { useToast } from "./toast-provider";
 
 const statusLabels: Record<ShopBrandStatus, string> = {
   available: "取扱あり",
@@ -30,10 +35,13 @@ function breweryName(brand: Brand) {
 export function PostForm({
   shop,
   shopRelations,
+  copyAllowed,
 }: {
   shop: Shop;
   shopRelations: ShopBrand[];
+  copyAllowed: boolean;
 }) {
+  const { showToast } = useToast();
   const [query, setQuery] = useState("");
   const [catalog, setCatalog] = useState<Brand[]>([]);
   const [selectedPrefectures, setSelectedPrefectures] = useState<Set<string>>(
@@ -52,12 +60,11 @@ export function PostForm({
         shopRelations.map((relation) => [relation.brand_id, relation.status]),
       ),
   );
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
   const [requestOpen, setRequestOpen] = useState(false);
   const [requestBrewery, setRequestBrewery] = useState("");
   const [requestNote, setRequestNote] = useState("");
   const [requestBusy, setRequestBusy] = useState(false);
+  const [copyOpen, setCopyOpen] = useState(false);
 
   useEffect(() => {
     const abort = new AbortController();
@@ -69,20 +76,20 @@ export function PostForm({
         const data = await response.json();
         if (!response.ok) throw new Error(data.error);
         setCatalog(data);
-        setError("");
       } catch (reason) {
         if (!abort.signal.aborted)
-          setError(
+          showToast(
             reason instanceof Error
               ? reason.message
               : "銘柄一覧を取得できませんでした",
+            "error",
           );
       } finally {
         if (!abort.signal.aborted) setCatalogBusy(false);
       }
     })();
     return () => abort.abort();
-  }, []);
+  }, [showToast]);
 
   const isBrowsingCatalog =
     query.trim().length > 0 ||
@@ -135,12 +142,20 @@ export function PostForm({
     (brand) =>
       brand.name.normalize("NFKC").toLocaleLowerCase() === normalizedQuery,
   );
+  const availableCount = [...relationStatuses.values()].filter(
+    (status) => status === "available",
+  ).length;
+
+  function copied(result: ShopBrandCopyResult) {
+    setCopyOpen(false);
+    showToast(
+      `${result.copied_count ?? result.add_count}件を${result.target_count}店舗へコピーしました${result.skip_count ? `（${result.skip_count}件は既存のためスキップ）` : ""}`,
+    );
+  }
 
   async function addBrand(brand: Brand) {
     if (working.has(brand.id)) return;
     setWorking((current) => new Set(current).add(brand.id));
-    setError("");
-    setMessage("");
     try {
       await mutate({
         kind: "shop_brand_status",
@@ -154,10 +169,11 @@ export function PostForm({
         next.set(brand.id, "available");
         return next;
       });
-      setMessage(`${brand.name}を「取扱あり」にしました`);
+      showToast(`${brand.name}を「取扱あり」にしました`);
     } catch (reason) {
-      setError(
+      showToast(
         reason instanceof Error ? reason.message : "追加できませんでした",
+        "error",
       );
     } finally {
       setWorking((current) => {
@@ -172,8 +188,6 @@ export function PostForm({
     const previous = relationStatuses.get(brand.id);
     if (!previous || previous === nextStatus || working.has(brand.id)) return;
     setWorking((current) => new Set(current).add(brand.id));
-    setError("");
-    setMessage("");
     try {
       await mutate({
         kind: "shop_brand_status",
@@ -187,14 +201,13 @@ export function PostForm({
         next.set(brand.id, nextStatus);
         return next;
       });
-      setMessage(
-        `${brand.name}を「${statusLabels[nextStatus]}」に変更しました`,
-      );
+      showToast(`${brand.name}を「${statusLabels[nextStatus]}」に変更しました`);
     } catch (reason) {
-      setError(
+      showToast(
         reason instanceof Error
           ? reason.message
           : "取扱状況を変更できませんでした",
+        "error",
       );
     } finally {
       setWorking((current) => {
@@ -208,8 +221,6 @@ export function PostForm({
   async function submitMissingBrand() {
     if (!query.trim()) return;
     setRequestBusy(true);
-    setError("");
-    setMessage("");
     try {
       await mutate({
         kind: "brand_request",
@@ -221,10 +232,11 @@ export function PostForm({
       setRequestOpen(false);
       setRequestBrewery("");
       setRequestNote("");
-      setMessage(`「${query.trim()}」が見つからないことを送信しました`);
+      showToast(`「${query.trim()}」が見つからないことを送信しました`);
     } catch (reason) {
-      setError(
+      showToast(
         reason instanceof Error ? reason.message : "報告を送信できませんでした",
+        "error",
       );
     } finally {
       setRequestBusy(false);
@@ -243,6 +255,28 @@ export function PostForm({
             visibleCount={visibleBrands.length}
             totalCount={catalog.length}
           />
+          {availableCount > 0 &&
+            (copyAllowed ? (
+              <button
+                type="button"
+                className="button ghost small post-copy-button"
+                onClick={() => setCopyOpen(true)}
+              >
+                <Copy size={17} />
+                他店舗へコピー
+              </button>
+            ) : (
+              <Link
+                className="button ghost small post-copy-button"
+                href={
+                  "/login?next=" +
+                  encodeURIComponent(`/post?shop_id=${shop.id}`)
+                }
+              >
+                <Copy size={17} />
+                ログインしてコピー
+              </Link>
+            ))}
           <Link className="post-shop" href={`/shops/${shop.id}`}>
             <Store size={18} />
             <span>{shop.name}</span>
@@ -331,7 +365,12 @@ export function PostForm({
                     </>
                   )}
                 </span>
-                <strong>{brand.name}</strong>
+                <span className="brand-option-name">
+                  <strong>{brand.name}</strong>
+                  {brand.name_kana && (
+                    <span className="brand-option-kana">{brand.name_kana}</span>
+                  )}
+                </span>
               </span>
               {relationStatus ? (
                 <label className="brand-status-select">
@@ -426,11 +465,13 @@ export function PostForm({
         </div>
       )}
 
-      {message && <p className="quick-post-status">{message}</p>}
-      {error && (
-        <p className="notice error" role="alert">
-          {error}
-        </p>
+      {copyOpen && (
+        <ShopBrandCopyDialog
+          sourceShop={shop}
+          availableCount={availableCount}
+          onClose={() => setCopyOpen(false)}
+          onCopied={copied}
+        />
       )}
     </div>
   );

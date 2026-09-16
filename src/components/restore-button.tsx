@@ -2,10 +2,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { mutate } from "@/lib/client";
+import { useToast } from "@/components/toast-provider";
 export function RestoreButton({ id }: { id: string }) {
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
   const router = useRouter();
+  const { showToast } = useToast();
   return (
     <div style={{ marginTop: 16 }}>
       <button
@@ -21,9 +22,13 @@ export function RestoreButton({ id }: { id: string }) {
           setBusy(true);
           try {
             await mutate({ kind: "restore", id });
+            showToast("この時点の状態に戻しました");
             router.refresh();
           } catch (e) {
-            setError(e instanceof Error ? e.message : "復元できませんでした");
+            showToast(
+              e instanceof Error ? e.message : "復元できませんでした",
+              "error",
+            );
           } finally {
             setBusy(false);
           }
@@ -31,11 +36,6 @@ export function RestoreButton({ id }: { id: string }) {
       >
         {busy ? "復元しています…" : "この時点の状態に戻す"}
       </button>
-      {error && (
-        <p className="notice error" role="alert">
-          {error}
-        </p>
-      )}
     </div>
   );
 }

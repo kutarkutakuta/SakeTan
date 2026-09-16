@@ -3,23 +3,27 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { mutate } from "@/lib/client";
+import { useToast } from "@/components/toast-provider";
 
 export function BrandRequestActions({ id }: { id: string }) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
 
   async function review(status: "resolved" | "dismissed") {
     setBusy(true);
-    setError("");
     try {
       await mutate({ kind: "brand_request_review", id, status });
+      showToast(
+        status === "resolved" ? "解決済みにしました" : "対応不要にしました",
+      );
       router.refresh();
     } catch (reason) {
-      setError(
+      showToast(
         reason instanceof Error
           ? reason.message
           : "確認状態を変更できませんでした",
+        "error",
       );
     } finally {
       setBusy(false);
@@ -46,11 +50,6 @@ export function BrandRequestActions({ id }: { id: string }) {
           対応不要
         </button>
       </div>
-      {error && (
-        <p className="notice error" role="alert">
-          {error}
-        </p>
-      )}
     </div>
   );
 }

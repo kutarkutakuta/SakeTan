@@ -6,6 +6,7 @@ import { Search } from "lucide-react";
 import { mutate } from "@/lib/client";
 import type { Brewery, EntityType } from "@/lib/types";
 import { LocationPicker } from "@/components/location-picker";
+import { useToast } from "@/components/toast-provider";
 const entityLabels = { shop: "酒屋", brand: "銘柄", brewery: "酒蔵" };
 export function MasterForm({
   type,
@@ -23,7 +24,8 @@ export function MasterForm({
   kanaOnly?: boolean;
 }) {
   const router = useRouter();
-  const [error, setError] = useState("");
+  const { showToast } = useToast();
+  const [searchError, setSearchError] = useState("");
   const [busy, setBusy] = useState(false);
   const [brewery, setBrewery] = useState(initialBrewery);
   const [query, setQuery] = useState("");
@@ -40,9 +42,11 @@ export function MasterForm({
   useEffect(() => {
     if (type !== "brand" || !query.trim()) {
       setResults([]);
+      setSearchError("");
       return;
     }
     const abort = new AbortController();
+    setSearchError("");
     const timer = setTimeout(async () => {
       try {
         const r = await fetch("/api/breweries?q=" + encodeURIComponent(query), {
@@ -53,7 +57,9 @@ export function MasterForm({
         setResults(data);
       } catch (e) {
         if (!abort.signal.aborted)
-          setError(e instanceof Error ? e.message : "検索できませんでした");
+          setSearchError(
+            e instanceof Error ? e.message : "検索できませんでした",
+          );
       }
     }, 250);
     return () => {
@@ -65,7 +71,6 @@ export function MasterForm({
   async function saveKana(form: HTMLFormElement) {
     if (!id || type === "shop") return;
     setBusy(true);
-    setError("");
     const f = new FormData(form);
     const text = (key: string) => String(f.get(key) ?? "").trim();
     try {
@@ -76,17 +81,20 @@ export function MasterForm({
         name_kana: text("name_kana") || null,
         reason: text("reason") || null,
       });
+      showToast(`${entityLabels[type]}のかなを保存しました`);
       router.push("/history?type=" + type + "&id=" + result.id);
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "保存できませんでした");
+      showToast(
+        e instanceof Error ? e.message : "保存できませんでした",
+        "error",
+      );
     } finally {
       setBusy(false);
     }
   }
   async function save(form: HTMLFormElement) {
     setBusy(true);
-    setError("");
     const f = new FormData(form);
     const text = (key: string) => String(f.get(key) ?? "").trim();
     const nullable = (key: string) => text(key) || null;
@@ -131,6 +139,11 @@ export function MasterForm({
         data,
         reason: nullable("reason"),
       });
+      showToast(
+        id
+          ? `${entityLabels[type]}の変更を保存しました`
+          : `${entityLabels[type]}を登録しました`,
+      );
       router.push(
         type === "shop"
           ? "/shops/" + result.id
@@ -140,7 +153,10 @@ export function MasterForm({
       );
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "保存できませんでした");
+      showToast(
+        e instanceof Error ? e.message : "保存できませんでした",
+        "error",
+      );
     } finally {
       setBusy(false);
     }
@@ -189,11 +205,6 @@ export function MasterForm({
             placeholder="例：公式サイトの表記に合わせて修正"
           />
         </label>
-        {error && (
-          <p className="notice error" role="alert">
-            {error}
-          </p>
-        )}
         <button disabled={busy} type="submit" className="button full">
           {busy ? "保存しています…" : "かなを保存"}
         </button>
@@ -390,9 +401,9 @@ export function MasterForm({
           </label>
         </>
       )}
-      {error && (
+      {searchError && (
         <p className="notice error" role="alert">
-          {error}
+          {searchError}
         </p>
       )}
       <button

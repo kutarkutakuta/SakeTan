@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { LoginOptions } from "@/components/login-options";
+import { ToastOnMount } from "@/components/toast-provider";
 import { configured, viewer } from "@/lib/supabase/server";
 import { safeNext } from "@/lib/utils";
 
@@ -32,18 +33,14 @@ export default async function LoginPage({
             ? "このブラウザで行った取扱情報の変更を保ったまま、別の端末でも利用できるようになります。"
             : "Google、X、Facebookのいずれかを利用できます。表示名はあとから変更できます。"}
         </p>
-        {query.error && (
-          <p className="notice error" role="alert">
-            {query.error}
-          </p>
-        )}
+        {query.error && <ToastOnMount message={query.error} tone="error" />}
         {configured() ? (
           <LoginOptions next={next} />
         ) : (
           <p className="notice">ログインにはSupabaseの接続設定が必要です。</p>
         )}
         <p className="login-note">
-          取扱銘柄の編集は、ログインなしでも利用できます。
+          個別の取扱銘柄編集はログインなしでも利用できます。店舗間の一括コピーにはログインが必要です。
         </p>
       </section>
     </main>

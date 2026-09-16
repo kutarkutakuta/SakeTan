@@ -5,6 +5,7 @@ import Link from "next/link";
 import { X } from "lucide-react";
 import { mutate } from "@/lib/client";
 import type { Brand, Brewery } from "@/lib/types";
+import { useToast } from "@/components/toast-provider";
 
 type KanaTarget = "brand" | "brewery";
 
@@ -23,10 +24,10 @@ export function KanaEditDialog({
   onClose: () => void;
   onSaved: (id: string, nameKana: string | null) => void;
 }) {
+  const { showToast } = useToast();
   const [nameKana, setNameKana] = useState(item.name_kana?.trim() ?? "");
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -43,7 +44,6 @@ export function KanaEditDialog({
 
   async function save() {
     setBusy(true);
-    setError("");
     try {
       const normalizedKana = nameKana.trim() || null;
       await mutate({
@@ -55,8 +55,9 @@ export function KanaEditDialog({
       });
       onSaved(item.id, normalizedKana);
     } catch (reason) {
-      setError(
+      showToast(
         reason instanceof Error ? reason.message : "保存できませんでした",
+        "error",
       );
     } finally {
       setBusy(false);
@@ -121,11 +122,6 @@ export function KanaEditDialog({
               placeholder="例：公式サイトの表記に合わせて修正"
             />
           </label>
-          {error && (
-            <p className="notice error" role="alert">
-              {error}
-            </p>
-          )}
           <div className="quick-kana-actions">
             {admin && (
               <Link className="button ghost" href={`/edit/${type}/${item.id}`}>

@@ -27,6 +27,7 @@ import {
 } from "./home/shop-comment-popover";
 import { ShopListCard } from "./home/shop-list-card";
 import { useShopMetadata } from "./home/use-shop-metadata";
+import { useToast } from "./toast-provider";
 import type { Brand, Bounds, Shop } from "@/lib/types";
 
 type MobileSheetSnap = "peek" | "half" | "full";
@@ -55,6 +56,7 @@ export function Home({
   initialShop: Shop | null;
   initialError?: string;
 }) {
+  const { showToast } = useToast();
   const initialShopPosition = useMemo(
     () =>
       typeof initialShop?.latitude === "number" &&
@@ -82,7 +84,7 @@ export function Home({
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [resolvingInitialArea, setResolvingInitialArea] = useState(ready);
-  const [error, setError] = useState(initialError ?? "");
+  const [error, setError] = useState("");
   const [mobileSheetSnap, setMobileSheetSnap] =
     useState<MobileSheetSnap>("peek");
   const [draggingSheet, setDraggingSheet] = useState(false);
@@ -113,6 +115,9 @@ export function Home({
     toggle: toggleShopComment,
   } = useShopCommentPopover();
   selectedRef.current = selected;
+  useEffect(() => {
+    if (initialError) showToast(initialError, "error");
+  }, [initialError, showToast]);
   const syncSelectedShopUrl = useCallback((shopId: string | null) => {
     const url = new URL(window.location.href);
     if (shopId) url.searchParams.set("shop_id", shopId);

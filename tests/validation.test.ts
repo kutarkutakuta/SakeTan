@@ -282,6 +282,30 @@ test("shop brand status action accepts only the three public statuses", () => {
   );
 });
 
+test("shop brand copy accepts one to ten destination shops", () => {
+  const input = {
+    kind: "shop_brand_copy",
+    source_shop_id: "10000000-0000-4000-8000-000000000001",
+    target_shop_ids: ["10000000-0000-4000-8000-000000000002"],
+  };
+  assert.equal(actionSchema.safeParse(input).success, true);
+  assert.equal(
+    actionSchema.safeParse({ ...input, target_shop_ids: [] }).success,
+    false,
+  );
+  assert.equal(
+    actionSchema.safeParse({
+      ...input,
+      target_shop_ids: Array.from(
+        { length: 11 },
+        (_, index) =>
+          `10000000-0000-4000-8000-${String(index + 10).padStart(12, "0")}`,
+      ),
+    }).success,
+    false,
+  );
+});
+
 test("master kana action only accepts existing brand and brewery readings", () => {
   const input = {
     kind: "master_kana",

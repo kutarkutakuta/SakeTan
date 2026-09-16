@@ -7,6 +7,7 @@ import { MessageCircle, Pencil, Trash2 } from "lucide-react";
 import { mutate } from "@/lib/client";
 import type { ShopComment } from "@/lib/types";
 import { dateLabel } from "@/lib/utils";
+import { useToast } from "@/components/toast-provider";
 
 export function ShopComments({
   shopId,
@@ -22,16 +23,15 @@ export function ShopComments({
   ready: boolean;
 }) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [comment, setComment] = useState("");
   const [editing, setEditing] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
 
   async function addComment() {
     if (!comment.trim()) return;
     setBusy(true);
-    setError("");
     try {
       await mutate({
         kind: "shop_comment",
@@ -39,10 +39,12 @@ export function ShopComments({
         comment: comment.trim(),
       });
       setComment("");
+      showToast("コメントを投稿しました");
       router.refresh();
     } catch (reason) {
-      setError(
+      showToast(
         reason instanceof Error ? reason.message : "コメントできませんでした",
+        "error",
       );
     } finally {
       setBusy(false);
@@ -52,7 +54,6 @@ export function ShopComments({
   async function updateComment(item: ShopComment, remove = false) {
     if (!remove && !editText.trim()) return;
     setBusy(true);
-    setError("");
     try {
       await mutate({
         kind: "shop_comment_edit",
@@ -61,10 +62,12 @@ export function ShopComments({
         is_deleted: remove,
       });
       setEditing(null);
+      showToast(remove ? "コメントを削除しました" : "コメントを変更しました");
       router.refresh();
     } catch (reason) {
-      setError(
+      showToast(
         reason instanceof Error ? reason.message : "変更できませんでした",
+        "error",
       );
     } finally {
       setBusy(false);
@@ -109,11 +112,6 @@ export function ShopComments({
           ログインしてコメント
         </Link>
       ) : null}
-      {error && (
-        <p className="notice error" role="alert">
-          {error}
-        </p>
-      )}
       <div className="comments-list">
         {comments.map((item) => {
           const canEdit = item.user_id === userId || admin;

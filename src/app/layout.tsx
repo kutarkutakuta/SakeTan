@@ -4,6 +4,7 @@ import "@fontsource/noto-sans-jp/500.css";
 import "@fontsource/noto-sans-jp/700.css";
 import "./globals.css";
 import { Header } from "@/components/header";
+import { ToastProvider } from "@/components/toast-provider";
 export const metadata: Metadata = {
   title: {
     default: "さけたん｜酒と酒屋をつなぐ地図",
@@ -18,22 +19,24 @@ export default function Layout({
   return (
     <html lang="ja">
       <body suppressHydrationWarning>
-        <a href="#main" className="skip">
-          本文へ移動
-        </a>
-        <Header />
-        {children}
-        <footer>
-          <p className="footer-tagline">酒が見つかる。店が見つかる。</p>
-          <a
-            className="footer-source"
-            href="https://sakenowa.com"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            さけのわデータを利用しています ↗
+        <ToastProvider>
+          <a href="#main" className="skip">
+            本文へ移動
           </a>
-        </footer>
+          <Header />
+          {children}
+          <footer>
+            <p className="footer-tagline">酒が見つかる。店が見つかる。</p>
+            <a
+              className="footer-source"
+              href="https://sakenowa.com"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              さけのわデータを利用しています ↗
+            </a>
+          </footer>
+        </ToastProvider>
       </body>
     </html>
   );
