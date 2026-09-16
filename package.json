@@ -11,7 +11,8 @@
     "db:migrate": "tsx --env-file=.env.local scripts/migrate.ts",
     "test": "tsx --test tests/*.test.ts",
     "import:sakenowa": "tsx --env-file=.env.local scripts/import-sakenowa.ts",
-    "import:sakeno-shops": "tsx --env-file=.env.local scripts/import-sakeno-shops.ts"
+    "import:sakeno-shops": "tsx --env-file=.env.local scripts/import-sakeno-shops.ts",
+    "import:shop-products": "tsx --env-file=.env.local scripts/import-shop-products.ts"
   },
   "dependencies": {
     "@fontsource/noto-sans-jp": "^5.2.0",
@@ -33,6 +34,7 @@
     "cheerio": "^1.2.0",
     "postgres": "^3.4.9",
     "prettier": "^3.9.6",
+    "robots-parser": "^3.0.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.0"
   }

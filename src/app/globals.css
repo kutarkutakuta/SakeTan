@@ -679,6 +679,36 @@ nav {
   color: var(--muted);
   background: #edf0e8;
 }
+.shop-map-marker {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 3px 9px rgb(37 37 34 / 30%);
+  transition:
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+  transform-origin: center bottom;
+}
+.shop-map-marker-registered {
+  background: #71382f;
+  color: white;
+}
+.shop-map-marker-unregistered {
+  border-color: #716d68;
+  background: white;
+  color: #716d68;
+}
+.shop-map-marker-loading {
+  background: #e7e3dc;
+  color: #817b74;
+}
+.shop-map-marker.is-highlighted {
+  box-shadow: 0 4px 13px rgb(37 37 34 / 38%);
+  transform: scale(1.15);
+}
 .map-top {
   position: absolute;
   top: 10px;

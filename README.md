@@ -105,7 +105,23 @@ npm run import:sakeno-shops -- --import
 
 実装仕様は `docs/sakeno-shops-import.md` です。
 
-### 6. Google Mapsと店舗位置
+### 6. 店舗公式サイトの商品一覧import
+
+店舗公式サイトの商品一覧URLからHTMLを取得し、既存銘柄との照合結果を
+review.json で人が確認してから取扱銘柄を一括登録できます。通常のアプリ処理とは
+分離した管理者向けCLIです。
+
+    npm run import:shop-products -- --shop-id=<店舗UUID> --url=<商品一覧URL> --fetch
+    npm run import:shop-products -- --shop-id=<店舗UUID> --url=<商品一覧URL> --parse
+    # review.json で approved: true にした項目だけ登録
+    npm run import:shop-products -- --shop-id=<店舗UUID> --url=<商品一覧URL> --import
+
+静的HTML、同一ドメインのページ送り、最大50ページに対応します。未登録銘柄は
+自動作成せず、ページから消えた銘柄も自動で取扱なしにしません。CSS構造が特殊な
+サイトは --selector で商品名要素を指定できます。詳細は
+docs/shop-product-import.md を参照してください。
+
+### 7. Google Mapsと店舗位置
 
 Google Cloudで課金を有効にし、**Maps JavaScript API** と **Places API (New)** を有効にします。OAuthログイン用のClient ID / SecretはMaps APIキーとして使用できません。
 
@@ -114,7 +130,7 @@ Google Cloudで課金を有効にし、**Maps JavaScript API** と **Places API 
 
 Googleから取得した店舗座標には取得日時と精度を保存し、30日を超えた座標は地図とエリア検索から除外します。継続表示する場合は期限内に再取得してください。料金、保存期間、表示条件は運用開始前にも最新のGoogle Maps Platform規約を確認してください。
 
-### 7. 匿名操作とソーシャルログイン
+### 8. 匿名操作とソーシャルログイン
 
 1. Supabase AuthenticationでAnonymous Sign-Insを有効にします。画面上はログインを求めませんが、初回の取扱操作時に匿名ユーザーを自動作成し、DB権限と更新履歴の主体にします。
 2. Authentication → ProvidersでGoogle、X、Facebookを有効化し、各サービスで発行したClient ID / Secretを設定します。Secretはアプリの環境変数には置きません。

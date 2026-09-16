@@ -113,6 +113,16 @@ export function Home({
     loadingShopId: loadingBrandShop,
     toggleBrands: toggleShopBrands,
   } = useShopMetadata(shops, setError);
+  const shopBrandTotals = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(listBrands).map(([shopId, preview]) => [
+          shopId,
+          preview.total,
+        ]),
+      ),
+    [listBrands],
+  );
   const {
     close: closeComment,
     popoverRef: commentPreviewRef,
@@ -597,6 +607,7 @@ export function Home({
         <section className="map-panel" aria-label="酒屋マップ">
           <Map
             shops={shops}
+            brandTotals={shopBrandTotals}
             selected={selected}
             highlighted={focusedShop}
             onSelect={(id) => {

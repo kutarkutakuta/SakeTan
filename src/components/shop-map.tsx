@@ -4,16 +4,60 @@ import { googleMapId, loadGoogleMaps } from "@/lib/google-maps";
 import type { Bounds, Shop } from "@/lib/types";
 import { hasUsableCoordinates } from "@/lib/utils";
 import type { MapView } from "@/lib/map-view";
+import {
+  shopMarkerStatus,
+  shopMarkerTitle,
+  type ShopMarkerStatus,
+} from "@/lib/shop-marker";
 
 type GoogleLibraries = Awaited<ReturnType<typeof loadGoogleMaps>>;
 type MarkerInstance = {
   id: string;
   marker: google.maps.marker.AdvancedMarkerElement;
-  pin: google.maps.marker.PinElement;
+  shopContent: HTMLDivElement;
+  selectedPin: google.maps.marker.PinElement;
 };
+
+const svgNamespace = "http://www.w3.org/2000/svg";
+const storeIconPaths = [
+  "M15 21v-5a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v5",
+  "M17.774 10.31a1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.451 0 1.12 1.12 0 0 0-1.548 0 2.5 2.5 0 0 1-3.452 0 1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.77-3.248l2.889-4.184A2 2 0 0 1 7 2h10a2 2 0 0 1 1.653.873l2.895 4.192a2.5 2.5 0 0 1-3.774 3.244",
+  "M4 10.95V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.05",
+];
+const selectedStoreGlyph = `data:image/svg+xml,${encodeURIComponent(
+  `<svg xmlns="${svgNamespace}" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${storeIconPaths
+    .map((pathData) => `<path d="${pathData}"/>`)
+    .join("")}</svg>`,
+)}`;
+
+function createStoreMarker(status: ShopMarkerStatus) {
+  const content = document.createElement("div");
+  content.className = `shop-map-marker shop-map-marker-${status}`;
+  content.setAttribute("aria-hidden", "true");
+
+  const icon = document.createElementNS(svgNamespace, "svg");
+  icon.setAttribute("viewBox", "0 0 24 24");
+  icon.setAttribute("width", "21");
+  icon.setAttribute("height", "21");
+  icon.setAttribute("fill", "none");
+  icon.setAttribute("stroke", "currentColor");
+  icon.setAttribute("stroke-width", "2");
+  icon.setAttribute("stroke-linecap", "round");
+  icon.setAttribute("stroke-linejoin", "round");
+
+  storeIconPaths.forEach((pathData) => {
+    const path = document.createElementNS(svgNamespace, "path");
+    path.setAttribute("d", pathData);
+    icon.append(path);
+  });
+
+  content.append(icon);
+  return content;
+}
 
 export default function ShopMap({
   shops,
+  brandTotals,
   selected,
   highlighted,
   onSelect,
@@ -26,6 +70,7 @@ export default function ShopMap({
   compact = false,
 }: {
   shops: Shop[];
+  brandTotals?: Record<string, number>;
   selected?: string | null;
   highlighted?: string | null;
   onSelect?: (id: string) => void;
@@ -156,46 +201,44 @@ export default function ShopMap({
     if (!libraries || !map.current) return;
     markerInstances.current.forEach(({ marker }) => (marker.map = null));
     markerInstances.current = shops.filter(hasUsableCoordinates).map((shop) => {
-      const pin = new libraries.marker.PinElement({
+      const brandTotal = brandTotals?.[shop.id];
+      const shopContent = createStoreMarker(shopMarkerStatus(brandTotal));
+      const selectedPin = new libraries.marker.PinElement({
         background: "#b84a3a",
         borderColor: "#ffffff",
-        glyphColor: "#ffffff",
-        scale: 1,
+        glyphSrc: selectedStoreGlyph,
+        scale: 1.55,
       });
       const marker = new libraries.marker.AdvancedMarkerElement({
         map: map.current,
         position: { lat: shop.latitude, lng: shop.longitude },
-        title: shop.name,
-        content: pin,
+        title: shopMarkerTitle(shop.name, brandTotal),
+        content: shopContent,
         gmpClickable: Boolean(onSelectRef.current),
         zIndex: 1,
       });
       marker.addEventListener("gmp-click", () =>
         onSelectRef.current?.(shop.id),
       );
-      return { id: shop.id, marker, pin };
+      return { id: shop.id, marker, shopContent, selectedPin };
     });
     return () => {
       markerInstances.current.forEach(({ marker }) => (marker.map = null));
       markerInstances.current = [];
     };
-  }, [libraries, shops]);
+  }, [brandTotals, libraries, shops]);
 
   useEffect(() => {
-    markerInstances.current.forEach(({ id, marker, pin }) => {
-      const isSelected = id === selected;
-      const isHighlighted = id === highlighted && !isSelected;
-      pin.background = isSelected ? "#fff7f4" : "#b84a3a";
-      pin.borderColor = isSelected
-        ? "#b84a3a"
-        : isHighlighted
-          ? "#f0b4a9"
-          : "#ffffff";
-      pin.glyphColor = isSelected ? "#b84a3a" : "#ffffff";
-      pin.scale = isSelected ? 1.3 : isHighlighted ? 1.15 : 1;
-      marker.zIndex = isSelected ? 20 : isHighlighted ? 10 : 1;
-    });
-  }, [highlighted, libraries, selected, shops]);
+    markerInstances.current.forEach(
+      ({ id, marker, selectedPin, shopContent }) => {
+        const isSelected = id === selected;
+        const isHighlighted = id === highlighted && !isSelected;
+        shopContent.classList.toggle("is-highlighted", isHighlighted);
+        marker.content = isSelected ? selectedPin : shopContent;
+        marker.zIndex = isSelected ? 20 : isHighlighted ? 10 : 1;
+      },
+    );
+  }, [brandTotals, highlighted, libraries, selected, shops]);
 
   if (error)
     return (

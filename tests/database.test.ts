@@ -872,3 +872,63 @@ test("anonymous contributions can be claimed by an existing account exactly once
     /引き継ぎ情報が見つかりません/,
   );
 });
+
+test("approved shop product imports are atomic, repeatable, and keep private provenance", async () => {
+  await db.exec("reset role");
+  const importedBrand = await scalar(
+    "insert into public.brands(name,source,source_id) values('公式サイト取込酒','sakenowa','import-brand-1') returning id",
+  );
+  await db.exec("set role service_role");
+  const payload = JSON.stringify([
+    {
+      brand_id: importedBrand,
+      source_name: "公式サイト取込酒 純米 720ml",
+      source_url: "https://shop.example/products/1",
+    },
+  ]);
+  const first = await scalar<{
+    import_id: string;
+    added_brands: number;
+    approved_items: number;
+  }>("select public.import_shop_products($1,$2,$3,$4,$5)", [
+    shop,
+    "https://shop.example/products",
+    "2026-09-16T00:00:00.000Z",
+    "a".repeat(64),
+    payload,
+  ]);
+  assert.equal(first.added_brands, 1);
+  assert.equal(first.approved_items, 1);
+
+  const second = await scalar<{
+    import_id: string;
+    added_brands: number;
+    unchanged_brands: number;
+  }>("select public.import_shop_products($1,$2,$3,$4,$5)", [
+    shop,
+    "https://shop.example/products",
+    "2026-09-16T00:00:00.000Z",
+    "a".repeat(64),
+    payload,
+  ]);
+  assert.equal(second.added_brands, 0);
+  assert.equal(second.unchanged_brands, 1);
+
+  await db.exec("reset role");
+  assert.equal(
+    await scalar<number>(
+      "select count(*)::integer from public.shop_brands where shop_id=$1 and brand_id=$2 and status='available'",
+      [shop, importedBrand],
+    ),
+    1,
+  );
+  assert.equal(
+    await scalar<number>(
+      "select count(*)::integer from public.shop_product_import_items where import_id in ($1,$2)",
+      [first.import_id, second.import_id],
+    ),
+    2,
+  );
+  await asUser(alice);
+  await assert.rejects(db.query("select * from public.shop_product_imports"));
+});
