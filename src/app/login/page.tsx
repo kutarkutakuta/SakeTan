@@ -40,7 +40,7 @@ export default async function LoginPage({
           <p className="notice">ログインにはSupabaseの接続設定が必要です。</p>
         )}
         <p className="login-note">
-          個別の取扱銘柄編集はログインなしでも利用できます。店舗間の一括コピーにはログインが必要です。
+          個別の取扱銘柄編集はログインなしでも利用できます。
         </p>
       </section>
     </main>

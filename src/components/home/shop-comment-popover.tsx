@@ -7,6 +7,7 @@ import Link from "next/link";
 import { X } from "lucide-react";
 import type { LatestShopComment } from "@/lib/types";
 import { dateLabel } from "@/lib/utils";
+import { CommentText } from "@/components/comment-text";
 
 type CommentPopoverPosition = {
   left: number;
@@ -109,7 +110,9 @@ export function ShopCommentPopover({
           <X size={18} />
         </button>
       </div>
-      <p>{comment.comment}</p>
+      <p>
+        <CommentText>{comment.comment}</CommentText>
+      </p>
       <Link href={shopHref} onNavigate={onShopNavigate}>
         店舗ページで見る
       </Link>

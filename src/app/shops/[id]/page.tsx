@@ -49,12 +49,10 @@ export default async function ShopPage({
     .select("*,brands(*,breweries(*))")
     .eq("shop_id", id);
   if (relationError) throw new Error("取扱情報を読み込めませんでした");
-  const available = ((relations ?? []) as ShopBrand[]).filter(
-    (relation) => relation.status === "available" && relation.brands?.is_active,
-  );
-  const unavailable = ((relations ?? []) as ShopBrand[]).filter(
+  const listedBrands = ((relations ?? []) as ShopBrand[]).filter(
     (relation) =>
-      relation.status === "unavailable" && relation.brands?.is_active,
+      (relation.status === "available" || relation.status === "unavailable") &&
+      relation.brands?.is_active,
   );
 
   const [{ data: comments, error: commentError }, account] = await Promise.all([
@@ -67,8 +65,7 @@ export default async function ShopPage({
     viewer(),
   ]);
   if (commentError) throw new Error("コメントを読み込めませんでした");
-  const brandSummaries = available as ShopBrandSummary[];
-  const unavailableSummaries = unavailable as ShopBrandSummary[];
+  const brandSummaries = listedBrands as ShopBrandSummary[];
 
   return (
     <main id="main" className="page shop-page">
@@ -120,7 +117,7 @@ export default async function ShopPage({
 
       <div className="shop-content">
         <section className="card shop-brands-card">
-          {available.length ? (
+          {listedBrands.length ? (
             <ShopBrandList items={brandSummaries} title="取扱銘柄" />
           ) : (
             <>
@@ -132,15 +129,6 @@ export default async function ShopPage({
             </>
           )}
         </section>
-        {unavailable.length > 0 && (
-          <section className="card shop-brands-card unavailable-brands-card">
-            <ShopBrandList
-              description="以前の取扱情報です。入荷状況は酒屋へご確認ください。"
-              items={unavailableSummaries}
-              title="現在は取扱なし"
-            />
-          </section>
-        )}
       </div>
 
       <ShopComments

@@ -26,6 +26,7 @@ import {
   useShopCommentPopover,
 } from "./home/shop-comment-popover";
 import { ShopListCard } from "./home/shop-list-card";
+import { ListingNotice } from "./home/listing-notice";
 import { useShopMetadata } from "./home/use-shop-metadata";
 import { useToast } from "./toast-provider";
 import { mapAwareShopPath, mapReturnPath, type MapView } from "@/lib/map-view";
@@ -316,10 +317,12 @@ export function Home({
     shop: Shop,
     preserveZoom = true,
     scrollListToTop = false,
+    recenter = true,
   ) {
     setSelected(shop.id);
     syncSelectedShopUrl(shop.id);
     if (
+      recenter &&
       typeof shop.latitude === "number" &&
       typeof shop.longitude === "number"
     ) {
@@ -539,6 +542,7 @@ export function Home({
                   <ChevronUp size={22} aria-hidden="true" />
                 )}
               </button>
+              <ListingNotice />
             </div>
             {error && (
               <p className="notice error" role="alert">
@@ -641,7 +645,7 @@ export function Home({
             highlighted={focusedShop}
             onSelect={(id) => {
               const shop = shops.find((item) => item.id === id);
-              if (shop) selectShop(shop, true, true);
+              if (shop) selectShop(shop, true, true, false);
             }}
             onBounds={(b) => {
               setBounds(b);

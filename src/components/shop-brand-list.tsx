@@ -92,8 +92,12 @@ export function ShopBrandList({
           const brand = relation.brands;
           const brewery = brand.breweries;
           const prefecture = brewery?.prefecture;
+          const unavailable = relation.status === "unavailable";
           return (
-            <div className="brand-item" key={relation.id}>
+            <div
+              className={`brand-item${unavailable ? " is-unavailable" : ""}`}
+              key={relation.id}
+            >
               <span className="brand-item-copy">
                 <span className="brand-item-meta">
                   {prefecture && (
@@ -123,6 +127,9 @@ export function ShopBrandList({
                   )}
                 </span>
                 <span className="brand-item-name">
+                  {unavailable && (
+                    <span className="sr-only">現在は取扱なし：</span>
+                  )}
                   <strong>{brand.name}</strong>
                   {brand.name_kana && (
                     <span className="brand-item-kana">{brand.name_kana}</span>

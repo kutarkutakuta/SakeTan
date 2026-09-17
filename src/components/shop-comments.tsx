@@ -8,6 +8,7 @@ import { mutate } from "@/lib/client";
 import type { ShopComment } from "@/lib/types";
 import { dateLabel } from "@/lib/utils";
 import { useToast } from "@/components/toast-provider";
+import { CommentText } from "@/components/comment-text";
 
 export function ShopComments({
   shopId,
@@ -149,7 +150,9 @@ export function ShopComments({
                   </div>
                 </form>
               ) : (
-                <p>{item.comment}</p>
+                <p>
+                  <CommentText>{item.comment}</CommentText>
+                </p>
               )}
               {canEdit && editing !== item.id && (
                 <div className="comment-actions">
