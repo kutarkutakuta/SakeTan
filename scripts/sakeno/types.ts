@@ -24,7 +24,7 @@ export type ParseResult = {
 };
 
 export type Phase = "fetch" | "parse" | "import";
-export type PhaseStatus = "pending" | "success" | "failed";
+type PhaseStatus = "pending" | "success" | "failed";
 export type ImportState = Record<
   Phase,
   Record<string, { status: PhaseStatus; updatedAt: string; message?: string }>

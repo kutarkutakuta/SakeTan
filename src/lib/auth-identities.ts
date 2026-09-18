@@ -1,11 +1,6 @@
 import { z } from "zod";
 
-export const identityProviders = [
-  "google",
-  "x",
-  "twitter",
-  "facebook",
-] as const;
+const identityProviders = ["google", "x", "twitter", "facebook"] as const;
 
 export type IdentityProvider = (typeof identityProviders)[number];
 

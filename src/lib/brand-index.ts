@@ -132,11 +132,11 @@ export function kanaGroup(value: string | null | undefined): KanaGroup {
   return kanaGroups.find((group) => rows[group].includes(first)) ?? "other";
 }
 
-export function brandReading(brand: Brand) {
+function brandReading(brand: Brand) {
   return brand.name_kana?.trim() || brand.name;
 }
 
-export function breweryReading(brand: Brand) {
+function breweryReading(brand: Brand) {
   return (
     brand.breweries?.name_kana?.trim() ||
     brand.breweries?.name ||
@@ -188,7 +188,7 @@ export function matchesBrandQuery(brand: Brand, query: string) {
   );
 }
 
-export function compareBrands(
+function compareBrands(
   a: Brand,
   b: Brand,
   by: Exclude<BrandCatalogSort, "recent">,

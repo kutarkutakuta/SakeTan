@@ -1,13 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  ArrowLeft,
-  MapPin,
-  Plus,
-  Pencil,
-  History,
-  ExternalLink,
-} from "lucide-react";
+import { ArrowLeft, Plus, Pencil, History, ExternalLink } from "lucide-react";
 import { configured, supabase, viewer } from "@/lib/supabase/server";
 import type { Shop, ShopBrand, ShopComment } from "@/lib/types";
 import type { ShopBrandSummary } from "@/lib/brand-index";

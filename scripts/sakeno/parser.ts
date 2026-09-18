@@ -10,7 +10,7 @@ const detailPattern =
 const japaneseAddressPattern =
   /(?:北海道|東京都|(?:京都|大阪)府|.{2,3}県)[^\n<>]{2,160}/;
 
-export function cleanText(value: string) {
+function cleanText(value: string) {
   return value
     .replace(/\u00a0/g, " ")
     .normalize("NFKC")
@@ -64,7 +64,7 @@ export function findShopBlocks($: CheerioAPI): Cheerio<AnyNode>[] {
   return blocks;
 }
 
-export function parseShopName($: CheerioAPI, block: Cheerio<AnyNode>) {
+function parseShopName($: CheerioAPI, block: Cheerio<AnyNode>) {
   const known = block.find("strong.lrg a, .lrg a, h2 a, h3 a, h4 a").first();
   return cleanText((known.length ? known : detailAnchor($, block)).text());
 }
@@ -98,7 +98,7 @@ export function parseShopKana($: CheerioAPI, block: Cheerio<AnyNode>) {
   return kana || null;
 }
 
-function blockLines($: CheerioAPI, block: Cheerio<AnyNode>) {
+function blockLines(block: Cheerio<AnyNode>) {
   const details = block.find(".smll, .shop-detail, address").first();
   const clone = (details.length ? details : block).clone();
   clone.find("br").replaceWith("\n");
@@ -112,7 +112,7 @@ export function parseAddress(
 ) {
   const labeled = valueByLabel($, block, ["住所", "所在地"]);
   if (labeled) return cleanText(labeled.replace(/^〒\s*\d{3}-?\d{4}\s*/, ""));
-  const line = blockLines($, block).find((value) =>
+  const line = blockLines(block).find((value) =>
     value.startsWith(prefecture.name),
   );
   if (line) return cleanText(line);
@@ -120,10 +120,10 @@ export function parseAddress(
   return match ? cleanText(match[0].split(/(?:TEL|電話|FAX)/i)[0]) : "";
 }
 
-export function parseSourceUrl($: CheerioAPI, block: Cheerio<AnyNode>) {
+function parseSourceUrl($: CheerioAPI, block: Cheerio<AnyNode>) {
   return absoluteUrl(detailAnchor($, block).attr("href"));
 }
-export function parseSourceId(
+function parseSourceId(
   sourceUrl: string | null,
   name: string,
   address: string,
@@ -152,7 +152,7 @@ export function parseCity(address: string, prefecture: Prefecture) {
   return municipality?.[1] ?? null;
 }
 
-export function parseShop(
+function parseShop(
   $: CheerioAPI,
   block: Cheerio<AnyNode>,
   prefecture: Prefecture,

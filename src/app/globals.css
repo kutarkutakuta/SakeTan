@@ -845,9 +845,6 @@ nav {
   box-shadow: 0 3px 18px #25252222;
   font-size: 14px;
 }
-.map-shop-card {
-  display: none;
-}
 .empty {
   padding: 28px 24px;
   text-align: center;
@@ -2833,86 +2830,6 @@ nav {
   .map {
     height: 100%;
     min-height: 0;
-  }
-  .map-shop-card {
-    display: none;
-  }
-  .map-shop-card-link {
-    position: absolute;
-    z-index: 1;
-    inset: 0;
-    border-radius: inherit;
-  }
-  .map-shop-card.expanded {
-    max-height: calc(100% - 94px);
-  }
-  .map-shop-card-head {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    align-items: flex-start;
-    min-height: 38px;
-    padding-right: 36px;
-    gap: 8px;
-    pointer-events: none;
-  }
-  .map-shop-card-head > strong {
-    flex: 0 1 auto;
-    min-width: 0;
-    padding: 4px 0;
-    font-size: 16px;
-    line-height: 1.5;
-    overflow-wrap: anywhere;
-  }
-  .map-shop-card-action {
-    display: grid;
-    place-items: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    color: var(--muted);
-    pointer-events: auto;
-  }
-  .map-shop-card-action:hover,
-  .map-shop-comment-trigger.active {
-    background: var(--tint);
-    color: var(--primary);
-  }
-  .map-shop-comment-trigger {
-    margin-top: -6px;
-  }
-  .map-shop-close {
-    position: absolute;
-    top: -10px;
-    right: -10px;
-    background: transparent;
-    color: var(--text);
-  }
-  .map-shop-card-action.map-shop-close:hover {
-    background: var(--bg);
-    color: var(--text);
-  }
-  .map-shop-brands {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    margin-top: 0;
-    pointer-events: none;
-  }
-  .map-shop-brands .shop-card-more {
-    pointer-events: auto;
-  }
-  .map-shop-empty {
-    position: relative;
-    z-index: 2;
-    display: block;
-    margin-top: 4px;
-    color: var(--muted);
-    font-size: 14px;
-    line-height: 1.5;
-    pointer-events: none;
   }
   .shop-sheet > .notice {
     flex: none;

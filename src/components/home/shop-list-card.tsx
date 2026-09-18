@@ -98,7 +98,6 @@ export function ShopListCard({
         onToggle={onToggleBrands}
         preview={preview}
         shopId={shop.id}
-        variant="list"
       />
     </div>
   );

@@ -49,7 +49,7 @@ const genericSakeTerms = new Set(
   ].map((value) => normalizeProductName(value)),
 );
 
-export function cleanProductName(value: string) {
+function cleanProductName(value: string) {
   return value.normalize("NFKC").replace(/\s+/g, " ").trim();
 }
 

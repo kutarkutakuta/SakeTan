@@ -1,4 +1,4 @@
-export type FavoriteShop = {
+type FavoriteShop = {
   shop_id: string;
   shop_name: string;
   contribution_count: number;
@@ -11,7 +11,7 @@ export type ContributionSummary = {
   favorite_shops: FavoriteShop[];
 };
 
-export const contributionLevels = [
+const contributionLevels = [
   { target: 1, name: "はじめの一献" },
   { target: 5, name: "酒屋めぐり" },
   { target: 20, name: "地酒案内人" },

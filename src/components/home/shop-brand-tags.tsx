@@ -8,7 +8,6 @@ export function ShopBrandTags({
   onToggle,
   preview,
   shopId,
-  variant,
 }: {
   brands?: Brand[];
   expanded: boolean;
@@ -16,23 +15,15 @@ export function ShopBrandTags({
   onToggle: () => void;
   preview?: ShopBrandPreview;
   shopId: string;
-  variant: "list" | "map";
 }) {
-  const contentId = `${variant}-shop-brands-${shopId}`;
+  const contentId = `shop-brands-${shopId}`;
   if (!brands?.length)
     return preview ? (
-      <span
-        className={variant === "map" ? "map-shop-empty" : "shop-card-empty"}
-      >
-        取扱銘柄は未登録
-      </span>
+      <span className="shop-card-empty">取扱銘柄は未登録</span>
     ) : null;
 
   return (
-    <div
-      className={variant === "map" ? "map-shop-brands" : "shop-card-brands"}
-      id={contentId}
-    >
+    <div className="shop-card-brands" id={contentId}>
       {brands.map((brand) => (
         <span className="shop-card-brand" key={brand.id}>
           {brand.name}

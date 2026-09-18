@@ -68,15 +68,6 @@ export type BrandRequest = {
   created_at: string;
   shops?: { name: string } | null;
 };
-export type Sighting = {
-  id: string;
-  shop_brand_id: string;
-  user_id: string;
-  comment: string | null;
-  observed_at: string;
-  is_deleted: boolean;
-  users: { name: string } | null;
-};
 export type ShopComment = {
   id: string;
   shop_id: string;
