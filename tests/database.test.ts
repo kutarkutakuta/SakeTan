@@ -244,11 +244,11 @@ test("latest shop comments are returned once per shop and omit deleted comments"
   assert.deepEqual(
     (
       await db.query(
-        "select comment,user_name from public.latest_shop_comments(array[$1::uuid])",
+        "select comment,user_name,comment_count::int from public.latest_shop_comments(array[$1::uuid])",
         [shop],
       )
     ).rows,
-    [{ comment: "最新のコメント", user_name: "Bob" }],
+    [{ comment: "最新のコメント", user_name: "Bob", comment_count: 2 }],
   );
   await asUser(bob);
   await db.query("select public.edit_shop_comment($1,'最新のコメント',true)", [
@@ -258,11 +258,11 @@ test("latest shop comments are returned once per shop and omit deleted comments"
   assert.deepEqual(
     (
       await db.query(
-        "select comment,user_name from public.latest_shop_comments(array[$1::uuid])",
+        "select comment,user_name,comment_count::int from public.latest_shop_comments(array[$1::uuid])",
         [shop],
       )
     ).rows,
-    [{ comment: "最初のコメント", user_name: "Alice" }],
+    [{ comment: "最初のコメント", user_name: "Alice", comment_count: 1 }],
   );
 });
 test("display names remain custom after provider metadata refresh", async () => {
@@ -316,6 +316,41 @@ test("posting creates relation atomically, out-of-order posts aggregate min/max 
     last: "2026-01-20",
     count: 1,
   });
+});
+test("shop brand previews return the total with only the requested top rows", async () => {
+  await asUser(alice);
+  const { rows } = await db.query<{
+    shop_id: string;
+    total: bigint;
+    brand_id: string;
+    brand_name: string;
+  }>(
+    "select shop_id,total,brand_id,brand_name from public.shop_brand_previews(array[$1]::uuid[],1)",
+    [shop],
+  );
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].shop_id, shop);
+  assert.equal(Number(rows[0].total), 1);
+  assert.equal(rows[0].brand_id, brand);
+  assert.equal(rows[0].brand_name, "試験の酒");
+});
+test("shop brand totals include requested shops with no active brands", async () => {
+  await db.exec("reset role");
+  const emptyShop = await scalar(
+    "insert into public.shops(name,name_kana,latitude,longitude) values('銘柄なし酒店','めいがらなしさけてん',35.6,139.7) returning id",
+  );
+  await asUser(alice);
+  const { rows } = await db.query<{ shop_id: string; total: bigint }>(
+    "select * from public.shop_brand_totals(array[$1,$2]::uuid[]) order by shop_id",
+    [shop, emptyShop],
+  );
+  assert.deepEqual(
+    new Map(rows.map((row) => [row.shop_id, Number(row.total)])),
+    new Map([
+      [shop, 1],
+      [emptyShop, 0],
+    ]),
+  );
 });
 test("invalid sighting rolls back relation and audit history", async () => {
   await asUser(alice);

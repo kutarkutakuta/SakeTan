@@ -1,6 +1,10 @@
 import { supabase } from "@/lib/supabase/server";
 import { invalidShopIdsResponse, shopIdsFromRequest } from "@/lib/shop-api";
-import type { LatestShopComment } from "@/lib/types";
+import type { LatestShopComment, ShopCommentSummary } from "@/lib/types";
+
+type LatestShopCommentRow = LatestShopComment & {
+  comment_count: number | string;
+};
 
 export async function GET(request: Request) {
   const shopIds = shopIdsFromRequest(request);
@@ -17,9 +21,20 @@ export async function GET(request: Request) {
       { status: 500 },
     );
 
-  return Response.json(
-    Object.fromEntries(
-      ((data ?? []) as LatestShopComment[]).map((item) => [item.shop_id, item]),
-    ),
-  );
+  const result = Object.fromEntries(
+    shopIds.map((id) => [id, { latest: null, total: 0 }]),
+  ) as Record<string, ShopCommentSummary>;
+  for (const row of (data ?? []) as LatestShopCommentRow[]) {
+    result[row.shop_id] = {
+      latest: {
+        id: row.id,
+        shop_id: row.shop_id,
+        comment: row.comment,
+        commented_on: row.commented_on,
+        user_name: row.user_name,
+      },
+      total: Number(row.comment_count),
+    };
+  }
+  return Response.json(result);
 }

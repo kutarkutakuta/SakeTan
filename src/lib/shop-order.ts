@@ -33,3 +33,12 @@ export function orderMapShops<T extends ShopLocation>(
     })
     .map(({ shop }) => shop);
 }
+
+export function visibleShopList<T extends ShopLocation>(
+  shops: T[],
+  center: [number, number] | undefined,
+  selectedId: string | null,
+  limit = 20,
+) {
+  return orderMapShops(shops, center, selectedId).slice(0, limit);
+}

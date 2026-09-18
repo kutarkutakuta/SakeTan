@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import type { Brand, LatestShopComment, Shop } from "@/lib/types";
+import type { Brand, Shop, ShopCommentSummary } from "@/lib/types";
 
 export type ShopBrandPreview = { brands: Brand[]; total: number };
 
 export function useShopMetadata(
-  shops: Shop[],
+  visibleShops: Shop[],
+  mapShops: Shop[],
   setError: Dispatch<SetStateAction<string>>,
 ) {
   const [brandPreviews, setBrandPreviews] = useState<
@@ -16,13 +17,14 @@ export function useShopMetadata(
   const [allBrands, setAllBrands] = useState<Record<string, Brand[]>>({});
   const [expandedShopId, setExpandedShopId] = useState<string | null>(null);
   const [loadingShopId, setLoadingShopId] = useState<string | null>(null);
-  const [latestComments, setLatestComments] = useState<
-    Record<string, LatestShopComment>
+  const [commentSummaries, setCommentSummaries] = useState<
+    Record<string, ShopCommentSummary>
   >({});
+  const [brandTotals, setBrandTotals] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const abort = new AbortController();
-    const ids = shops.map((shop) => shop.id);
+    const ids = visibleShops.map((shop) => shop.id);
     if (!ids.length) {
       setBrandPreviews({});
       return () => abort.abort();
@@ -39,29 +41,51 @@ export function useShopMetadata(
           setError(errorMessage(reason, "取扱銘柄を取得できませんでした"));
       });
     return () => abort.abort();
-  }, [setError, shops]);
+  }, [setError, visibleShops]);
 
   useEffect(() => {
     const abort = new AbortController();
-    const ids = shops.map((shop) => shop.id);
+    const ids = visibleShops.map((shop) => shop.id);
     if (!ids.length) {
-      setLatestComments({});
+      setCommentSummaries({});
       return () => abort.abort();
     }
-    setLatestComments({});
-    void fetchInChunks<LatestShopComment>(
+    setCommentSummaries({});
+    void fetchInChunks<ShopCommentSummary>(
       ids,
       (chunk) =>
         `/api/shops/comments?ids=${encodeURIComponent(chunk.join(","))}`,
       abort.signal,
     )
-      .then(setLatestComments)
+      .then(setCommentSummaries)
       .catch((reason) => {
         if (!abort.signal.aborted)
           setError(errorMessage(reason, "最新コメントを取得できませんでした"));
       });
     return () => abort.abort();
-  }, [setError, shops]);
+  }, [setError, visibleShops]);
+
+  useEffect(() => {
+    const abort = new AbortController();
+    const ids = mapShops.map((shop) => shop.id);
+    if (!ids.length) {
+      setBrandTotals({});
+      return () => abort.abort();
+    }
+    setBrandTotals({});
+    void fetchInChunks<number>(
+      ids,
+      (chunk) =>
+        `/api/shops/brand-totals?ids=${encodeURIComponent(chunk.join(","))}`,
+      abort.signal,
+    )
+      .then(setBrandTotals)
+      .catch((reason) => {
+        if (!abort.signal.aborted)
+          setError(errorMessage(reason, "取扱銘柄数を取得できませんでした"));
+      });
+    return () => abort.abort();
+  }, [mapShops, setError]);
 
   const toggleBrands = useCallback(
     async (shopId: string) => {
@@ -94,10 +118,11 @@ export function useShopMetadata(
 
   return {
     allBrands,
+    brandTotals,
     brandPreviews,
     collapseBrands,
     expandedShopId,
-    latestComments,
+    commentSummaries,
     loadingShopId,
     toggleBrands,
   };

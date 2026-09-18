@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ChevronRight, MessageCircle, Store } from "lucide-react";
-import type { Brand, LatestShopComment, Shop } from "@/lib/types";
+import type { Brand, Shop } from "@/lib/types";
 import { ShopBrandTags } from "./shop-brand-tags";
 import type { ShopBrandPreview } from "./use-shop-metadata";
 
@@ -8,7 +8,7 @@ export function ShopListCard({
   brands,
   commentOpen,
   expanded,
-  latestComment,
+  commentCount,
   loading,
   onCommentToggle,
   onHighlight,
@@ -23,7 +23,7 @@ export function ShopListCard({
   brands?: Brand[];
   commentOpen: boolean;
   expanded: boolean;
-  latestComment?: LatestShopComment;
+  commentCount: number;
   loading: boolean;
   onCommentToggle: (anchor: HTMLElement) => void;
   onHighlight: (shopId: string | null) => void;
@@ -64,21 +64,22 @@ export function ShopListCard({
           </span>
         </div>
         <div className="shop-card-actions">
-          {latestComment && (
-            <button
-              type="button"
-              data-comment-trigger
-              className={
-                "shop-comment-trigger " + (commentOpen ? "active" : "")
-              }
-              aria-label={`${shop.name}の最新コメントを表示`}
-              aria-expanded={commentOpen}
-              aria-controls={commentOpen ? "latest-shop-comment" : undefined}
-              onClick={(event) => onCommentToggle(event.currentTarget)}
-            >
-              <MessageCircle size={17} strokeWidth={1.8} />
-            </button>
-          )}
+          <button
+            type="button"
+            data-comment-trigger
+            className={"shop-comment-trigger " + (commentOpen ? "active" : "")}
+            aria-label={`${shop.name}のコメント${commentCount}件を表示`}
+            aria-expanded={commentOpen}
+            aria-controls={commentOpen ? "latest-shop-comment" : undefined}
+            onClick={(event) => onCommentToggle(event.currentTarget)}
+          >
+            <MessageCircle size={18} strokeWidth={1.8} aria-hidden="true" />
+            {commentCount > 0 && (
+              <span className="shop-comment-count" aria-hidden="true">
+                {commentCount}
+              </span>
+            )}
+          </button>
           <Link
             className="shop-page-link"
             href={shopHref}

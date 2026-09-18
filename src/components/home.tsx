@@ -30,10 +30,11 @@ import { ListingNotice } from "./home/listing-notice";
 import { useShopMetadata } from "./home/use-shop-metadata";
 import { useToast } from "./toast-provider";
 import { mapAwareShopPath, mapReturnPath, type MapView } from "@/lib/map-view";
-import { mapBoundsCenter, orderMapShops } from "@/lib/shop-order";
+import { mapBoundsCenter, visibleShopList } from "@/lib/shop-order";
 import type { Brand, Bounds, Shop } from "@/lib/types";
 
 type MobileSheetSnap = "peek" | "half" | "full";
+const shopsPerPage = 20;
 
 function nextSheetSnap(
   current: MobileSheetSnap,
@@ -92,6 +93,7 @@ export function Home({
   const [shopListCenter, setShopListCenter] = useState<
     [number, number] | undefined
   >(initialMapView?.center ?? initialShopPosition);
+  const [visibleShopLimit, setVisibleShopLimit] = useState(shopsPerPage);
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [resolvingInitialArea, setResolvingInitialArea] = useState(ready);
@@ -109,25 +111,20 @@ export function Home({
   const shopSheetRef = useRef<HTMLElement>(null);
   const sheetDragStart = useRef<number | null>(null);
   const sheetDragMoved = useRef(false);
+  const visibleShops = useMemo(
+    () => visibleShopList(shops, shopListCenter, selected, visibleShopLimit),
+    [selected, shopListCenter, shops, visibleShopLimit],
+  );
   const {
     allBrands: allListBrands,
+    brandTotals: shopBrandTotals,
     brandPreviews: listBrands,
     collapseBrands,
     expandedShopId: expandedBrandShop,
-    latestComments: listComments,
+    commentSummaries: listCommentSummaries,
     loadingShopId: loadingBrandShop,
     toggleBrands: toggleShopBrands,
-  } = useShopMetadata(shops, setError);
-  const shopBrandTotals = useMemo(
-    () =>
-      Object.fromEntries(
-        Object.entries(listBrands).map(([shopId, preview]) => [
-          shopId,
-          preview.total,
-        ]),
-      ),
-    [listBrands],
-  );
+  } = useShopMetadata(visibleShops, shops, setError);
   const {
     close: closeComment,
     popoverRef: commentPreviewRef,
@@ -169,6 +166,7 @@ export function Home({
           selectedShopId && nextShops.some((shop) => shop.id === selectedShopId)
             ? selectedShopId
             : null;
+        setVisibleShopLimit(shopsPerPage);
         setShops(nextShops);
         setShopListCenter(
           listCenter ?? (area ? mapBoundsCenter(area) : undefined),
@@ -375,12 +373,10 @@ export function Home({
     if (event.currentTarget.hasPointerCapture(event.pointerId))
       event.currentTarget.releasePointerCapture(event.pointerId);
   }
-  const sorted = useMemo(
-    () => orderMapShops(shops, shopListCenter, selected),
-    [selected, shopListCenter, shops],
-  );
-  const openCommentShop = shops.find((shop) => shop.id === openComment);
-  const openCommentData = openComment ? listComments[openComment] : undefined;
+  const openCommentShop = visibleShops.find((shop) => shop.id === openComment);
+  const openCommentSummary = openComment
+    ? listCommentSummaries[openComment]
+    : undefined;
   const returnPathForShop = useCallback(
     (shopId: string) =>
       mapReturnPath({ brandId: brand?.id, shopId, view: mapView }),
@@ -503,7 +499,11 @@ export function Home({
                 <h2>
                   {brand ? `「${brand.name}」を扱う酒屋` : "地図の酒屋"}{" "}
                   <span className="count">
-                    {resolvingInitialArea ? "…" : shops.length}
+                    {resolvingInitialArea
+                      ? "…"
+                      : visibleShops.length < shops.length
+                        ? `${visibleShops.length}/${shops.length}`
+                        : shops.length}
                   </span>
                 </h2>
               </div>
@@ -533,7 +533,11 @@ export function Home({
                     {brand ? `「${brand.name}」を扱う酒屋` : "地図の酒屋"}
                   </strong>
                   <span className="count">
-                    {resolvingInitialArea ? "…" : shops.length}
+                    {resolvingInitialArea
+                      ? "…"
+                      : visibleShops.length < shops.length
+                        ? `${visibleShops.length}/${shops.length}`
+                        : shops.length}
                   </span>
                 </span>
                 {mobileSheetSnap === "full" ? (
@@ -555,8 +559,8 @@ export function Home({
               className="shop-list"
               aria-live="polite"
             >
-              {sorted.map((s) => {
-                const latestComment = listComments[s.id];
+              {visibleShops.map((s) => {
+                const commentSummary = listCommentSummaries[s.id];
                 const preview = listBrands[s.id];
                 const expanded = expandedBrandShop === s.id;
                 const displayedBrands = expanded
@@ -567,8 +571,8 @@ export function Home({
                     key={s.id}
                     brands={displayedBrands}
                     commentOpen={openComment === s.id}
+                    commentCount={commentSummary?.total ?? 0}
                     expanded={expanded}
-                    latestComment={latestComment}
                     loading={loadingBrandShop === s.id}
                     onCommentToggle={(anchor) =>
                       toggleShopComment(s.id, anchor)
@@ -607,6 +611,19 @@ export function Home({
                   </p>
                 </div>
               )}
+              {visibleShops.length < shops.length && (
+                <div className="shop-list-more">
+                  <button
+                    type="button"
+                    className="button ghost"
+                    onClick={() =>
+                      setVisibleShopLimit((current) => current + shopsPerPage)
+                    }
+                  >
+                    もっと表示（残り{shops.length - visibleShops.length}店）
+                  </button>
+                </div>
+              )}
               <div className="mobile-map-footer">
                 <p>酒が見つかる。店が見つかる。</p>
                 <a
@@ -621,13 +638,16 @@ export function Home({
             {openComment &&
               openCommentShop &&
               commentPopoverPosition &&
-              openCommentData && (
+              openCommentSummary && (
                 <ShopCommentPopover
-                  comment={openCommentData}
+                  key={openComment}
+                  initialComment={openCommentSummary.latest}
+                  initialTotal={openCommentSummary.total}
                   onClose={closeComment}
                   popoverRef={commentPreviewRef}
                   position={commentPopoverPosition}
                   shopHref={`${shopPagePath(openComment)}#comments`}
+                  shopId={openComment}
                   onShopNavigate={() => prepareShopNavigation(openComment)}
                   shopName={openCommentShop.name}
                 />

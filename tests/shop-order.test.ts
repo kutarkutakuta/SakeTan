@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { mapBoundsCenter, orderMapShops } from "@/lib/shop-order";
+import {
+  mapBoundsCenter,
+  orderMapShops,
+  visibleShopList,
+} from "@/lib/shop-order";
 
 const shops = [
   { id: "far", latitude: 35.003, longitude: 139 },
@@ -26,6 +30,13 @@ test("original order is retained until a map center is available", () => {
   assert.deepEqual(
     orderMapShops(shops, undefined, null).map((shop) => shop.id),
     ["far", "near", "middle"],
+  );
+});
+
+test("visible shop list keeps the selected shop and applies the display limit", () => {
+  assert.deepEqual(
+    visibleShopList(shops, [35, 139], "far", 2).map((shop) => shop.id),
+    ["far", "near"],
   );
 });
 

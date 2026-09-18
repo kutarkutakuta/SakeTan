@@ -84,6 +84,13 @@ export type LatestShopComment = {
   commented_on: string;
   user_name: string | null;
 };
+export type ShopCommentSummary = {
+  latest: LatestShopComment | null;
+  total: number;
+};
+export type ShopCommentPage = ShopCommentSummary & {
+  offset: number;
+};
 export type Bounds = {
   south: number;
   north: number;

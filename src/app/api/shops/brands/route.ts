@@ -1,16 +1,17 @@
 import { supabase } from "@/lib/supabase/server";
-import {
-  orderedShopBrands,
-  type ShopBrandSummary,
-} from "@/lib/shop-brand-order";
-import { collectPaged } from "@/lib/paged-query";
 import { invalidShopIdsResponse, shopIdsFromRequest } from "@/lib/shop-api";
 import type { Brand } from "@/lib/types";
 
-type ShopBrandRow = ShopBrandSummary & {
-  id: string;
+type ShopBrandPreviewRow = {
   shop_id: string;
+  total: number | string;
   brand_id: string;
+  brand_name: string;
+  brand_name_kana: string | null;
+  brewery_id: string | null;
+  sakenowa_rank: number | null;
+  sakenowa_score: number | null;
+  sakenowa_rank_year_month: string | null;
 };
 type ShopBrandPreview = { brands: Brand[]; total: number };
 
@@ -20,40 +21,32 @@ export async function GET(request: Request) {
 
   const db = await supabase();
   if (!db) return Response.json({});
-  let rows: ShopBrandRow[];
-  try {
-    rows = await collectPaged(async (from, to) => {
-      const { data, error } = await db
-        .from("shop_brands")
-        .select(
-          "id,shop_id,brand_id,last_seen_at,brands!inner(id,name,name_kana,brewery_id,sakenowa_rank,sakenowa_score,sakenowa_rank_year_month)",
-        )
-        .in("shop_id", shopIds)
-        .eq("is_active", true)
-        .eq("brands.is_active", true)
-        .order("shop_id")
-        .order("brand_id")
-        .range(from, to);
-      if (error) throw error;
-      return (data ?? []) as unknown as ShopBrandRow[];
-    });
-  } catch {
+  const { data, error } = await db.rpc("shop_brand_previews", {
+    p_shop_ids: shopIds,
+    p_limit: 10,
+  });
+  if (error)
     return Response.json(
       { error: "取扱銘柄を取得できませんでした" },
       { status: 500 },
     );
-  }
 
-  const grouped = new Map<string, ShopBrandRow[]>();
-  for (const row of rows) {
-    const rows = grouped.get(row.shop_id) ?? [];
-    rows.push(row);
-    grouped.set(row.shop_id, rows);
-  }
-  const result: Record<string, ShopBrandPreview> = {};
-  for (const id of shopIds) {
-    const brands = orderedShopBrands(grouped.get(id) ?? []);
-    result[id] = { brands: brands.slice(0, 10), total: brands.length };
+  const result = Object.fromEntries(
+    shopIds.map((id) => [id, { brands: [], total: 0 }]),
+  ) as Record<string, ShopBrandPreview>;
+  for (const row of (data ?? []) as ShopBrandPreviewRow[]) {
+    const preview = result[row.shop_id];
+    if (!preview) continue;
+    preview.total = Number(row.total);
+    preview.brands.push({
+      id: row.brand_id,
+      name: row.brand_name,
+      name_kana: row.brand_name_kana,
+      brewery_id: row.brewery_id,
+      sakenowa_rank: row.sakenowa_rank,
+      sakenowa_score: row.sakenowa_score,
+      sakenowa_rank_year_month: row.sakenowa_rank_year_month,
+    });
   }
   return Response.json(result);
 }

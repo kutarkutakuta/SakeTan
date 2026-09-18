@@ -477,6 +477,13 @@ nav {
   overflow-y: auto;
   flex: 1;
 }
+.shop-list-more {
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.shop-list-more .button {
+  width: 100%;
+}
 .shop-card {
   position: relative;
   display: block;
@@ -589,13 +596,23 @@ nav {
   pointer-events: none;
 }
 .shop-comment-trigger {
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
   flex: none;
-  width: 44px;
+  min-width: 44px;
   height: 44px;
+  padding: 0 9px;
   border-radius: 50%;
   color: var(--muted);
+}
+.shop-comment-count {
+  min-width: 1ch;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  line-height: 1;
 }
 .shop-comment-trigger:hover,
 .shop-comment-trigger.active {
@@ -639,9 +656,7 @@ nav {
   padding: 14px;
   border: 1px solid rgb(144 163 154 / 35%);
   border-radius: 14px;
-  background: rgb(246 248 247 / 72%);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  background: #f6f8f7;
   box-shadow: 0 8px 24px rgb(37 37 34 / 16%);
 }
 .shop-comment-preview::before {
@@ -650,7 +665,7 @@ nav {
   width: 12px;
   height: 12px;
   content: "";
-  background: rgb(246 248 247 / 88%);
+  background: #f6f8f7;
   transform: translateX(-50%) rotate(45deg);
 }
 .shop-comment-preview[data-placement="below"]::before {
@@ -668,23 +683,19 @@ nav {
   align-items: flex-start;
   gap: 10px;
 }
-.shop-comment-preview-head > div {
+.shop-comment-preview-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
   flex: 1;
   min-width: 0;
-}
-.shop-comment-preview-head strong,
-.shop-comment-preview-head span {
-  display: block;
-}
-.shop-comment-preview-head strong {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.shop-comment-preview-head span {
   color: var(--muted);
   font-size: 14px;
   line-height: 1.5;
+}
+.shop-comment-preview-meta .shop-comment-number {
+  flex: none;
+  font-variant-numeric: tabular-nums;
 }
 .shop-comment-preview-head button {
   display: grid;
@@ -699,7 +710,7 @@ nav {
   background: var(--bg);
   color: var(--text);
 }
-.shop-comment-preview p {
+.shop-comment-preview-body p {
   display: -webkit-box;
   margin-top: 9px;
   overflow: hidden;
@@ -709,14 +720,59 @@ nav {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
 }
-.shop-comment-preview > a {
-  display: inline-block;
-  margin-top: 9px;
+.shop-comment-preview-error {
+  margin-top: 8px;
+  color: #9c3025;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.shop-comment-preview-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  margin: 6px 0 -6px;
+  border-top: 1px solid var(--line);
+  padding-top: 2px;
+}
+.shop-comment-preview-actions button,
+.shop-comment-preview-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 5px;
   color: var(--primary);
   font-size: 14px;
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+.shop-comment-preview-actions a {
+  gap: 2px;
+}
+.shop-comment-nav-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.shop-comment-preview-actions button {
+  min-width: 38px;
+  font-size: 18px;
+  line-height: 1;
+}
+.shop-comment-preview-actions button:disabled {
+  color: var(--muted);
+  cursor: default;
+  opacity: 0.45;
+  text-decoration: none;
+}
+.shop-comment-preview-actions button:not(:disabled):hover,
+.shop-comment-preview-actions button:not(:disabled):focus-visible,
+.shop-comment-preview-actions a:hover,
+.shop-comment-preview-actions a:focus-visible {
+  background: var(--bg);
+  text-decoration: none;
 }
 .comment-link {
   color: var(--primary);
@@ -970,6 +1026,8 @@ nav {
   margin-top: 14px;
 }
 .brand-item {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 64px;
   min-width: 0;
   min-height: 64px;
   padding: 9px 12px;

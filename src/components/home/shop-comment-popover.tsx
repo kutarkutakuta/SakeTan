@@ -4,8 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties, RefObject } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { X } from "lucide-react";
-import type { LatestShopComment } from "@/lib/types";
+import { ChevronRight, X } from "lucide-react";
+import type { LatestShopComment, ShopCommentPage } from "@/lib/types";
 import { dateLabel } from "@/lib/utils";
 import { CommentText } from "@/components/comment-text";
 
@@ -72,22 +72,72 @@ export function useShopCommentPopover() {
 }
 
 export function ShopCommentPopover({
-  comment,
+  initialComment,
+  initialTotal,
   onClose,
   onShopNavigate,
   popoverRef,
   position,
   shopHref,
+  shopId,
   shopName,
 }: {
-  comment: LatestShopComment;
+  initialComment: LatestShopComment | null;
+  initialTotal: number;
   onClose: () => void;
   onShopNavigate: () => void;
   popoverRef: RefObject<HTMLDivElement | null>;
   position: CommentPopoverPosition;
   shopHref: string;
+  shopId: string;
   shopName: string;
 }) {
+  const [comment, setComment] = useState(initialComment);
+  const [total, setTotal] = useState(initialTotal);
+  const [offset, setOffset] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const requestRef = useRef<AbortController | null>(null);
+
+  useEffect(
+    () => () => {
+      requestRef.current?.abort();
+    },
+    [],
+  );
+
+  async function showComment(nextOffset: number) {
+    requestRef.current?.abort();
+    const abort = new AbortController();
+    requestRef.current = abort;
+    setLoading(true);
+    setError("");
+    try {
+      const response = await fetch(
+        `/api/shops/${shopId}/comments?offset=${nextOffset}`,
+        { signal: abort.signal },
+      );
+      const data = (await response.json()) as ShopCommentPage & {
+        error?: string;
+      };
+      if (!response.ok) throw new Error(data.error);
+      if (data.latest) {
+        setComment(data.latest);
+        setOffset(data.offset);
+      }
+      setTotal(data.total);
+    } catch (reason) {
+      if (!abort.signal.aborted)
+        setError(
+          reason instanceof Error
+            ? reason.message
+            : "コメントを取得できませんでした",
+        );
+    } finally {
+      if (!abort.signal.aborted) setLoading(false);
+    }
+  }
+
   return createPortal(
     <div
       ref={popoverRef}
@@ -97,25 +147,65 @@ export function ShopCommentPopover({
       aria-live="polite"
       data-placement={position.placement}
       style={popoverStyle(position)}
-      aria-label={`${shopName}の最新コメント`}
+      aria-label={`${shopName}のコメント`}
+      aria-busy={loading}
     >
       <div className="shop-comment-preview-head">
-        <div>
-          <strong>{shopName}</strong>
-          <span>
-            {comment.user_name ?? "ユーザー"}・{dateLabel(comment.commented_on)}
-          </span>
+        <div className="shop-comment-preview-meta">
+          {comment ? (
+            <>
+              <span className="shop-comment-number">{offset + 1}.</span>
+              <span>
+                {comment.user_name ?? "ユーザー"}・
+                {dateLabel(comment.commented_on)}
+              </span>
+            </>
+          ) : (
+            <span>まだコメントはありません。</span>
+          )}
         </div>
         <button type="button" aria-label="コメントを閉じる" onClick={onClose}>
           <X size={18} />
         </button>
       </div>
-      <p>
-        <CommentText>{comment.comment}</CommentText>
-      </p>
-      <Link href={shopHref} onNavigate={onShopNavigate}>
-        店舗ページで見る
-      </Link>
+      {comment && (
+        <div className="shop-comment-preview-body" aria-live="polite">
+          <p>
+            <CommentText>{comment.comment}</CommentText>
+          </p>
+        </div>
+      )}
+      {error && (
+        <p className="shop-comment-preview-error" role="alert">
+          {error}
+        </p>
+      )}
+      <nav className="shop-comment-preview-actions" aria-label="コメント操作">
+        <div className="shop-comment-nav-buttons">
+          <button
+            type="button"
+            aria-label="新しいコメントへ"
+            title="新しいコメントへ"
+            disabled={loading || !comment || offset === 0}
+            onClick={() => void showComment(offset - 1)}
+          >
+            <span aria-hidden="true">←</span>
+          </button>
+          <button
+            type="button"
+            aria-label="古いコメントへ"
+            title="古いコメントへ"
+            disabled={loading || !comment || offset + 1 >= total}
+            onClick={() => void showComment(offset + 1)}
+          >
+            <span aria-hidden="true">→</span>
+          </button>
+        </div>
+        <Link href={shopHref} onNavigate={onShopNavigate}>
+          コメントする
+          <ChevronRight size={16} strokeWidth={2} aria-hidden="true" />
+        </Link>
+      </nav>
     </div>,
     document.body,
   );
