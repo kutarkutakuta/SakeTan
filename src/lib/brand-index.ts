@@ -73,6 +73,40 @@ const collator = new Intl.Collator("ja", {
   numeric: true,
 });
 
+export function brandFilterCriteriaLabel(
+  query: string,
+  selectedPrefectures: ReadonlySet<string>,
+  selectedKana: ReadonlySet<KanaGroup>,
+) {
+  const parts: string[] = [];
+  const normalizedQuery = query.trim().slice(0, 150);
+  if (normalizedQuery) parts.push(normalizedQuery);
+
+  const selectedPrefectureNames = prefectures.filter((value) =>
+    selectedPrefectures.has(value),
+  );
+  if (selectedPrefectureNames.length) {
+    const shown = selectedPrefectureNames.slice(0, 5);
+    const remainder = selectedPrefectureNames.length - shown.length;
+    parts.push(
+      ...shown.map((value) =>
+        value === "北海道" ? value : value.replace(/[都府県]$/u, ""),
+      ),
+    );
+    if (remainder > 0) parts.push(`ほか${remainder}県`);
+  }
+
+  const selectedKanaNames = [
+    ...kanaGroups
+      .filter((value) => selectedKana.has(value))
+      .map((value) => value),
+    ...(selectedKana.has("other") ? ["他"] : []),
+  ];
+  parts.push(...selectedKanaNames);
+
+  return parts.map((value) => `「${value}」`).join("");
+}
+
 const rows: Record<(typeof kanaGroups)[number], string> = {
   あ: "あいうえおぁぃぅぇぉ",
   か: "かきくけこがぎぐげご",

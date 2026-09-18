@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Copy, Plus, Search, Store, X } from "lucide-react";
 import { mutate } from "@/lib/client";
 import {
+  brandFilterCriteriaLabel,
   brandPrefecture,
   matchesBrandFilters,
   matchesBrandQuery,
@@ -61,7 +62,7 @@ export function PostForm({
       ),
   );
   const [requestOpen, setRequestOpen] = useState(false);
-  const [requestBrewery, setRequestBrewery] = useState("");
+  const [requestBrandName, setRequestBrandName] = useState("");
   const [requestNote, setRequestNote] = useState("");
   const [requestBusy, setRequestBusy] = useState(false);
   const [copyOpen, setCopyOpen] = useState(false);
@@ -137,14 +138,19 @@ export function PostForm({
     sort,
   ]);
 
-  const normalizedQuery = query.trim().normalize("NFKC").toLocaleLowerCase();
-  const hasExactMatch = catalog.some(
-    (brand) =>
-      brand.name.normalize("NFKC").toLocaleLowerCase() === normalizedQuery,
+  const missingCriteriaLabel = brandFilterCriteriaLabel(
+    query,
+    selectedPrefectures,
+    selectedKana,
   );
   const availableCount = [...relationStatuses.values()].filter(
     (status) => status === "available",
   ).length;
+  const hasFilterConflict =
+    !catalogBusy &&
+    query.trim().length > 0 &&
+    visibleBrands.length === 0 &&
+    (selectedPrefectures.size > 0 || selectedKana.size > 0);
 
   function copied(result: ShopBrandCopyResult) {
     setCopyOpen(false);
@@ -219,20 +225,22 @@ export function PostForm({
   }
 
   async function submitMissingBrand() {
-    if (!query.trim()) return;
+    if (!requestBrandName.trim()) return;
     setRequestBusy(true);
     try {
       await mutate({
         kind: "brand_request",
-        name: query.trim(),
-        brewery_name: requestBrewery.trim() || null,
+        name: requestBrandName.trim(),
+        brewery_name: null,
         note: requestNote.trim() || null,
         shop_id: shop.id,
       });
       setRequestOpen(false);
-      setRequestBrewery("");
+      setRequestBrandName("");
       setRequestNote("");
-      showToast(`「${query.trim()}」が見つからないことを送信しました`);
+      showToast(
+        `「${requestBrandName.trim()}」が見つからないことを送信しました`,
+      );
     } catch (reason) {
       showToast(
         reason instanceof Error ? reason.message : "報告を送信できませんでした",
@@ -319,6 +327,8 @@ export function PostForm({
           ["brewery", "蔵元順"],
           ["region", "県順"],
         ]}
+        emphasizePrefectures={hasFilterConflict && selectedPrefectures.size > 0}
+        emphasizeKana={hasFilterConflict && selectedKana.size > 0}
       />
 
       <div className="brand-options" aria-live="polite">
@@ -407,25 +417,31 @@ export function PostForm({
         {catalogBusy && <p className="brand-status">読み込んでいます…</p>}
         {!catalogBusy && visibleBrands.length === 0 && (
           <p className="brand-status">
-            {isBrowsingCatalog
-              ? "条件に合う銘柄がありません"
-              : "取扱情報はありません。検索または都道府県・かなを選んで追加してください。"}
+            {hasFilterConflict
+              ? "テキスト検索に一致しません。選択中の都道府県・かなも確認してください。"
+              : isBrowsingCatalog
+                ? "条件に合う銘柄がありません"
+                : "取扱情報はありません。検索または都道府県・かなを選んで追加してください。"}
           </p>
         )}
       </div>
 
-      {query.trim() && !hasExactMatch && (
+      {!catalogBusy && visibleBrands.length === 0 && missingCriteriaLabel && (
         <div className="missing-brand">
           <p>
-            商品名ではなく銘柄名で検索しても見つからない場合は、お知らせください。
+            銘柄名が見つからない場合や、「かな」に間違いがある場合はお知らせください。
           </p>
           {!requestOpen ? (
             <button
               type="button"
               className="text-link"
-              onClick={() => setRequestOpen(true)}
+              onClick={() => {
+                setRequestBrandName(query.trim().slice(0, 150));
+                setRequestNote(`${missingCriteriaLabel}が見つからない`);
+                setRequestOpen(true);
+              }}
             >
-              「{query.trim()}」が見つからないことを知らせる
+              {missingCriteriaLabel}が見つからないことを知らせる
             </button>
           ) : (
             <form
@@ -436,11 +452,13 @@ export function PostForm({
               }}
             >
               <label>
-                酒蔵名 <span className="muted">任意</span>
+                銘柄名
                 <input
-                  value={requestBrewery}
-                  onChange={(event) => setRequestBrewery(event.target.value)}
+                  value={requestBrandName}
+                  onChange={(event) => setRequestBrandName(event.target.value)}
                   maxLength={150}
+                  required
+                  placeholder="見つからない銘柄名"
                 />
               </label>
               <label>

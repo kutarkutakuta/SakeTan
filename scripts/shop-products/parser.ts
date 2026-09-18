@@ -8,6 +8,8 @@ import type {
   MatchKind,
   ReviewItem,
 } from "./types";
+import { aliasEntries, confirmedAlias } from "./aliases";
+import type { SourceProfile } from "./profiles";
 
 const ignoredNames = new Set([
   "home",
@@ -37,6 +39,10 @@ const genericSakeTerms = new Set(
     "本醸造",
     "生酒",
     "原酒",
+    "新酒",
+    "春酒",
+    "夏酒",
+    "秋酒",
     "ひやおろし",
     "秋あがり",
     "秋上がり",
@@ -60,7 +66,7 @@ export function normalizeProductName(value: string) {
 
 function usableName(value: string) {
   const name = cleanProductName(value);
-  if (name.length < 2 || name.length > 300) return null;
+  if (!name.length || name.length > 300) return null;
   if (ignoredNames.has(name.toLocaleLowerCase("ja"))) return null;
   if (/^[\d\s,.，。¥￥円税込%％+\-–—]+$/u.test(name)) return null;
   return name;
@@ -102,15 +108,21 @@ function pushProduct(
   sourceUrl: unknown,
   pageUrl: string,
   method: ExtractionMethod,
+  details: Partial<
+    Pick<ExtractedProduct, "sourceBreweryName" | "pageNumber" | "evidence">
+  > = {},
 ) {
   if (typeof name !== "string") return;
   const cleaned = usableName(name);
   if (!cleaned) return;
   results.push({
     sourceName: cleaned,
+    sourceBreweryName: details.sourceBreweryName ?? null,
     sourceUrl:
       typeof sourceUrl === "string" ? absoluteUrl(sourceUrl, pageUrl) : null,
     pageUrl,
+    pageNumber: details.pageNumber ?? null,
+    evidence: details.evidence ?? cleaned,
     method,
   });
 }
@@ -166,9 +178,58 @@ function extractElements(
     if (!name) return;
     results.push({
       sourceName: name,
+      sourceBreweryName: null,
       sourceUrl: elementUrl(element, pageUrl),
       pageUrl,
+      pageNumber: null,
+      evidence: name,
       method,
+    });
+  });
+  return results;
+}
+
+function extractProfileGroups(
+  $: CheerioAPI,
+  profile: SourceProfile | null,
+  pageUrl: string,
+) {
+  const results: ExtractedProduct[] = [];
+  if (!profile?.itemContainerSelector || !profile.brandSelector) return results;
+  const breweryPattern = profile.breweryPattern
+    ? new RegExp(profile.breweryPattern, "u")
+    : null;
+  const brandSplitPattern = profile.brandSplitPattern
+    ? new RegExp(profile.brandSplitPattern, "u")
+    : null;
+  $(profile.itemContainerSelector).each((_, node) => {
+    const container = $(node);
+    const breweryText = profile.brewerySelector
+      ? container.find(profile.brewerySelector).first().text()
+      : "";
+    const breweryName = breweryText
+      ? cleanProductName(
+          breweryPattern?.exec(breweryText)?.[1] ?? breweryText,
+        ) || null
+      : null;
+    container.find(profile.brandSelector).each((__, brandNode) => {
+      const brand = $(brandNode);
+      const name = elementName(brand);
+      if (!name) return;
+      for (const splitName of brandSplitPattern
+        ? name.split(brandSplitPattern)
+        : [name])
+        pushProduct(
+          results,
+          splitName,
+          elementUrl(brand, pageUrl),
+          pageUrl,
+          "selector",
+          {
+            sourceBreweryName: breweryName,
+            evidence: breweryName ? `${name} / ${breweryName}` : name,
+          },
+        );
     });
   });
   return results;
@@ -178,13 +239,16 @@ function deduplicate(products: ExtractedProduct[]) {
   const byKey = new Map<string, ExtractedProduct>();
   const priority: Record<ExtractionMethod, number> = {
     "json-ld": 4,
+    ai: 4,
     selector: 3,
     "brand-table": 3,
+    category: 3,
+    "pdf-text": 2,
     microdata: 2,
     heuristic: 1,
   };
   for (const product of products) {
-    const key = `${normalizeProductName(product.sourceName)}\n${product.sourceUrl ?? ""}`;
+    const key = `${normalizeProductName(product.sourceName)}\n${normalizeProductName(product.sourceBreweryName ?? "")}`;
     const current = byKey.get(key);
     if (!current || priority[product.method] > priority[current.method])
       byKey.set(key, product);
@@ -202,8 +266,11 @@ function extractBrandTables($: CheerioAPI, pageUrl: string) {
       .map((_, rowNode) => {
         const cells = $(rowNode).find("td");
         if (cells.length < 2) return null;
-        const brandNames = cleanProductName(cells.eq(0).text());
-        const breweryName = cleanProductName(cells.eq(1).text());
+        const brandCell =
+          cells.length >= 3 ? cells.eq(cells.length - 2) : cells.eq(0);
+        const breweryCell = cells.eq(cells.length - 1);
+        const brandNames = cleanProductName(brandCell.text());
+        const breweryName = cleanProductName(breweryCell.text());
         if (
           !brandNames ||
           !breweryName ||
@@ -229,8 +296,43 @@ function extractBrandTables($: CheerioAPI, pageUrl: string) {
     if (brewerySignals / rows.length < 0.4) return;
     for (const row of rows) {
       for (const brandName of row.brandNames.split(/\s+/))
-        pushProduct(results, brandName, null, pageUrl, "brand-table");
+        pushProduct(results, brandName, null, pageUrl, "brand-table", {
+          sourceBreweryName: row.breweryName,
+          evidence: `${row.brandNames} / ${row.breweryName}`,
+        });
     }
+  });
+  return results;
+}
+
+function extractCategoryBrands($: CheerioAPI, pageUrl: string) {
+  const results: ExtractedProduct[] = [];
+  $('link[rel~="chapter"][title], a[data-category][title]').each((_, node) => {
+    const element = $(node);
+    const title = cleanProductName(element.attr("title") ?? "").replace(
+      /\s*\|\s*CATEGORY$/i,
+      "",
+    );
+    if (!title || /味醂|みりん|焼酎|ワイン|ビール|リキュール/.test(title))
+      return;
+    const bracket = title.match(/【([^】]+)】/);
+    if (title.startsWith("【")) return;
+    const breweryName = bracket?.[1].replace(/^\S+\s+/, "").trim() || null;
+    const brandPart = title.replace(/【[^】]*】/g, "").trim();
+    for (const brandName of brandPart
+      .split(/[/／]/)
+      .map((value) => value.trim()))
+      pushProduct(
+        results,
+        brandName,
+        element.attr("href"),
+        pageUrl,
+        "category",
+        {
+          sourceBreweryName: breweryName,
+          evidence: title,
+        },
+      );
   });
   return results;
 }
@@ -239,11 +341,14 @@ export function extractProducts(
   html: string,
   pageUrl: string,
   customSelector?: string,
+  profile: SourceProfile | null = null,
 ) {
   const $ = load(html);
   const products = extractJsonLd($, pageUrl);
+  products.push(...extractProfileGroups($, profile, pageUrl));
   if (customSelector)
     products.push(...extractElements($, customSelector, pageUrl, "selector"));
+  products.push(...extractCategoryBrands($, pageUrl));
   products.push(...extractBrandTables($, pageUrl));
   products.push(
     ...extractElements(
@@ -272,6 +377,21 @@ export function extractProducts(
   return deduplicate(products);
 }
 
+export function extractPdfTextProducts(
+  pages: Array<{ pageNumber: number; text: string }>,
+  pageUrl: string,
+) {
+  const products: ExtractedProduct[] = [];
+  for (const page of pages) {
+    for (const line of page.text.split(/\r?\n/))
+      pushProduct(products, line, null, pageUrl, "pdf-text", {
+        pageNumber: page.pageNumber,
+        evidence: cleanProductName(line),
+      });
+  }
+  return deduplicate(products);
+}
+
 export function paginationLinks(html: string, pageUrl: string) {
   const $ = load(html);
   const links = new Set<string>();
@@ -282,6 +402,7 @@ export function paginationLinks(html: string, pageUrl: string) {
     'a[aria-label*="next" i]',
     '[class*="pagination" i] a',
     '[class*="pager" i] a',
+    ".wp-pagenavi a",
   ];
   $(selectors.join(", ")).each((_, node) => {
     const element = $(node);
@@ -289,23 +410,108 @@ export function paginationLinks(html: string, pageUrl: string) {
       element.attr("aria-label") ?? element.text(),
     ).toLocaleLowerCase("ja");
     const rel = element.attr("rel")?.toLocaleLowerCase("en") ?? "";
+    const insidePager = Boolean(
+      element.closest(
+        '[class*="pagination" i], [class*="pager" i], .wp-pagenavi',
+      ).length,
+    );
     const isNext =
       rel.split(/\s+/).includes("next") ||
       /^(次|次へ|次の.+|next(?:\s+page)?|›|»|>)/i.test(label) ||
-      /次|next/i.test(element.attr("aria-label") ?? "");
+      /次|next/i.test(element.attr("aria-label") ?? "") ||
+      (insidePager && /^\d+$/.test(label));
     if (!isNext) return;
     const url = absoluteUrl(element.attr("href"), pageUrl);
-    if (url) links.add(url);
+    if (url) {
+      const current = new URL(pageUrl);
+      const candidate = new URL(url);
+      if (current.search && !candidate.search) return;
+    }
+    if (url && url !== pageUrl) links.add(url);
   });
-  return [...links];
+  const collected = [...links];
+  return collected.filter((value) => {
+    const url = new URL(value);
+    if (url.search) return true;
+    return !collected.some((otherValue) => {
+      const other = new URL(otherValue);
+      return (
+        other.origin === url.origin &&
+        other.pathname === url.pathname &&
+        Boolean(other.search)
+      );
+    });
+  });
+}
+
+export function canonicalizeCatalogPrefixProducts(
+  products: ExtractedProduct[],
+  catalog: CatalogBrand[],
+) {
+  const catalogByName = new Map<string, CatalogBrand[]>();
+  for (const brand of catalog) {
+    const name = normalizeProductName(brand.name);
+    catalogByName.set(name, [...(catalogByName.get(name) ?? []), brand]);
+  }
+  const uniqueCatalog = [...catalogByName.entries()]
+    .filter(([, brands]) => brands.length === 1)
+    .map(([name, brands]) => ({ name, brand: brands[0] }))
+    .sort((left, right) => right.name.length - left.name.length);
+  const aliases = aliasEntries()
+    .filter(([alias]) => alias.length >= 2)
+    .sort(([left], [right]) => right.length - left.length);
+
+  return products.map((product) => {
+    const leadingToken = cleanProductName(product.sourceName).split(
+      /[\s\u3000()（）[\]［］【】「」『』:：'"“”‘’]+/u,
+    )[0];
+    const normalizedLeadingToken = normalizeProductName(leadingToken ?? "");
+    const alias = aliases.find(([name]) => normalizedLeadingToken === name);
+    const aliasBrands = alias
+      ? catalogByName.get(normalizeProductName(alias[1]))
+      : null;
+    const aliasBrand = aliasBrands?.length === 1 ? aliasBrands[0] : null;
+    const prefixBrand = uniqueCatalog.find(
+      ({ name }) =>
+        !genericSakeTerms.has(name) && normalizedLeadingToken === name,
+    )?.brand;
+    const brand = aliasBrand ?? prefixBrand;
+    if (!brand) return product;
+    return {
+      ...product,
+      sourceName: brand.name,
+      sourceBreweryName: brand.breweryName,
+      evidence: product.evidence
+        ? `${product.evidence}; 商品名: ${product.sourceName}`
+        : `商品名: ${product.sourceName}`,
+    };
+  });
 }
 
 function matchScore(product: ExtractedProduct, brand: CatalogBrand) {
   const sourceForMatch = product.sourceName.replace(/【[^】]*】/g, " ");
-  const productName = normalizeProductName(sourceForMatch);
+  const alias = confirmedAlias(cleanProductName(sourceForMatch));
   const brandName = normalizeProductName(brand.name);
-  if (!brandName || brandName.length < 2) return 0;
-  if (productName === brandName) return 1000 + brandName.length;
+  const aliasName = alias ? normalizeProductName(alias) : "";
+  const productName =
+    aliasName && brandName === aliasName
+      ? aliasName
+      : normalizeProductName(sourceForMatch);
+  if (!brandName) return 0;
+  const sourceBrewery = normalizeProductName(product.sourceBreweryName ?? "");
+  const brewery = brand.breweryName
+    ? normalizeProductName(brand.breweryName)
+    : "";
+  const breweryScore =
+    sourceBrewery &&
+    brewery &&
+    (sourceBrewery === brewery ||
+      sourceBrewery.includes(brewery) ||
+      brewery.includes(sourceBrewery))
+      ? 100
+      : 0;
+  if (productName === brandName) return 1000 + brandName.length + breweryScore;
+  if (brandName.length < 2) return 0;
   if (genericSakeTerms.has(brandName)) return 0;
   if (
     product.method === "brand-table" &&
@@ -324,10 +530,8 @@ function matchScore(product: ExtractedProduct, brand: CatalogBrand) {
   let score = 100 + brandName.length * 2;
   if (startsWithBrand) score += 50;
   if (tokens.some((token) => token === brandName)) score += 25;
-  const brewery = brand.breweryName
-    ? normalizeProductName(brand.breweryName)
-    : "";
   if (brewery.length >= 2 && productName.includes(brewery)) score += 20;
+  score += breweryScore;
   return score;
 }
 
@@ -355,10 +559,15 @@ export function matchProduct(
   const exact = candidates[0].score >= 1000;
   const tied =
     candidates.length > 1 && candidates[0].score === candidates[1].score;
+  const alias = confirmedAlias(
+    cleanProductName(product.sourceName.replace(/【[^】]*】/g, " ")),
+  );
   const matchKind: MatchKind = exact
     ? tied
       ? "ambiguous"
-      : "exact"
+      : alias
+        ? "alias"
+        : "exact"
     : tied
       ? "ambiguous"
       : "suggested";
@@ -397,4 +606,31 @@ export function buildReviewItems(
         a.sourceName.localeCompare(b.sourceName, "ja")
       );
     });
+}
+
+export function autoApproveReviewItems(items: ReviewItem[]) {
+  const approvedBrandIds = new Set<string>();
+  return items.map((item) => {
+    const singleCharacterSafe =
+      normalizeProductName(item.sourceName).length >= 2 ||
+      Boolean(item.sourceBreweryName) ||
+      ["json-ld", "selector", "brand-table", "category", "ai"].includes(
+        item.method,
+      );
+    const safe =
+      item.brandId &&
+      ["exact", "alias"].includes(item.matchKind) &&
+      singleCharacterSafe;
+    const approved = Boolean(safe && !approvedBrandIds.has(item.brandId!));
+    if (approved) approvedBrandIds.add(item.brandId!);
+    return { ...item, approved };
+  });
+}
+
+export function uniqueApprovedReviewItems(items: ReviewItem[]) {
+  return [
+    ...new Map(
+      items.filter((item) => item.approved).map((item) => [item.brandId, item]),
+    ).values(),
+  ];
 }

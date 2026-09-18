@@ -37,6 +37,8 @@ export function BrandFilterControls({
   sort,
   onSortChange,
   sortOptions = defaultSortOptions,
+  emphasizePrefectures = false,
+  emphasizeKana = false,
 }: {
   selectedPrefectures: ReadonlySet<string>;
   onPrefecturesChange: (value: Set<string>) => void;
@@ -47,6 +49,8 @@ export function BrandFilterControls({
   sort: BrandCatalogSort;
   onSortChange: (value: BrandCatalogSort) => void;
   sortOptions?: Array<[BrandCatalogSort, string]>;
+  emphasizePrefectures?: boolean;
+  emphasizeKana?: boolean;
 }) {
   const [prefecturesOpen, setPrefecturesOpen] = useState(false);
   const prefectureOptionsId = useId();
@@ -67,7 +71,7 @@ export function BrandFilterControls({
     <div className="brand-filter-panel">
       <button
         type="button"
-        className="prefecture-filter-toggle"
+        className={`prefecture-filter-toggle${emphasizePrefectures ? " filter-attention" : ""}`}
         aria-expanded={prefecturesOpen}
         aria-controls={prefectureOptionsId}
         aria-label={`都道府県フィルター、${
@@ -87,7 +91,7 @@ export function BrandFilterControls({
       </button>
       <div
         id={prefectureOptionsId}
-        className={`filter-links prefecture-links${prefecturesOpen ? " open" : ""}`}
+        className={`filter-links prefecture-links${prefecturesOpen ? " open" : ""}${emphasizePrefectures ? " filter-attention" : ""}`}
         aria-label="県で絞り込む"
       >
         {prefectures.map((value) => (
@@ -105,7 +109,7 @@ export function BrandFilterControls({
         ))}
       </div>
       <div
-        className="filter-links combined-filter-links kana-links"
+        className={`filter-links combined-filter-links kana-links${emphasizeKana ? " filter-attention" : ""}`}
         aria-label="銘柄・蔵元と頭文字で絞り込む"
       >
         {(["brand", "brewery"] as const).map((value) => (

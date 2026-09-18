@@ -13,6 +13,7 @@ import type { Shop, ShopBrand, ShopComment } from "@/lib/types";
 import type { ShopBrandSummary } from "@/lib/brand-index";
 import { ShopBrandList } from "@/components/shop-brand-list";
 import { ShopComments } from "@/components/shop-comments";
+import { ShopPageTabs } from "@/components/shop-page-tabs";
 import { googleMapsShopUrl } from "@/lib/utils";
 import { safeMapReturnPath } from "@/lib/map-view";
 
@@ -21,10 +22,10 @@ export default async function ShopPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ return_to?: string }>;
+  searchParams: Promise<{ return_to?: string; tab?: string }>;
 }) {
   const { id } = await params;
-  const { return_to: returnTo } = await searchParams;
+  const { return_to: returnTo, tab } = await searchParams;
   const db = await supabase();
   if (!db)
     return (
@@ -100,7 +101,7 @@ export default async function ShopPage({
           )}
           <Link className="button ghost small" href={"/edit/shop/" + id}>
             <Pencil size={16} />
-            編集
+            店舗の編集
           </Link>
           <Link
             className="button ghost small"
@@ -115,28 +116,36 @@ export default async function ShopPage({
         <p className="notice">この酒屋は無効化されています。</p>
       )}
 
-      <div className="shop-content">
-        <section className="card shop-brands-card">
-          {listedBrands.length ? (
-            <ShopBrandList items={brandSummaries} title="取扱銘柄" />
-          ) : (
-            <>
-              <div className="shop-brands-heading">
-                <h2>取扱銘柄</h2>
-                <span className="brand-filter-count">0件</span>
-              </div>
-              <p className="muted">まだ取扱銘柄の登録がありません。</p>
-            </>
-          )}
-        </section>
-      </div>
-
-      <ShopComments
-        shopId={id}
-        comments={(comments ?? []) as ShopComment[]}
-        userId={account.anonymous ? null : (account.user?.id ?? null)}
-        admin={account.admin}
-        ready={configured()}
+      <ShopPageTabs
+        initialTab={tab === "comments" ? "comments" : "brands"}
+        brandCount={listedBrands.length}
+        commentCount={comments?.length ?? 0}
+        brands={
+          <div className="shop-content">
+            <section className="card shop-brands-card">
+              {listedBrands.length ? (
+                <ShopBrandList items={brandSummaries} title="取扱銘柄" />
+              ) : (
+                <>
+                  <div className="shop-brands-heading">
+                    <h2>取扱銘柄</h2>
+                    <span className="brand-filter-count">0件</span>
+                  </div>
+                  <p className="muted">まだ取扱銘柄の登録がありません。</p>
+                </>
+              )}
+            </section>
+          </div>
+        }
+        comments={
+          <ShopComments
+            shopId={id}
+            comments={(comments ?? []) as ShopComment[]}
+            userId={account.anonymous ? null : (account.user?.id ?? null)}
+            admin={account.admin}
+            ready={configured()}
+          />
+        }
       />
 
       {shop.is_active && (

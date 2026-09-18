@@ -7,19 +7,32 @@ import robotsParser from "robots-parser";
 import { z } from "zod";
 import { adminClient, paged } from "./supabase-admin";
 import {
+  autoApproveReviewItems,
   buildReviewItems,
+  canonicalizeCatalogPrefixProducts,
+  extractPdfTextProducts,
   extractProducts,
+  normalizeProductName,
   paginationLinks,
+  uniqueApprovedReviewItems,
 } from "./shop-products/parser";
+import { extractPdfPages } from "./shop-products/pdf";
+import {
+  profileAllowsName,
+  sourceProfileFor,
+  type SourceProfile,
+} from "./shop-products/profiles";
 import type {
   CatalogBrand,
   CrawlManifest,
   CrawledPage,
+  ExtractedProduct,
   ShopProductReview,
+  StandardExtraction,
 } from "./shop-products/types";
 
 const userAgent = "SAKETAN-ShopImporter";
-const maximumResponseBytes = 5 * 1024 * 1024;
+const maximumResponseBytes = 25 * 1024 * 1024;
 
 type Phase = "fetch" | "parse" | "import";
 type Options = {
@@ -30,10 +43,14 @@ type Options = {
   maxPages: number;
   delayMs: number;
   force: boolean;
+  auto: boolean;
+  dryRun: boolean;
+  extracted?: string;
+  profile: SourceProfile | null;
 };
 
 const reviewSchema = z.object({
-  version: z.literal(1),
+  version: z.union([z.literal(1), z.literal(2)]),
   shop: z.object({ id: z.uuid(), name: z.string().min(1) }),
   sourceUrl: z.url(),
   fetchedAt: z.iso.datetime(),
@@ -43,16 +60,34 @@ const reviewSchema = z.object({
   items: z.array(
     z.object({
       sourceName: z.string().min(1).max(300),
+      sourceBreweryName: z.string().nullable().optional().default(null),
       sourceUrl: z.url().nullable(),
       pageUrl: z.url(),
+      pageNumber: z
+        .number()
+        .int()
+        .positive()
+        .nullable()
+        .optional()
+        .default(null),
+      evidence: z.string().nullable().optional().default(null),
       method: z.enum([
         "json-ld",
         "microdata",
         "selector",
         "brand-table",
+        "category",
+        "pdf-text",
+        "ai",
         "heuristic",
       ]),
-      matchKind: z.enum(["exact", "suggested", "ambiguous", "unmatched"]),
+      matchKind: z.enum([
+        "exact",
+        "alias",
+        "suggested",
+        "ambiguous",
+        "unmatched",
+      ]),
       candidates: z.array(
         z.object({
           brandId: z.uuid(),
@@ -67,6 +102,32 @@ const reviewSchema = z.object({
   ),
 });
 
+const standardExtractionSchema = z.object({
+  version: z.literal(1),
+  sourceUrl: z.url(),
+  generatedAt: z.iso.datetime(),
+  items: z.array(
+    z.object({
+      sourceName: z.string().min(1).max(300),
+      sourceBreweryName: z.string().min(1).max(200).nullable(),
+      sourceUrl: z.url().nullable(),
+      pageUrl: z.url(),
+      pageNumber: z.number().int().positive().nullable(),
+      evidence: z.string().max(1000).nullable(),
+      method: z.enum([
+        "json-ld",
+        "microdata",
+        "selector",
+        "brand-table",
+        "category",
+        "pdf-text",
+        "ai",
+        "heuristic",
+      ]),
+    }),
+  ),
+});
+
 function usage(): never {
   throw new Error(
     [
@@ -75,6 +136,10 @@ function usage(): never {
       "  npm run import:shop-products -- --shop-id=<UUID> --url=<商品一覧URL> --parse [--selector=<CSS>]",
       "  review.json の approved を確認後:",
       "  npm run import:shop-products -- --shop-id=<UUID> --url=<商品一覧URL> --import",
+      "  確実な一致だけ自動登録し、例外をレポート:",
+      "  npm run import:shop-products -- --shop-id=<UUID> --url=<一覧URLまたはPDF> --auto",
+      "  登録せず結果だけ確認する場合は --auto --dry-run を使います。",
+      "  AI等で作成した共通形式を使う場合は --extracted=<JSON> を追加します。",
       "  --all は安全のため fetch と parse だけを実行し、importは行いません。",
     ].join("\n"),
   );
@@ -119,25 +184,44 @@ function parseOptions(): Options {
   }
   if (!["http:", "https:"].includes(parsedUrl.protocol)) usage();
   parsedUrl.hash = "";
+  const profile = sourceProfileFor(parsedUrl.toString());
 
   const all = argumentsList.includes("--all");
-  const phases: Phase[] = all
-    ? ["fetch", "parse"]
-    : (["fetch", "parse", "import"] as const).filter((phase) =>
-        argumentsList.includes("--" + phase),
-      );
-  if ((!all && phases.length !== 1) || (all && phases.length !== 2)) usage();
+  const auto = argumentsList.includes("--auto");
+  const dryRun = argumentsList.includes("--dry-run");
+  const extracted = selectedValue(argumentsList, "--extracted") ?? undefined;
+  const phases: Phase[] = auto
+    ? extracted
+      ? dryRun
+        ? ["parse"]
+        : ["parse", "import"]
+      : dryRun
+        ? ["fetch", "parse"]
+        : ["fetch", "parse", "import"]
+    : all
+      ? ["fetch", "parse"]
+      : (["fetch", "parse", "import"] as const).filter((phase) =>
+          argumentsList.includes("--" + phase),
+        );
+  if (
+    (!auto && !all && phases.length !== 1) ||
+    (!auto && all && phases.length !== 2)
+  )
+    usage();
 
   return {
     shopId,
     sourceUrl: parsedUrl.toString(),
     phases,
-    selector: selectedValue(argumentsList, "--selector") ?? undefined,
+    selector:
+      selectedValue(argumentsList, "--selector") ??
+      profile?.selector ??
+      undefined,
     maxPages: integerOption(
       selectedValue(argumentsList, "--max-pages"),
-      5,
+      profile?.maxPages ?? (auto ? 50 : 5),
       1,
-      50,
+      200,
     ),
     delayMs: integerOption(
       selectedValue(argumentsList, "--delay-ms"),
@@ -145,7 +229,11 @@ function parseOptions(): Options {
       1_000,
       30_000,
     ),
-    force: argumentsList.includes("--force"),
+    force: argumentsList.includes("--force") || auto,
+    auto,
+    dryRun,
+    extracted,
+    profile,
   };
 }
 
@@ -164,7 +252,11 @@ function artifactPaths(options: Options) {
     raw: resolve(root, "raw"),
     manifest: resolve(root, "manifest.json"),
     parsed: resolve(root, "parsed.json"),
+    extracted: resolve(root, "extracted.json"),
     review: resolve(root, "review.json"),
+    reportJson: resolve(root, "report.json"),
+    reportMarkdown: resolve(root, "report.md"),
+    pdfText: resolve(root, "pdf-text.json"),
   };
 }
 
@@ -259,7 +351,8 @@ async function fetchBytes(value: string, maximumBytes = maximumResponseBytes) {
       redirect: "manual",
       headers: {
         "User-Agent": userAgent + "/0.1",
-        Accept: "text/html,application/xhtml+xml,text/plain;q=0.8",
+        Accept:
+          "text/html,application/xhtml+xml,application/pdf,text/plain;q=0.8",
       },
       signal: AbortSignal.timeout(30_000),
     });
@@ -282,7 +375,18 @@ async function fetchBytes(value: string, maximumBytes = maximumResponseBytes) {
 }
 
 function decodeHtml(bytes: Uint8Array, contentType: string) {
-  const charset = contentType.match(/charset\s*=\s*["']?([^;"'\s]+)/i)?.[1];
+  const headerCharset = contentType.match(
+    /charset\s*=\s*["']?([^;"'\s]+)/i,
+  )?.[1];
+  const beginning = new TextDecoder("windows-1252").decode(
+    bytes.slice(0, 4096),
+  );
+  const metaCharset =
+    beginning.match(/<meta[^>]+charset\s*=\s*["']?([^\s"'>;]+)/i)?.[1] ??
+    beginning.match(
+      /<meta[^>]+content=["'][^"']*charset\s*=\s*([^\s"'>;]+)/i,
+    )?.[1];
+  const charset = headerCharset ?? metaCharset;
   try {
     return new TextDecoder(charset || "utf-8").decode(bytes);
   } catch {
@@ -338,7 +442,24 @@ async function runFetch(options: Options) {
     if (robots.isAllowed(url, userAgent) === false)
       throw new Error("robots.txtにより取得できません: " + url);
     if (pages.length) await sleep(options.delayMs);
-    const { response, bytes, finalUrl } = await fetchBytes(url);
+    let fetched: Awaited<ReturnType<typeof fetchBytes>> | null = null;
+    for (let attempt = 1; attempt <= 4; attempt++) {
+      fetched = await fetchBytes(url);
+      if (
+        fetched.response.ok ||
+        !(
+          fetched.response.status === 429 ||
+          fetched.response.status >= 500
+        ) ||
+        attempt === 4
+      )
+        break;
+      console.warn(
+        `一時エラー HTTP ${fetched.response.status}。再試行 ${attempt}/3: ${url}`,
+      );
+      await sleep(options.delayMs * attempt);
+    }
+    const { response, bytes, finalUrl } = fetched!;
     if (!response.ok)
       throw new Error(
         "ページ取得に失敗しました: HTTP " + response.status + " " + url,
@@ -349,8 +470,26 @@ async function runFetch(options: Options) {
           finalUrl,
       );
     const contentType = response.headers.get("content-type") ?? "";
-    if (contentType && !/html|xhtml/i.test(contentType))
-      throw new Error("HTMLではない応答です: " + contentType);
+    const pdf =
+      /application\/pdf/i.test(contentType) ||
+      /\.pdf(?:$|[?#])/i.test(finalUrl);
+    if (contentType && !pdf && !/html|xhtml/i.test(contentType))
+      throw new Error("HTMLまたはPDFではない応答です: " + contentType);
+    if (pdf) {
+      if (pages.length)
+        throw new Error("HTMLのページ送り先にPDFが含まれています: " + finalUrl);
+      const file = "001.pdf";
+      await atomicWrite(resolve(output.raw, file), bytes);
+      pages.push({
+        url: finalUrl,
+        file,
+        fetchedAt: new Date().toISOString(),
+        contentType: contentType || "application/pdf",
+        sha256: sha256(bytes),
+      });
+      console.log("fetch PDF: " + finalUrl);
+      break;
+    }
     const html = decodeHtml(bytes, contentType);
     const file = String(pages.length + 1).padStart(3, "0") + ".html";
     await atomicWrite(resolve(output.raw, file), html);
@@ -375,9 +514,17 @@ async function runFetch(options: Options) {
     sourceUrl: options.sourceUrl,
     generatedAt: new Date().toISOString(),
     pages,
+    truncated: pending.length > 0,
   };
   await writeJson(output.manifest, manifest);
-  console.log("取得完了: " + pages.length + "ページ\n" + output.manifest);
+  console.log(
+    "取得完了: " +
+      pages.length +
+      "ページ" +
+      (manifest.truncated ? "（上限到達。続きがあります）" : "") +
+      "\n" +
+      output.manifest,
+  );
 }
 
 async function loadShopAndCatalog(shopId: string) {
@@ -422,11 +569,140 @@ async function loadShopAndCatalog(shopId: string) {
   return { shop, catalog };
 }
 
+function extractionKey(product: ExtractedProduct) {
+  return `${normalizeProductName(product.sourceName)}\n${normalizeProductName(product.sourceBreweryName ?? "")}`;
+}
+
+function uniqueExtractions(products: ExtractedProduct[]) {
+  return [
+    ...new Map(
+      products.map((product) => [extractionKey(product), product]),
+    ).values(),
+  ];
+}
+
+function markdownCell(value: string | null | undefined) {
+  return (value || "—").replace(/\|/g, "\\|").replace(/\r?\n/g, " ");
+}
+
+async function writeReport(
+  options: Options,
+  summary: Record<string, unknown>,
+  review: ShopProductReview,
+  importResult?: unknown,
+) {
+  const output = artifactPaths(options);
+  const highConfidence = review.items.filter((item) =>
+    ["exact", "alias"].includes(item.matchKind),
+  );
+  const approvedBrandIds = new Set(
+    review.items
+      .filter((item) => item.approved && item.brandId)
+      .map((item) => item.brandId),
+  );
+  const duplicateMatches = highConfidence.filter(
+    (item) =>
+      item.brandId && !item.approved && approvedBrandIds.has(item.brandId),
+  );
+  const needsReview = review.items.filter(
+    (item) =>
+      !item.approved &&
+      !(
+        item.brandId &&
+        ["exact", "alias"].includes(item.matchKind) &&
+        duplicateMatches.includes(item)
+      ),
+  );
+  const report = {
+    ...summary,
+    importResult: importResult ?? null,
+    duplicateMatches: duplicateMatches.map((item) => ({
+      sourceName: item.sourceName,
+      sourceBreweryName: item.sourceBreweryName,
+      brandId: item.brandId,
+    })),
+    needsReview: needsReview.map((item) => ({
+      sourceName: item.sourceName,
+      sourceBreweryName: item.sourceBreweryName,
+      pageUrl: item.pageUrl,
+      pageNumber: item.pageNumber,
+      reason: item.matchKind,
+      candidates: item.candidates,
+    })),
+  };
+  await writeJson(output.reportJson, report);
+
+  const lines = [
+    `# ${review.shop.name} 銘柄取込レポート`,
+    "",
+    `- 取得元: ${review.sourceUrl}`,
+    `- 生成日時: ${review.generatedAt}`,
+    `- 抽出件数: ${String(summary.extracted ?? 0)}`,
+    `- 抽出時の重複: ${String(summary.sourceDuplicates ?? 0)}`,
+    `- 自動登録対象: ${String(summary.autoApproved ?? 0)}`,
+    `- 同一銘柄への集約: ${String(summary.consolidatedDuplicates ?? 0)}`,
+    `- 要確認: ${needsReview.length}`,
+  ];
+  if (importResult) {
+    lines.push("", "## 登録結果", "", "```json");
+    lines.push(JSON.stringify(importResult, null, 2), "```");
+  }
+  lines.push("", "## 登録できなかった銘柄", "");
+  if (!needsReview.length) lines.push("なし");
+  else {
+    lines.push("| 銘柄 | 蔵名 | 理由 | 候補 | 出典 |", "|---|---|---|---|---|");
+    for (const item of needsReview) {
+      const candidates = item.candidates
+        .map(
+          (candidate) =>
+            `${candidate.brandName}${candidate.breweryName ? ` (${candidate.breweryName})` : ""}`,
+        )
+        .join(", ");
+      const location = item.pageNumber
+        ? `${item.pageUrl} PDF ${item.pageNumber}ページ`
+        : item.pageUrl;
+      lines.push(
+        `| ${markdownCell(item.sourceName)} | ${markdownCell(item.sourceBreweryName)} | ${item.matchKind} | ${markdownCell(candidates)} | ${markdownCell(location)} |`,
+      );
+    }
+  }
+  await atomicWrite(output.reportMarkdown, lines.join("\n") + "\n");
+}
+
 async function runParse(options: Options) {
   const input = artifactPaths(options);
-  const manifest = JSON.parse(
-    await readFile(input.manifest, "utf8"),
-  ) as CrawlManifest;
+  await mkdir(input.root, { recursive: true });
+  let externalExtraction: z.infer<typeof standardExtractionSchema> | null =
+    null;
+  let manifest: CrawlManifest;
+  if (options.extracted) {
+    const extractionText = await readFile(resolve(options.extracted), "utf8");
+    externalExtraction = standardExtractionSchema.parse(
+      JSON.parse(extractionText),
+    );
+    if (externalExtraction.sourceUrl !== options.sourceUrl)
+      throw new Error("共通抽出JSONのsourceUrlが指定URLと一致しません");
+    const now = new Date().toISOString();
+    manifest = {
+      version: 1,
+      sourceUrl: options.sourceUrl,
+      generatedAt: now,
+      pages: [
+        {
+          url: options.sourceUrl,
+          file: "external-extraction.json",
+          fetchedAt: now,
+          contentType: "application/json",
+          sha256: sha256(extractionText),
+        },
+      ],
+    };
+    await writeJson(input.manifest, manifest);
+  } else {
+    manifest = JSON.parse(
+      await readFile(input.manifest, "utf8"),
+    ) as CrawlManifest;
+  }
   if (manifest.sourceUrl !== options.sourceUrl)
     throw new Error("manifest.jsonの取得元URLが指定URLと一致しません");
   if (!options.force) {
@@ -440,52 +716,92 @@ async function runParse(options: Options) {
       if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
     }
   }
-  const products = [];
-  for (const page of manifest.pages) {
-    const html = await readFile(resolve(input.raw, page.file), "utf8");
-    products.push(...extractProducts(html, page.url, options.selector));
+  let products: ExtractedProduct[] = [];
+  if (externalExtraction) {
+    products = externalExtraction.items;
+  } else {
+    for (const page of manifest.pages) {
+      if (/pdf/i.test(page.contentType) || page.file.endsWith(".pdf")) {
+        const bytes = new Uint8Array(
+          await readFile(resolve(input.raw, page.file)),
+        );
+        const pdfPages = await extractPdfPages(bytes);
+        await writeJson(input.pdfText, pdfPages);
+        products.push(...extractPdfTextProducts(pdfPages, page.url));
+      } else {
+        const html = await readFile(resolve(input.raw, page.file), "utf8");
+        products.push(
+          ...extractProducts(html, page.url, options.selector, options.profile),
+        );
+      }
+    }
   }
-  const uniqueProducts = [
-    ...new Map(
-      products.map((product) => [
-        product.sourceName + "\n" + (product.sourceUrl ?? product.pageUrl),
-        product,
-      ]),
-    ).values(),
-  ];
-  if (!uniqueProducts.length)
+  const uniqueProducts = uniqueExtractions(products);
+  const filteredProducts = uniqueProducts.filter((product) =>
+    profileAllowsName(options.profile, product.sourceName),
+  );
+  if (!filteredProducts.length)
     throw new Error(
       "商品候補を抽出できませんでした。商品名のCSSセレクタを --selector で指定してください。",
     );
   const { shop, catalog } = await loadShopAndCatalog(options.shopId);
-  const items = buildReviewItems(uniqueProducts, catalog);
+  const productsForMatching = options.profile?.canonicalizeBrandPrefix
+    ? canonicalizeCatalogPrefixProducts(filteredProducts, catalog)
+    : filteredProducts;
+  const matchedItems = buildReviewItems(productsForMatching, catalog);
+  const items = options.auto
+    ? autoApproveReviewItems(matchedItems)
+    : matchedItems;
   const contentSha256 = sha256(
     manifest.pages.map((page) => page.sha256).join("\n"),
   );
   const review: ShopProductReview = {
-    version: 1,
+    version: 2,
     shop,
     sourceUrl: manifest.sourceUrl,
     fetchedAt: manifest.pages.at(-1)?.fetchedAt ?? manifest.generatedAt,
     contentSha256,
     generatedAt: new Date().toISOString(),
-    instructions:
-      "登録する項目だけ approved を true にしてください。brandIdは候補を確認し、必要なら正しい既存銘柄UUIDへ変更してください。未登録銘柄は追加せず別途報告してください。",
+    instructions: options.auto
+      ? "完全一致または確認済み表記揺れだけを自動承認済みです。suggested、ambiguous、unmatchedは登録せずreport.mdへ出力しています。"
+      : "登録する項目だけ approved を true にしてください。brandIdは候補を確認し、必要なら正しい既存銘柄UUIDへ変更してください。未登録銘柄は追加せず別途報告してください。",
     items,
   };
+  const extraction: StandardExtraction = {
+    version: 1,
+    sourceUrl: manifest.sourceUrl,
+    generatedAt: new Date().toISOString(),
+    items: filteredProducts,
+  };
+  const highConfidenceCount = items.filter((item) =>
+    ["exact", "alias"].includes(item.matchKind),
+  ).length;
   const summary = {
     shop,
     sourceUrl: manifest.sourceUrl,
     pages: manifest.pages.length,
+    pageLimitReached: Boolean(manifest.truncated),
+    extractedBeforeDeduplication: products.length,
     extracted: items.length,
+    sourceDuplicates: products.length - uniqueProducts.length,
+    profileExcluded: uniqueProducts.length - filteredProducts.length,
     exact: items.filter((item) => item.matchKind === "exact").length,
+    alias: items.filter((item) => item.matchKind === "alias").length,
     suggested: items.filter((item) => item.matchKind === "suggested").length,
     ambiguous: items.filter((item) => item.matchKind === "ambiguous").length,
     unmatched: items.filter((item) => item.matchKind === "unmatched").length,
+    autoApproved: items.filter((item) => item.approved).length,
+    consolidatedDuplicates: options.auto
+      ? highConfidenceCount - items.filter((item) => item.approved).length
+      : 0,
     selector: options.selector ?? null,
+    externalExtraction: options.extracted ?? null,
+    sourceProfile: options.profile?.name ?? null,
   };
+  await writeJson(input.extracted, extraction);
   await writeJson(input.parsed, summary);
   await writeJson(input.review, review);
+  await writeReport(options, summary, review);
   console.log(
     JSON.stringify(summary, null, 2) + "\n\n確認ファイル: " + input.review,
   );
@@ -493,20 +809,28 @@ async function runParse(options: Options) {
 
 async function runImport(options: Options) {
   const input = artifactPaths(options);
-  const review = reviewSchema.parse(
+  const parsedReview = reviewSchema.parse(
     JSON.parse(await readFile(input.review, "utf8")),
   );
+  const review: ShopProductReview = { ...parsedReview, version: 2 };
   if (
     review.shop.id !== options.shopId ||
     review.sourceUrl !== options.sourceUrl
   )
     throw new Error("review.jsonの店舗またはURLが指定内容と一致しません");
-  const approved = review.items.filter((item) => item.approved);
-  if (!approved.length)
+  const uniqueApproved = uniqueApprovedReviewItems(review.items);
+  if (!uniqueApproved.length) {
+    if (options.auto) {
+      console.log(
+        "自動登録できる確実な一致はありませんでした。要確認項目をreport.mdに出力しました。",
+      );
+      return null;
+    }
     throw new Error(
       "approved: true の項目がありません。review.jsonを確認してください。",
     );
-  const missingBrand = approved.find((item) => !item.brandId);
+  }
+  const missingBrand = uniqueApproved.find((item) => !item.brandId);
   if (missingBrand)
     throw new Error(
       "承認済み項目にbrandIdがありません: " + missingBrand.sourceName,
@@ -517,7 +841,7 @@ async function runImport(options: Options) {
     p_source_url: review.sourceUrl,
     p_fetched_at: review.fetchedAt,
     p_content_sha256: review.contentSha256,
-    p_items: approved.map((item) => ({
+    p_items: uniqueApproved.map((item) => ({
       brand_id: item.brandId,
       source_name: item.sourceName,
       source_url: item.sourceUrl ?? item.pageUrl,
@@ -529,6 +853,13 @@ async function runImport(options: Options) {
         "\n先に npm run db:migrate で最新migrationを適用してください。",
     );
   console.log("一括登録完了:\n" + JSON.stringify(data, null, 2));
+  const summary = JSON.parse(await readFile(input.parsed, "utf8")) as Record<
+    string,
+    unknown
+  >;
+  await writeReport(options, summary, review, data);
+  console.log("レポート: " + input.reportMarkdown);
+  return data;
 }
 
 async function main() {

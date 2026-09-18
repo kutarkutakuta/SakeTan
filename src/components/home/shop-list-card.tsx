@@ -86,7 +86,7 @@ export function ShopListCard({
             onClick={onSelect}
             onNavigate={onShopNavigate}
           >
-            詳細
+            詳しく見る
             <ChevronRight size={16} strokeWidth={2} aria-hidden="true" />
           </Link>
         </div>

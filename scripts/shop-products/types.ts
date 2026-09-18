@@ -1,5 +1,12 @@
 export type ExtractionMethod =
-  "json-ld" | "microdata" | "selector" | "brand-table" | "heuristic";
+  | "json-ld"
+  | "microdata"
+  | "selector"
+  | "brand-table"
+  | "category"
+  | "pdf-text"
+  | "ai"
+  | "heuristic";
 
 export type CrawledPage = {
   url: string;
@@ -14,13 +21,24 @@ export type CrawlManifest = {
   sourceUrl: string;
   generatedAt: string;
   pages: CrawledPage[];
+  truncated?: boolean;
 };
 
 export type ExtractedProduct = {
   sourceName: string;
+  sourceBreweryName?: string | null;
   sourceUrl: string | null;
   pageUrl: string;
+  pageNumber?: number | null;
+  evidence?: string | null;
   method: ExtractionMethod;
+};
+
+export type StandardExtraction = {
+  version: 1;
+  sourceUrl: string;
+  generatedAt: string;
+  items: ExtractedProduct[];
 };
 
 export type CatalogBrand = {
@@ -37,7 +55,8 @@ export type BrandMatch = {
   score: number;
 };
 
-export type MatchKind = "exact" | "suggested" | "ambiguous" | "unmatched";
+export type MatchKind =
+  "exact" | "alias" | "suggested" | "ambiguous" | "unmatched";
 
 export type ReviewItem = ExtractedProduct & {
   matchKind: MatchKind;
@@ -47,7 +66,7 @@ export type ReviewItem = ExtractedProduct & {
 };
 
 export type ShopProductReview = {
-  version: 1;
+  version: 2;
   shop: { id: string; name: string };
   sourceUrl: string;
   fetchedAt: string;

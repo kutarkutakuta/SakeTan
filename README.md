@@ -107,18 +107,27 @@ npm run import:sakeno-shops -- --import
 
 ### 6. 店舗公式サイトの商品一覧import
 
-店舗公式サイトの商品一覧URLからHTMLを取得し、既存銘柄との照合結果を
-review.json で人が確認してから取扱銘柄を一括登録できます。通常のアプリ処理とは
-分離した管理者向けCLIです。
+店舗公式サイトの商品一覧URLまたはPDFから銘柄を取得し、既存銘柄との照合結果を
+一括登録できる管理者向けCLIです。通常のアプリ処理とは分離しています。
+
+通常は次の自動処理を使います。複数ページを巡回し、完全一致または確認済み表記揺れ
+だけを銘柄UUID単位で重複除去して登録します。登録できない銘柄は蔵名・候補・出典と
+ともに `report.md` へ出力します。
+
+    npm run import:shop-products -- --shop-id=<店舗UUID> --url=<一覧URLまたはPDF> --auto
+
+手動確認が必要な場合は従来どおり段階実行できます。
 
     npm run import:shop-products -- --shop-id=<店舗UUID> --url=<商品一覧URL> --fetch
     npm run import:shop-products -- --shop-id=<店舗UUID> --url=<商品一覧URL> --parse
     # review.json で approved: true にした項目だけ登録
     npm run import:shop-products -- --shop-id=<店舗UUID> --url=<商品一覧URL> --import
 
-静的HTML、同一ドメインのページ送り、最大50ページに対応します。未登録銘柄は
+静的HTML、PDF、同一ドメインのページ送りに対応し、`--max-pages` で最大200ページ
+まで指定できます。未登録銘柄は
 自動作成せず、ページから消えた銘柄も自動で取扱なしにしません。CSS構造が特殊な
-サイトは --selector で商品名要素を指定できます。詳細は
+サイトは --selector で商品名要素を指定できます。JavaScript描画や画像PDFは、
+AI・ブラウザーで作成した共通抽出JSONを `--extracted` で渡せます。詳細は
 docs/shop-product-import.md を参照してください。
 
 ### 7. Google Mapsと店舗位置

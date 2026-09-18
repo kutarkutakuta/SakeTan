@@ -13,7 +13,11 @@ import {
 } from "../src/lib/validation";
 import { trustedRequestOrigin } from "../src/lib/request-origin";
 import { featuredShopBrands } from "../src/lib/shop-brand-order";
-import { kanaGroup, sortShopBrands } from "../src/lib/brand-index";
+import {
+  brandFilterCriteriaLabel,
+  kanaGroup,
+  sortShopBrands,
+} from "../src/lib/brand-index";
 import { contributionAchievement } from "../src/lib/contribution";
 import {
   loginProviderForIdentity,
@@ -285,6 +289,21 @@ test("brand indexes handle hiragana, katakana and unregistered readings", () => 
   assert.equal(kanaGroup("さくら"), "さ");
   assert.equal(kanaGroup("ハナビ"), "は");
   assert.equal(kanaGroup("獺祭"), "other");
+});
+
+test("missing brand criteria include text, prefectures, and kana filters", () => {
+  assert.equal(
+    brandFilterCriteriaLabel(
+      " 十四代 ",
+      new Set(["山形県", "宮城県"]),
+      new Set(["さ", "other"]),
+    ),
+    "「十四代」「宮城」「山形」「さ」「他」",
+  );
+  assert.equal(
+    brandFilterCriteriaLabel("", new Set(["長野県"]), new Set(["あ"])),
+    "「長野」「あ」",
+  );
 });
 
 test("shop brand status action accepts only the three public statuses", () => {

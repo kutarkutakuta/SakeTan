@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "sourceUrl": "https://example.com/sake/",
+  "generatedAt": "2026-09-17T00:00:00.000Z",
+  "items": [
+    {
+      "sourceName": "寒菊",
+      "sourceBreweryName": "寒菊銘醸",
+      "sourceUrl": "https://example.com/sake/kankiku",
+      "pageUrl": "https://example.com/sake/",
+      "pageNumber": null,
+      "evidence": "寒菊 / 千葉県 / 寒菊銘醸",
+      "method": "ai"
+    }
+  ]
+}

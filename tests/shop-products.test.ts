@@ -1,16 +1,24 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  autoApproveReviewItems,
   buildReviewItems,
+  canonicalizeCatalogPrefixProducts,
+  extractPdfTextProducts,
   extractProducts,
   matchProduct,
   normalizeProductName,
   paginationLinks,
+  uniqueApprovedReviewItems,
 } from "../scripts/shop-products/parser";
 import type {
   CatalogBrand,
   ExtractedProduct,
 } from "../scripts/shop-products/types";
+import {
+  profileAllowsName,
+  sourceProfileFor,
+} from "../scripts/shop-products/profiles";
 
 const catalog: CatalogBrand[] = [
   {
@@ -40,8 +48,11 @@ test("shop product parser prefers structured product data and removes duplicates
   assert.deepEqual(products, [
     {
       sourceName: "獺祭 純米大吟醸45 720ml",
+      sourceBreweryName: null,
       sourceUrl: "https://shop.example/products/dassai-45",
       pageUrl: "https://shop.example/items",
+      pageNumber: null,
+      evidence: "獺祭 純米大吟醸45 720ml",
       method: "json-ld",
     },
   ]);
@@ -56,11 +67,115 @@ test("shop product parser supports a site-specific selector", () => {
   assert.deepEqual(products, [
     {
       sourceName: "写楽 純米吟醸",
+      sourceBreweryName: null,
       sourceUrl: "https://shop.example/p/1",
       pageUrl: "https://shop.example/list",
+      pageNumber: null,
+      evidence: "写楽 純米吟醸",
       method: "selector",
     },
   ]);
+});
+
+test("shop product parser reads storefront categories with brewery context", () => {
+  const products = extractProducts(
+    '<link rel="chapter" href="/?category_id=1" title="鶴齢/雪男【新潟 青木酒造】 | CATEGORY">' +
+      '<link rel="chapter" href="/?category_id=2" title="クラフトビール | CATEGORY">',
+    "https://shop.example/",
+  );
+  assert.deepEqual(
+    products.map((product) => ({
+      name: product.sourceName,
+      brewery: product.sourceBreweryName,
+      method: product.method,
+    })),
+    [
+      { name: "雪男", brewery: "青木酒造", method: "category" },
+      { name: "鶴齢", brewery: "青木酒造", method: "category" },
+    ],
+  );
+});
+
+test("source profiles reuse storefront exclusions", () => {
+  const profile = sourceProfileFor("https://sample.stores.jp/items");
+  assert.equal(profile?.name, "stores-category-navigation");
+  assert.equal(profileAllowsName(profile, "風の森"), true);
+  assert.equal(profileAllowsName(profile, "クラフトビール"), false);
+});
+
+test("source profiles can extract grouped brand and brewery rows", () => {
+  const products = extractProducts(
+    '<section class="maker"><p class="brewery">玉泉堂酒造</p><ul><li class="brand">醴泉</li></ul></section>',
+    "https://shop.example/brands",
+    undefined,
+    {
+      name: "grouped-test",
+      itemContainerSelector: ".maker",
+      brandSelector: ".brand",
+      brewerySelector: ".brewery",
+    },
+  );
+  assert.equal(products[0].sourceName, "醴泉");
+  assert.equal(products[0].sourceBreweryName, "玉泉堂酒造");
+});
+
+test("source profiles can split multiple published brands in one row", () => {
+  const products = extractProducts(
+    '<table><tbody><tr><td class="brewery">青木酒造</td><td class="brand">鶴齢、雪男</td></tr></tbody></table>',
+    "https://shop.example/brands",
+    undefined,
+    {
+      name: "split-brand-test",
+      itemContainerSelector: "tbody tr",
+      brandSelector: ".brand",
+      brandSplitPattern: "[、,，]",
+      brewerySelector: ".brewery",
+    },
+  );
+  assert.deepEqual(
+    products.map((product) => [
+      product.sourceName,
+      product.sourceBreweryName,
+    ]),
+    [
+      ["雪男", "青木酒造"],
+      ["鶴齢", "青木酒造"],
+    ],
+  );
+});
+
+test("source profiles can extract a brewery name from surrounding text", () => {
+  const products = extractProducts(
+    '<article><div class="brand">花巴 水酛純米 秋上がり</div><p class="details">花巴 水酛純米\n奈良県　　美吉野醸造\n720ml</p></article>',
+    "https://shop.example/sake",
+    undefined,
+    {
+      name: "brewery-pattern-test",
+      itemContainerSelector: "article",
+      brandSelector: ".brand",
+      brewerySelector: ".details",
+      breweryPattern: "(?:奈良県)[\\s　]+([^\\r\\n]+)",
+    },
+  );
+  assert.equal(products[0].sourceName, "花巴 水酛純米 秋上がり");
+  assert.equal(products[0].sourceBreweryName, "美吉野醸造");
+});
+
+test("PDF text extraction keeps page evidence and removes repeated lines", () => {
+  const products = extractPdfTextProducts(
+    [
+      { pageNumber: 1, text: "獺祭\n写楽" },
+      { pageNumber: 2, text: "獺祭\n" },
+    ],
+    "https://shop.example/list.pdf",
+  );
+  assert.deepEqual(
+    products.map((product) => [product.sourceName, product.pageNumber]),
+    [
+      ["写楽", 1],
+      ["獺祭", 1],
+    ],
+  );
 });
 
 test("shop product parser recognizes dense brand and brewery tables", () => {
@@ -106,6 +221,38 @@ test("pagination follows only links identified as next", () => {
   assert.deepEqual(links, ["https://shop.example/items?page=2"]);
 });
 
+test("pagination follows numbered links in WordPress pagenavi", () => {
+  const links = paginationLinks(
+    '<div class="wp-pagenavi" role="navigation">' +
+      '<span class="current">1</span>' +
+      '<a class="page larger" href="/page/2/?catnum=2">2</a>' +
+      '<a class="last" href="/page/88/?catnum=2">88</a>' +
+      "</div>",
+    "https://shop.example/?catnum=2",
+  );
+  assert.deepEqual(links, [
+    "https://shop.example/page/2/?catnum=2",
+    "https://shop.example/page/88/?catnum=2",
+  ]);
+});
+
+test("pagination prefers a filtered page link over an unfiltered canonical next link", () => {
+  const links = paginationLinks(
+    '<link rel="next" href="https://shop.example/page/3/">' +
+      '<div class="wp-pagenavi"><a href="/page/3/?catnum=2">3</a></div>',
+    "https://shop.example/page/2/?catnum=2",
+  );
+  assert.deepEqual(links, ["https://shop.example/page/3/?catnum=2"]);
+});
+
+test("pagination does not leave a filtered result through an unfiltered next link", () => {
+  const links = paginationLinks(
+    '<link rel="next" href="https://shop.example/page/89/">',
+    "https://shop.example/page/88/?catnum=2",
+  );
+  assert.deepEqual(links, []);
+});
+
 test("brand matching distinguishes exact, suggested, and unmatched names", () => {
   const product = (sourceName: string): ExtractedProduct => ({
     sourceName,
@@ -123,6 +270,83 @@ test("brand matching distinguishes exact, suggested, and unmatched names", () =>
     "unmatched",
   );
   assert.equal(normalizeProductName(" 獺祭・純米大吟醸 "), "獺祭純米大吟醸");
+});
+
+test("trusted product catalogs canonicalize only brand-name prefixes", () => {
+  const product = (sourceName: string): ExtractedProduct => ({
+    sourceName,
+    sourceUrl: null,
+    pageUrl: "https://shop.example/items",
+    method: "selector",
+  });
+  const prefixCatalog: CatalogBrand[] = [
+    ...catalog,
+    {
+      id: "10000000-0000-4000-8000-000000000003",
+      name: "総乃寒菊",
+      nameKana: null,
+      breweryName: "寒菊銘醸",
+    },
+    {
+      id: "10000000-0000-4000-8000-000000000004",
+      name: "NOTO",
+      nameKana: null,
+      breweryName: "数馬酒造",
+    },
+    {
+      id: "10000000-0000-4000-8000-000000000005",
+      name: "貴",
+      nameKana: null,
+      breweryName: "永山本家酒造場",
+    },
+  ];
+  const canonicalized = canonicalizeCatalogPrefixProducts(
+    [
+      product("寒菊 Pray for NOTO あらせめ"),
+      product("貴 特別純米60"),
+      product("銘酒 NOTO 限定品"),
+    ],
+    prefixCatalog,
+  );
+  assert.deepEqual(
+    canonicalized.map((item) => item.sourceName),
+    ["総乃寒菊", "貴", "銘酒 NOTO 限定品"],
+  );
+});
+
+test("trusted product catalogs reject partial and generic leading words", () => {
+  const product = (sourceName: string): ExtractedProduct => ({
+    sourceName,
+    sourceUrl: null,
+    pageUrl: "https://shop.example/items",
+    method: "selector",
+  });
+  const prefixCatalog: CatalogBrand[] = [
+    {
+      id: "10000000-0000-4000-8000-000000000003",
+      name: "Yu",
+      nameKana: null,
+      breweryName: "YK3",
+    },
+    {
+      id: "10000000-0000-4000-8000-000000000004",
+      name: "夏酒",
+      nameKana: null,
+      breweryName: "瑞鷹酒造",
+    },
+  ];
+  const canonicalized = canonicalizeCatalogPrefixProducts(
+    [
+      product("YUKIOTOKO sake yell"),
+      product("夏酒、人気銘柄入荷"),
+      product("Yu・別銘柄 飲み比べ"),
+    ],
+    prefixCatalog,
+  );
+  assert.deepEqual(
+    canonicalized.map((item) => item.sourceName),
+    ["YUKIOTOKO sake yell", "夏酒、人気銘柄入荷", "Yu・別銘柄 飲み比べ"],
+  );
 });
 
 test("brand matching rejects generic sake terms and cross-token false positives", () => {
@@ -254,6 +478,87 @@ test("review candidates always require explicit approval", () => {
   assert.equal(items[0].matchKind, "exact");
   assert.equal(items[0].brandId, catalog[0].id);
   assert.equal(items[0].approved, false);
+});
+
+test("automatic approval accepts exact and confirmed aliases once per brand", () => {
+  const items = buildReviewItems(
+    [
+      {
+        sourceName: "AKABU",
+        sourceUrl: "https://shop.example/akabu-1",
+        pageUrl: "https://shop.example/items",
+        method: "selector",
+      },
+      {
+        sourceName: "赤武",
+        sourceUrl: "https://shop.example/akabu-2",
+        pageUrl: "https://shop.example/items",
+        method: "selector",
+      },
+      {
+        sourceName: "獺祭 純米大吟醸45",
+        sourceUrl: null,
+        pageUrl: "https://shop.example/items",
+        method: "selector",
+      },
+    ],
+    [
+      ...catalog,
+      {
+        id: "10000000-0000-4000-8000-000000000020",
+        name: "AKABU",
+        nameKana: null,
+        breweryName: "赤武酒造",
+      },
+    ],
+  );
+  const approved = autoApproveReviewItems(items);
+  assert.equal(approved.filter((item) => item.approved).length, 1);
+  assert.equal(uniqueApprovedReviewItems(approved).length, 1);
+  assert.equal(
+    approved.find((item) => item.sourceName === "赤武")?.matchKind,
+    "alias",
+  );
+  assert.equal(
+    approved.find((item) => item.sourceName.startsWith("獺祭 "))?.approved,
+    false,
+  );
+});
+
+test("automatic approval requires structured evidence for one-character brands", () => {
+  const oneCharacterCatalog: CatalogBrand[] = [
+    {
+      id: "10000000-0000-4000-8000-000000000021",
+      name: "作",
+      nameKana: "ざく",
+      breweryName: "清水清三郎商店",
+    },
+  ];
+  const unsafe = buildReviewItems(
+    [
+      {
+        sourceName: "作",
+        sourceUrl: null,
+        pageUrl: "https://shop.example/items",
+        method: "heuristic",
+      },
+    ],
+    oneCharacterCatalog,
+  );
+  const safe = buildReviewItems(
+    [
+      {
+        sourceName: "作",
+        sourceBreweryName: "清水清三郎商店",
+        sourceUrl: null,
+        pageUrl: "https://shop.example/brands",
+        method: "brand-table",
+      },
+    ],
+    oneCharacterCatalog,
+  );
+  assert.equal(autoApproveReviewItems(unsafe)[0].approved, false);
+  assert.equal(autoApproveReviewItems(safe)[0].approved, true);
 });
 
 test("review candidates are ordered by matched brand then source name", () => {

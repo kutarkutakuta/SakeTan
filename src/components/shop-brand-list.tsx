@@ -48,6 +48,10 @@ export function ShopBrandList({
       ),
     [items, query, selectedKana, selectedPrefectures, selectedTargets, sort],
   );
+  const hasFilterConflict =
+    query.trim().length > 0 &&
+    visible.length === 0 &&
+    (selectedPrefectures.size > 0 || selectedKana.size > 0);
 
   return (
     <>
@@ -86,6 +90,8 @@ export function ShopBrandList({
         onKanaChange={setSelectedKana}
         sort={sort}
         onSortChange={setSort}
+        emphasizePrefectures={hasFilterConflict && selectedPrefectures.size > 0}
+        emphasizeKana={hasFilterConflict && selectedKana.size > 0}
       />
       <div className="brand-list" aria-live="polite">
         {visible.map((relation) => {
@@ -140,7 +146,11 @@ export function ShopBrandList({
           );
         })}
         {visible.length === 0 && (
-          <p className="brand-status">条件に合う取扱銘柄がありません</p>
+          <p className="brand-status">
+            {hasFilterConflict
+              ? "テキスト検索に一致しません。選択中の都道府県・かなも確認してください。"
+              : "条件に合う取扱銘柄がありません"}
+          </p>
         )}
       </div>
     </>
