@@ -14,6 +14,7 @@ import {
   extractProducts,
   normalizeProductName,
   paginationLinks,
+  profileLinks,
   uniqueApprovedReviewItems,
 } from "./shop-products/parser";
 import { extractPdfPages } from "./shop-products/pdf";
@@ -447,10 +448,7 @@ async function runFetch(options: Options) {
       fetched = await fetchBytes(url);
       if (
         fetched.response.ok ||
-        !(
-          fetched.response.status === 429 ||
-          fetched.response.status >= 500
-        ) ||
+        !(fetched.response.status === 429 || fetched.response.status >= 500) ||
         attempt === 4
       )
         break;
@@ -460,10 +458,15 @@ async function runFetch(options: Options) {
       await sleep(options.delayMs * attempt);
     }
     const { response, bytes, finalUrl } = fetched!;
-    if (!response.ok)
+    if (!response.ok) {
+      if (response.status === 404 && pages.length > 0) {
+        console.warn("リンク切れをスキップ: " + url);
+        continue;
+      }
       throw new Error(
         "ページ取得に失敗しました: HTTP " + response.status + " " + url,
       );
+    }
     if (new URL(finalUrl).origin !== origin)
       throw new Error(
         "別ドメインへのリダイレクトは追跡しません。転送後のURLを指定してください: " +
@@ -503,6 +506,17 @@ async function runFetch(options: Options) {
     for (const nextUrl of paginationLinks(html, finalUrl)) {
       if (new URL(nextUrl).origin === origin && !seen.has(nextUrl))
         pending.push(nextUrl);
+    }
+    if (options.profile?.crawlLinkSelector) {
+      for (const nextUrl of profileLinks(
+        html,
+        finalUrl,
+        options.profile.crawlLinkSelector,
+        options.profile.crawlLinkTextPattern,
+      )) {
+        if (new URL(nextUrl).origin === origin && !seen.has(nextUrl))
+          pending.push(nextUrl);
+      }
     }
     console.log(
       "fetch " + pages.length + "/" + options.maxPages + ": " + finalUrl,

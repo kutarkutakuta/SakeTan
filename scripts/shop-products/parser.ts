@@ -53,6 +53,27 @@ function cleanProductName(value: string) {
   return value.normalize("NFKC").replace(/\s+/g, " ").trim();
 }
 
+function readableElementText($: CheerioAPI, element: Cheerio<AnyNode>) {
+  return element
+    .contents()
+    .map((_, node) => {
+      if (node.type === "text") return node.data;
+      if (node.type === "tag" && node.name === "br") return "\n";
+      return $(node).text();
+    })
+    .get()
+    .join("");
+}
+
+function elementValue($: CheerioAPI, element: Cheerio<AnyNode>) {
+  return (
+    element.attr("content") ??
+    element.attr("title") ??
+    element.attr("alt") ??
+    readableElementText($, element)
+  );
+}
+
 export function normalizeProductName(value: string) {
   return cleanProductName(value)
     .toLocaleLowerCase("ja")
@@ -93,13 +114,8 @@ function elementUrl(element: Cheerio<AnyNode>, baseUrl: string) {
   return absoluteUrl(href, baseUrl);
 }
 
-function elementName(element: Cheerio<AnyNode>) {
-  return usableName(
-    element.attr("content") ??
-      element.attr("title") ??
-      element.attr("alt") ??
-      element.text(),
-  );
+function elementName($: CheerioAPI, element: Cheerio<AnyNode>) {
+  return usableName(elementValue($, element));
 }
 
 function pushProduct(
@@ -174,7 +190,7 @@ function extractElements(
   const results: ExtractedProduct[] = [];
   $(selector).each((_, node) => {
     const element = $(node);
-    const name = elementName(element);
+    const name = elementName($, element);
     if (!name) return;
     results.push({
       sourceName: name,
@@ -214,7 +230,7 @@ function extractProfileGroups(
       : null;
     container.find(profile.brandSelector).each((__, brandNode) => {
       const brand = $(brandNode);
-      const name = elementName(brand);
+      const name = elementValue($, brand);
       if (!name) return;
       for (const splitName of brandSplitPattern
         ? name.split(brandSplitPattern)
@@ -402,6 +418,7 @@ export function paginationLinks(html: string, pageUrl: string) {
     'a[aria-label*="next" i]',
     '[class*="pagination" i] a',
     '[class*="pager" i] a',
+    '[class*="pagenavi" i] a',
     ".wp-pagenavi a",
   ];
   $(selectors.join(", ")).each((_, node) => {
@@ -412,7 +429,7 @@ export function paginationLinks(html: string, pageUrl: string) {
     const rel = element.attr("rel")?.toLocaleLowerCase("en") ?? "";
     const insidePager = Boolean(
       element.closest(
-        '[class*="pagination" i], [class*="pager" i], .wp-pagenavi',
+        '[class*="pagination" i], [class*="pager" i], [class*="pagenavi" i], .wp-pagenavi',
       ).length,
     );
     const isNext =
@@ -442,6 +459,24 @@ export function paginationLinks(html: string, pageUrl: string) {
       );
     });
   });
+}
+
+export function profileLinks(
+  html: string,
+  pageUrl: string,
+  selector: string,
+  textPattern?: string,
+) {
+  const $ = load(html);
+  const pattern = textPattern ? new RegExp(textPattern, "u") : null;
+  const links = new Set<string>();
+  $(selector).each((_, node) => {
+    const element = $(node);
+    if (pattern && !pattern.test(cleanProductName(element.text()))) return;
+    const url = absoluteUrl(element.attr("href"), pageUrl);
+    if (url) links.add(url);
+  });
+  return [...links];
 }
 
 export function canonicalizeCatalogPrefixProducts(

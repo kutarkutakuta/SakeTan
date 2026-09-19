@@ -9,6 +9,7 @@ import {
   matchProduct,
   normalizeProductName,
   paginationLinks,
+  profileLinks,
   uniqueApprovedReviewItems,
 } from "../scripts/shop-products/parser";
 import type {
@@ -133,14 +134,29 @@ test("source profiles can split multiple published brands in one row", () => {
     },
   );
   assert.deepEqual(
-    products.map((product) => [
-      product.sourceName,
-      product.sourceBreweryName,
-    ]),
+    products.map((product) => [product.sourceName, product.sourceBreweryName]),
     [
       ["雪男", "青木酒造"],
       ["鶴齢", "青木酒造"],
     ],
+  );
+});
+
+test("source profiles split brands separated by br elements", () => {
+  const products = extractProducts(
+    "<table><tbody><tr><td>青森県</td><td>陸奥八仙<br>田酒<BR>豊盃</td></tr></tbody></table>",
+    "https://shop.example/nihonsyu.html",
+    undefined,
+    {
+      name: "prefecture-table-test",
+      itemContainerSelector: "tbody tr",
+      brandSelector: "td:nth-child(2)",
+      brandSplitPattern: "[\\r\\n]+",
+    },
+  );
+  assert.deepEqual(
+    products.map((product) => product.sourceName),
+    ["田酒", "豊盃", "陸奥八仙"],
   );
 });
 
@@ -233,6 +249,23 @@ test("pagination follows numbered links in WordPress pagenavi", () => {
   assert.deepEqual(links, [
     "https://shop.example/page/2/?catnum=2",
     "https://shop.example/page/88/?catnum=2",
+  ]);
+});
+
+test("profile links can follow only prefecture brand groups", () => {
+  const links = profileLinks(
+    '<div id="group-list">' +
+      '<a href="?mode=grp&gid=1">北海道「男山」</a>' +
+      '<a href="?mode=grp&gid=2">最新入荷の日本酒</a>' +
+      '<a href="?mode=grp&gid=3">秋田県「天寿」</a>' +
+      "</div>",
+    "https://www.jizakenoaono.com/?mode=cate&cbid=749860&csid=0",
+    '#group-list a[href*="mode=grp"]',
+    "^(?:北海道|秋田県)[「『]",
+  );
+  assert.deepEqual(links, [
+    "https://www.jizakenoaono.com/?mode=grp&gid=1",
+    "https://www.jizakenoaono.com/?mode=grp&gid=3",
   ]);
 });
 

@@ -6,6 +6,8 @@ export type SourceProfile = {
   hostSuffix?: string;
   pathPrefix?: string;
   selector?: string;
+  crawlLinkSelector?: string;
+  crawlLinkTextPattern?: string;
   itemContainerSelector?: string;
   brandSelector?: string;
   brandSplitPattern?: string;
