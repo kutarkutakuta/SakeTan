@@ -6,6 +6,7 @@ import {
   CircleAlert,
   Database,
   ExternalLink,
+  HeartHandshake,
   LogIn,
   UserRound,
 } from "lucide-react";
@@ -40,13 +41,26 @@ export default function HelpPage() {
 
       <section className="info-hero" aria-labelledby="help-title">
         <p className="info-lead">
-          <span className="logo-title">さけのありか</span> は、飲みたい日本酒から取扱店を探したり、近くの酒屋から取扱銘柄を探したりできる、<br/>みんなで育てる酒屋マップです。
+          「<span className="logo-title" style={{fontSize:"20px"}}>さけのありか</span>」
+          は、飲みたい日本酒から取扱店を探したり、近くの酒屋から取扱銘柄を探したりできる、
+          みんなで育てる酒屋マップです。
         </p>
       </section>
 
       <section className="info-section" aria-labelledby="important-title">
         <h2 id="important-title">はじめに知ってほしいこと</h2>
         <div className="help-callout-grid">
+          <article className="help-callout help-callout-community">
+            <div className="help-callout-heading">
+              <HeartHandshake size={22} aria-hidden="true" />
+              <h3>見つけた情報を、次の人へ</h3>
+            </div>
+            <p>
+              「<span className="logo-title" style={{fontSize:"18px"}}>さけのありか</span>」は、
+              みなさんの投稿で成り立っています。探していたお酒や酒屋を見つけて「役に立った」と思ったら、店頭で見かけた銘柄や変わっていた取扱情報を、ぜひ積極的に更新してください。ひとつひとつの更新が、次に探す人の助けになります。
+            </p>
+          </article>
+
           <article className="help-callout">
             <div className="help-callout-heading">
               <Database size={22} aria-hidden="true" />

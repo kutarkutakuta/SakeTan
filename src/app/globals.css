@@ -1097,6 +1097,11 @@ nav {
 .help-callout {
   padding: 24px;
 }
+.help-callout-community {
+  grid-column: 1 / -1;
+  border-color: #e8bdb5;
+  background: #fff5f2;
+}
 .help-callout-warning {
   border-color: #e4c98e;
   background: #fff8e9;
