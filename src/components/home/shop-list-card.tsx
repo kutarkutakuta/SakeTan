@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight, MessageCircle, Store } from "lucide-react";
+import { ChevronRight, MessageCircle } from "lucide-react";
 import type { Brand, Shop } from "@/lib/types";
 import { ShopBrandTags } from "./shop-brand-tags";
 import type { ShopBrandPreview } from "./use-shop-metadata";
@@ -58,7 +58,6 @@ export function ShopListCard({
       />
       <div className="shop-card-head">
         <div className="shop-card-main">
-          <Store size={17} strokeWidth={1.8} aria-hidden="true" />
           <span className="shop-card-copy">
             <h3>{shop.name}</h3>
           </span>

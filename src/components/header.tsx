@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MapPin, LogIn, UserRound } from "lucide-react";
+import { LogIn, UserRound } from "lucide-react";
 import { viewer } from "@/lib/supabase/server";
 export async function Header() {
   const { user, anonymous, name } = await viewer();
@@ -7,10 +7,10 @@ export async function Header() {
     <header className="header">
       <Link href="/" className="logo" aria-label="さけたん ホーム">
         <span className="logo-icon">
-          <MapPin size={23} strokeWidth={1.8} />
+          <img src="/brand-icon.png" alt="" width="42" height="42" />
         </span>
         <span className="logo-copy">
-          <span>さけのありか</span>
+          <span className="logo-title">さけのありか</span>
           <span className="logo-subtitle">次の一杯を探そう。</span>
         </span>
       </Link>

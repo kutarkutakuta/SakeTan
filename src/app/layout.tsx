@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import "@fontsource/klee-one/400.css";
 import "@fontsource/noto-sans-jp/400.css";
 import "@fontsource/noto-sans-jp/500.css";
 import "@fontsource/noto-sans-jp/700.css";
