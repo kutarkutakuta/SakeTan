@@ -207,8 +207,14 @@ nav {
   min-height: 42px;
   font-weight: 500;
 }
+.nav-help > svg {
+  color: #995700;
+}
 .nav-help:hover {
   color: var(--primary);
+}
+.nav-help:hover > svg {
+  color: #814800;
 }
 .button {
   display: inline-flex;
@@ -2004,10 +2010,12 @@ nav {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  color: var(--muted);
+  color: #995700;
 }
-.availability-info-trigger:hover {
-  color: var(--primary);
+.availability-info-trigger:hover,
+.availability-info-trigger:focus-visible,
+.availability-info.open .availability-info-trigger {
+  color: #814800;
   background: var(--tint);
 }
 .availability-tooltip {
