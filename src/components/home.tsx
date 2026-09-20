@@ -777,7 +777,7 @@ export function Home({
                 </div>
               )}
               <div className="mobile-map-footer">
-                <p>酒が見つかる。店が見つかる。</p>
+                <p>みんなで作る酒屋マップ</p>
                 <a
                   href="https://sakenowa.com"
                   target="_blank"

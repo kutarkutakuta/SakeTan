@@ -1,0 +1,158 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CircleAlert,
+  Database,
+  ExternalLink,
+  LogIn,
+  UserRound,
+} from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "ヘルプ",
+  description:
+    "さけのありかの特徴、掲載情報についての注意点、ログインの有無で利用できる機能をご案内します。",
+};
+
+function XLogo({ size = 16 }: { size?: number }) {
+  return (
+    <svg
+      aria-hidden="true"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+    >
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+  );
+}
+
+export default function HelpPage() {
+  return (
+    <main id="main" className="page info-page">
+      <Link className="back" href="/">
+        <ArrowLeft size={17} aria-hidden="true" />
+        地図に戻る
+      </Link>
+
+      <section className="info-hero" aria-labelledby="help-title">
+        <h1 id="help-title">ヘルプ</h1>
+        <p className="info-lead">
+          「さけのありか」は、飲みたい日本酒から取扱店を探したり、近くの酒屋から取扱銘柄を探したりできる、みんなで育てる酒屋マップです。
+        </p>
+      </section>
+
+      <section className="info-section" aria-labelledby="important-title">
+        <h2 id="important-title">はじめに知ってほしいこと</h2>
+        <div className="help-callout-grid">
+          <article className="help-callout">
+            <div className="help-callout-heading">
+              <Database size={22} aria-hidden="true" />
+              <h3>銘柄マスタは「さけのわ」由来です</h3>
+            </div>
+            <p>
+              銘柄・酒蔵の基本データは、
+              <a
+                href="https://sakenowa.com"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                さけのわデータ
+                <ExternalLink size={15} aria-hidden="true" />
+              </a>
+              を取り込んでいます。利用者は銘柄・酒蔵を直接登録したり、削除したりできません。見つからない銘柄は、運営へ報告できます。
+            </p>
+          </article>
+
+          <article className="help-callout help-callout-warning">
+            <div className="help-callout-heading">
+              <CircleAlert size={22} aria-hidden="true" />
+              <h3>取扱いや在庫を保証する情報ではありません</h3>
+            </div>
+            <p>
+              酒屋の取扱情報は、利用者の発見や投稿をもとに蓄積しています。誰でも取扱銘柄を登録・変更できるため、現在の取扱いや在庫を保証するものではありません。購入前に店舗へ直接ご確認ください。
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section className="info-section" aria-labelledby="usage-title">
+        <h2 id="usage-title">ログインは必要なときだけ</h2>
+        <p className="info-section-intro">
+          探す・見る・取扱情報を更新する基本機能は、ログインせず利用できます。アカウントが必要なのは、酒屋情報や自分の記録を継続して管理するときです。
+        </p>
+
+        <div className="help-access-grid">
+          <article className="help-access-card">
+            <div className="help-access-heading">
+              <LogIn size={22} aria-hidden="true" />
+              <h3>ログインなしでできること</h3>
+            </div>
+            <ul>
+              <li>
+                <strong>酒屋・銘柄を探す</strong>
+                <span>名前や現在地、地図のエリアから検索できます。</span>
+              </li>
+              <li>
+                <strong>取扱情報を見る・更新する</strong>
+                <span>
+                  酒屋の取扱銘柄を確認し、「取扱あり」「現在は取扱なし」「誤った取扱情報」を登録できます。
+                </span>
+              </li>
+              <li>
+                <strong>見つけた情報を共有する</strong>
+                <span>
+                  日付やコメントを添えて投稿し、見つからない銘柄を運営へ報告できます。
+                </span>
+              </li>
+            </ul>
+          </article>
+
+          <article className="help-access-card help-access-card-account">
+            <div className="help-access-heading">
+              <UserRound size={22} aria-hidden="true" />
+              <h3>ログインしてできること</h3>
+            </div>
+            <ul>
+              <li>
+                <strong>酒屋情報を登録・編集する</strong>
+                <span>新しい酒屋の追加や、掲載情報の修正ができます。</span>
+              </li>
+              <li>
+                <strong>酒屋へコメントする</strong>
+                <span>店舗についての情報をコメントとして共有できます。</span>
+              </li>
+              <li>
+                <strong>自分の貢献を引き継ぐ</strong>
+                <span>
+                  ログイン前の操作履歴を引き継ぎ、表示名や貢献記録を確認できます。
+                </span>
+              </li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <div className="privacy-link-row">
+        <p className="help-contact">
+          お問い合わせ：
+          <a
+            href="https://x.com/kutakutakutar"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <XLogo />
+            クタクター
+          </a>
+        </p>
+        <Link href="/privacy">
+          プライバシーポリシー
+          <ArrowRight size={18} aria-hidden="true" />
+        </Link>
+      </div>
+    </main>
+  );
+}
