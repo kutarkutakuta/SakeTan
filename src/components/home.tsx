@@ -778,13 +778,6 @@ export function Home({
               )}
               <div className="mobile-map-footer">
                 <p>みんなで作る酒屋マップ</p>
-                <a
-                  href="https://sakenowa.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  さけのわデータを利用しています ↗
-                </a>
               </div>
             </div>
             {openComment &&

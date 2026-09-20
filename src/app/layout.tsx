@@ -28,14 +28,6 @@ export default function Layout({
           {children}
           <footer>
             <p className="footer-tagline">酒が見つかる。店が見つかる。</p>
-            <a
-              className="footer-source"
-              href="https://sakenowa.com"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              さけのわデータを利用しています ↗
-            </a>
           </footer>
         </ToastProvider>
       </body>

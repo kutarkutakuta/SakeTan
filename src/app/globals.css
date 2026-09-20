@@ -124,13 +124,6 @@ footer {
   color: var(--text);
   font-weight: 500;
 }
-.footer-source {
-  margin-left: auto;
-}
-footer a {
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
 .header {
   height: 72px;
   border-bottom: 1px solid var(--line);
@@ -3140,11 +3133,6 @@ nav {
     color: var(--text);
     font-weight: 500;
   }
-  .mobile-map-footer a {
-    align-self: flex-end;
-    text-decoration: underline;
-    text-underline-offset: 4px;
-  }
   .map-panel {
     grid-row: 2;
     width: 100%;
@@ -3185,9 +3173,6 @@ nav {
     gap: 2px;
     padding: 10px 14px;
     font-size: 14px;
-  }
-  .footer-source {
-    align-self: flex-end;
   }
   .explore + footer {
     display: none;
