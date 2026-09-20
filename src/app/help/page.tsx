@@ -39,9 +39,8 @@ export default function HelpPage() {
       </Link>
 
       <section className="info-hero" aria-labelledby="help-title">
-        <h1 id="help-title">ヘルプ</h1>
         <p className="info-lead">
-          「さけのありか」は、飲みたい日本酒から取扱店を探したり、近くの酒屋から取扱銘柄を探したりできる、みんなで育てる酒屋マップです。
+          <span className="logo-title">さけのありか</span> は、飲みたい日本酒から取扱店を探したり、近くの酒屋から取扱銘柄を探したりできる、<br/>みんなで育てる酒屋マップです。
         </p>
       </section>
 
