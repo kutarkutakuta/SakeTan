@@ -270,7 +270,11 @@ export function Home({
     const seq = ++searchSequence.current;
     setLoadingMoreSearchShops(false);
     if (!query.trim()) {
-      setResults(emptySearchResults());
+      setResults((current) =>
+        current.brands.length || current.shops.length || current.shopsHasMore
+          ? emptySearchResults()
+          : current,
+      );
       return;
     }
     const abort = new AbortController();

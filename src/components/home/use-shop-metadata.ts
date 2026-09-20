@@ -22,6 +22,11 @@ export function useShopMetadata(
     Record<string, ShopCommentSummary>
   >({});
   const [brandTotals, setBrandTotals] = useState<Record<string, number>>({});
+  const commentShopIds = Array.from(
+    new Set(commentShops.map((shop) => shop.id)),
+  )
+    .sort()
+    .join(",");
 
   useEffect(() => {
     const abort = new AbortController();
@@ -46,12 +51,11 @@ export function useShopMetadata(
 
   useEffect(() => {
     const abort = new AbortController();
-    const ids = commentShops.map((shop) => shop.id);
+    const ids = commentShopIds ? commentShopIds.split(",") : [];
     if (!ids.length) {
       setCommentSummaries({});
       return () => abort.abort();
     }
-    setCommentSummaries({});
     void fetchInChunks<ShopCommentSummary>(
       ids,
       (chunk) =>
@@ -64,7 +68,7 @@ export function useShopMetadata(
           setError(errorMessage(reason, "最新コメントを取得できませんでした"));
       });
     return () => abort.abort();
-  }, [commentShops, setError]);
+  }, [commentShopIds, setError]);
 
   useEffect(() => {
     const abort = new AbortController();
