@@ -15,7 +15,11 @@ export default async function EditPage({
   searchParams,
 }: {
   params: Promise<{ type: string; id: string }>;
-  searchParams: Promise<{ shop_id?: string; name?: string }>;
+  searchParams: Promise<{
+    shop_id?: string;
+    name?: string;
+    return_to?: string;
+  }>;
 }) {
   const p = await params;
   const q = await searchParams;
@@ -23,11 +27,16 @@ export default async function EditPage({
   const type = p.type as EntityType;
   const entity = entities[type];
   const id = p.id === "new" ? null : p.id;
+  const returnTo =
+    q.return_to === "/edit" || q.return_to?.startsWith("/edit?")
+      ? q.return_to
+      : undefined;
   const db = await supabase();
   const { user, admin, anonymous } = await viewer();
   const nextParams = new URLSearchParams();
   if (q.shop_id) nextParams.set("shop_id", q.shop_id);
   if (q.name) nextParams.set("name", q.name.slice(0, 150));
+  if (returnTo) nextParams.set("return_to", returnTo);
   const next =
     "/edit/" +
     type +
@@ -62,9 +71,11 @@ export default async function EditPage({
         href={
           q.shop_id
             ? "/post?shop_id=" + q.shop_id
-            : type === "shop" && id
-              ? "/shops/" + id
-              : "/"
+            : returnTo
+              ? returnTo
+              : type === "shop" && id
+                ? "/shops/" + id
+                : "/"
         }
       >
         <ArrowLeft size={17} />
@@ -100,6 +111,7 @@ export default async function EditPage({
           initial={initial}
           initialBrewery={brewery}
           shopId={q.shop_id}
+          afterSaveHref={returnTo}
           kanaOnly={(type === "brand" || type === "brewery") && !admin}
         />
       ) : (

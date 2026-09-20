@@ -10,6 +10,7 @@ export function useShopMetadata(
   visibleShops: Shop[],
   mapShops: Shop[],
   setError: Dispatch<SetStateAction<string>>,
+  commentShops: Shop[] = visibleShops,
 ) {
   const [brandPreviews, setBrandPreviews] = useState<
     Record<string, ShopBrandPreview>
@@ -45,7 +46,7 @@ export function useShopMetadata(
 
   useEffect(() => {
     const abort = new AbortController();
-    const ids = visibleShops.map((shop) => shop.id);
+    const ids = commentShops.map((shop) => shop.id);
     if (!ids.length) {
       setCommentSummaries({});
       return () => abort.abort();
@@ -63,7 +64,7 @@ export function useShopMetadata(
           setError(errorMessage(reason, "最新コメントを取得できませんでした"));
       });
     return () => abort.abort();
-  }, [setError, visibleShops]);
+  }, [commentShops, setError]);
 
   useEffect(() => {
     const abort = new AbortController();

@@ -50,13 +50,17 @@ function resultDetails(type: EntityType, item: SearchItem) {
 export function EditSearch({
   admin = false,
   signedIn = false,
+  initialTarget = "brand",
+  initialQuery = "",
 }: {
   admin?: boolean;
   signedIn?: boolean;
+  initialTarget?: EntityType;
+  initialQuery?: string;
 }) {
   const { showToast } = useToast();
-  const [target, setTarget] = useState<EntityType>("brand");
-  const [query, setQuery] = useState("");
+  const [target, setTarget] = useState<EntityType>(initialTarget);
+  const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState<SearchItem[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -227,7 +231,9 @@ export function EditSearch({
               <Link
                 className="edit-result"
                 key={item.id}
-                href={`/edit/${target}/${item.id}`}
+                href={`/edit/${target}/${item.id}?return_to=${encodeURIComponent(
+                  `/edit?type=shop&q=${encodeURIComponent(normalizedQuery)}`,
+                )}`}
               >
                 {content}
               </Link>

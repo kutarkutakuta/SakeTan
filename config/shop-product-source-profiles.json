@@ -1,5 +1,60 @@
 [
   {
+    "name": "mishimaya-nihonshu-brewery-brands",
+    "host": "www.mishimaya.sake-ten.jp",
+    "pathPrefix": "/nihon.htm",
+    "dedicatedProfile": true,
+    "itemContainerSelector": "a[href$=\".htm\"]:has(strong)",
+    "brandSelector": "strong",
+    "brandPattern": "『([^（(』]+)",
+    "brewerySelector": "strong",
+    "breweryPattern": "^([^『]+?)\\s*『",
+    "maxPages": 1
+  },
+  {
+    "name": "imaishouten-nihonshu-prefecture-brands",
+    "host": "www.imaishouten-sake.com",
+    "pathPrefix": "/nihonshu.html",
+    "dedicatedProfile": true,
+    "itemContainerSelector": "#meigara .row li",
+    "brandSelector": "span.kurafont",
+    "brandPattern": "^([^（(]+)",
+    "brewerySelector": "span.fontmini",
+    "breweryPattern": "^[（(]\\s*([^）)]*)[）)]?",
+    "maxPages": 1
+  },
+  {
+    "name": "sake-suzuki-japanese-sake-products",
+    "host": "sake-suzuki.co.jp",
+    "pathPrefix": "/collections/",
+    "dedicatedProfile": true,
+    "itemContainerSelector": "a.product-card-link",
+    "brandSelector": "h2.product-card__title",
+    "brandPattern": "^([^|｜]+)",
+    "brewerySelector": "h3.product-card__vendor",
+    "breweryPattern": "^([^（(]+)",
+    "maxPages": 50
+  },
+  {
+    "name": "onosaketen-sake-brand-navigation",
+    "host": "onosaketen.jp",
+    "pathPrefix": "/view/category/ct8",
+    "dedicatedSelector": "li:has(> a[href=\"/view/category/ct8\"]) > ul.layer3 a[href^=\"/view/category/ct\"]",
+    "maxPages": 50
+  },
+  {
+    "name": "jyunmai-sake-brand-navigation",
+    "host": "www.jyunmai.co.jp",
+    "pathPrefix": "/hpgen/HPB/entries/",
+    "itemContainerSelector": "ul.sps-itemCategorySub li.cat2",
+    "itemHrefPattern": "^/SHOP/1879(?:08|09|10|11)/",
+    "brandSelector": "a",
+    "brandPattern": "^([^（(]+)",
+    "brewerySelector": "a",
+    "breweryPattern": "^[^（(]*[（(]\\s*([^,，、)）]+)",
+    "maxPages": 1
+  },
+  {
     "name": "nabedana-nihonsyu-prefecture-table",
     "host": "nabedana.com",
     "pathPrefix": "/nihonsyu.html",

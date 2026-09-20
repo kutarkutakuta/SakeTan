@@ -14,7 +14,7 @@ import {
   ChevronUp,
   GripHorizontal,
   Search,
-  MapPin,
+  MessageCircle,
   X,
   LocateFixed,
   Plus,
@@ -35,6 +35,36 @@ import type { Brand, Bounds, Shop } from "@/lib/types";
 
 type MobileSheetSnap = "peek" | "half" | "full";
 const shopsPerPage = 20;
+const searchShopsPerPage = 10;
+
+type SearchResults = {
+  brands: Brand[];
+  shops: Shop[];
+  shopsHasMore: boolean;
+};
+
+const emptySearchResults = (): SearchResults => ({
+  brands: [],
+  shops: [],
+  shopsHasMore: false,
+});
+
+function searchRequestParams(
+  query: string,
+  origin: [number, number] | undefined,
+  offset = 0,
+) {
+  const params = new URLSearchParams({
+    q: query,
+    shop_limit: String(searchShopsPerPage),
+    shop_offset: String(offset),
+  });
+  if (origin) {
+    params.set("latitude", String(origin[0]));
+    params.set("longitude", String(origin[1]));
+  }
+  return params;
+}
 
 function nextSheetSnap(
   current: MobileSheetSnap,
@@ -73,10 +103,7 @@ export function Home({
   );
   const [shops, setShops] = useState<Shop[]>(initialShop ? [initialShop] : []);
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<{ brands: Brand[]; shops: Shop[] }>({
-    brands: [],
-    shops: [],
-  });
+  const [results, setResults] = useState<SearchResults>(emptySearchResults);
   const [brand, setBrand] = useState<Brand | null>(initialBrand);
   const [selected, setSelected] = useState<string | null>(
     initialShopPosition ? (initialShop?.id ?? null) : null,
@@ -86,6 +113,9 @@ export function Home({
   const [center, setCenter] = useState<[number, number] | undefined>(
     initialMapView?.center ?? initialShopPosition,
   );
+  const [userLocation, setUserLocation] = useState<
+    [number, number] | undefined
+  >();
   const [preserveMapZoom, setPreserveMapZoom] = useState(
     Boolean(initialMapView),
   );
@@ -96,6 +126,7 @@ export function Home({
   const [visibleShopLimit, setVisibleShopLimit] = useState(shopsPerPage);
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [loadingMoreSearchShops, setLoadingMoreSearchShops] = useState(false);
   const [resolvingInitialArea, setResolvingInitialArea] = useState(ready);
   const [error, setError] = useState("");
   const [mobileSheetSnap, setMobileSheetSnap] =
@@ -115,6 +146,15 @@ export function Home({
     () => visibleShopList(shops, shopListCenter, selected, visibleShopLimit),
     [selected, shopListCenter, shops, visibleShopLimit],
   );
+  const searchOrigin = userLocation ?? mapView?.center ?? center;
+  const searchLatitude = searchOrigin?.[0];
+  const searchLongitude = searchOrigin?.[1];
+  const commentShops = useMemo(() => {
+    const uniqueShops = new globalThis.Map<string, Shop>();
+    for (const shop of [...visibleShops, ...results.shops])
+      uniqueShops.set(shop.id, shop);
+    return [...uniqueShops.values()];
+  }, [results.shops, visibleShops]);
   const {
     allBrands: allListBrands,
     brandTotals: shopBrandTotals,
@@ -124,7 +164,7 @@ export function Home({
     commentSummaries: listCommentSummaries,
     loadingShopId: loadingBrandShop,
     toggleBrands: toggleShopBrands,
-  } = useShopMetadata(visibleShops, shops, setError);
+  } = useShopMetadata(visibleShops, shops, setError, commentShops);
   const {
     close: closeComment,
     popoverRef: commentPreviewRef,
@@ -215,7 +255,12 @@ export function Home({
         }
         searchAtLocation.current = true;
         setPreserveMapZoom(false);
-        setCenter([p.coords.latitude, p.coords.longitude]);
+        const location: [number, number] = [
+          p.coords.latitude,
+          p.coords.longitude,
+        ];
+        setUserLocation(location);
+        setCenter(location);
       },
       loadDefaultShops,
       { timeout: 8000, maximumAge: 300000 },
@@ -223,20 +268,30 @@ export function Home({
   }, [initialBrand, initialShopPosition, loadShops, ready]);
   useEffect(() => {
     const seq = ++searchSequence.current;
+    setLoadingMoreSearchShops(false);
     if (!query.trim()) {
-      setResults({ brands: [], shops: [] });
+      setResults(emptySearchResults());
       return;
     }
     const abort = new AbortController();
     const timer = setTimeout(async () => {
       try {
+        const origin =
+          searchLatitude !== undefined && searchLongitude !== undefined
+            ? ([searchLatitude, searchLongitude] as [number, number])
+            : undefined;
         const r = await fetch(
-          "/api/search?q=" + encodeURIComponent(query.trim()),
+          "/api/search?" + searchRequestParams(query.trim(), origin),
           { signal: abort.signal },
         );
         const data = await r.json();
         if (!r.ok) throw new Error(data.error);
-        if (seq === searchSequence.current) setResults(data);
+        if (seq === searchSequence.current)
+          setResults({
+            brands: data.brands ?? [],
+            shops: data.shops ?? [],
+            shopsHasMore: Boolean(data.shopsHasMore),
+          });
       } catch (e) {
         if (!abort.signal.aborted)
           setError(e instanceof Error ? e.message : "検索できませんでした");
@@ -246,12 +301,49 @@ export function Home({
       clearTimeout(timer);
       abort.abort();
     };
-  }, [query]);
+  }, [query, searchLatitude, searchLongitude]);
+
+  async function loadMoreSearchShops() {
+    const normalizedQuery = query.trim();
+    if (!normalizedQuery || loadingMoreSearchShops) return;
+    const seq = searchSequence.current;
+    setLoadingMoreSearchShops(true);
+    try {
+      const r = await fetch(
+        "/api/search?" +
+          searchRequestParams(
+            normalizedQuery,
+            searchOrigin,
+            results.shops.length,
+          ) +
+          "&scope=shops",
+      );
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error);
+      if (seq !== searchSequence.current) return;
+      setResults((current) => {
+        const knownIds = new Set(current.shops.map((shop) => shop.id));
+        const additionalShops = (data.shops as Shop[]).filter(
+          (shop) => !knownIds.has(shop.id),
+        );
+        return {
+          ...current,
+          shops: [...current.shops, ...additionalShops],
+          shopsHasMore: Boolean(data.shopsHasMore),
+        };
+      });
+    } catch (e) {
+      if (seq === searchSequence.current)
+        setError(e instanceof Error ? e.message : "検索できませんでした");
+    } finally {
+      if (seq === searchSequence.current) setLoadingMoreSearchShops(false);
+    }
+  }
   function chooseBrand(value: Brand | null) {
     setBrand(value);
     setSelected(null);
     setQuery("");
-    setResults({ brands: [], shops: [] });
+    setResults(emptySearchResults());
     const url = new URL(window.location.href);
     if (value) url.searchParams.set("brand_id", value.id);
     else url.searchParams.delete("brand_id");
@@ -272,7 +364,7 @@ export function Home({
     areaSequence.current += 1;
     setBrand(null);
     setQuery("");
-    setResults({ brands: [], shops: [] });
+    setResults(emptySearchResults());
     setShops([shop]);
     setShopListCenter(
       typeof shop.latitude === "number" && typeof shop.longitude === "number"
@@ -373,7 +465,7 @@ export function Home({
     if (event.currentTarget.hasPointerCapture(event.pointerId))
       event.currentTarget.releasePointerCapture(event.pointerId);
   }
-  const openCommentShop = visibleShops.find((shop) => shop.id === openComment);
+  const openCommentShop = commentShops.find((shop) => shop.id === openComment);
   const openCommentSummary = openComment
     ? listCommentSummaries[openComment]
     : undefined;
@@ -464,25 +556,85 @@ export function Home({
                     <ArrowRight size={18} />
                   </button>
                 ))}
-                <h3>酒屋</h3>
-                {results.shops.map((s) => (
-                  <button
-                    type="button"
-                    className="search-result"
-                    key={s.id}
-                    aria-label={`${s.name}を地図で表示`}
-                    onClick={() => chooseShop(s)}
-                  >
-                    <span>
-                      <strong>{s.name}</strong>
-                      <small>
-                        {s.prefecture ?? "地域未登録"}
-                        {s.city ? ` ${s.city}` : ""}
-                      </small>
-                    </span>
-                    <MapPin size={18} />
-                  </button>
-                ))}
+                <h3 className="search-results-heading">
+                  <span>酒屋</span>
+                  <span className="search-result-summary">
+                    {results.shops.length}
+                    {results.shopsHasMore ? "件以上" : "件"}
+                    {searchOrigin
+                      ? userLocation
+                        ? "・現在地に近い順"
+                        : "・地図の中心に近い順"
+                      : ""}
+                  </span>
+                </h3>
+                {results.shops.map((s) => {
+                  const commentSummary = listCommentSummaries[s.id];
+                  const commentCount = commentSummary?.total ?? 0;
+                  const commentOpen = openComment === s.id;
+                  return (
+                    <div
+                      className="search-result search-shop-result"
+                      key={s.id}
+                    >
+                      <button
+                        type="button"
+                        className="search-result-select"
+                        aria-label={`${s.name}を地図で表示`}
+                        onClick={() => chooseShop(s)}
+                      >
+                        <span>
+                          <strong>{s.name}</strong>
+                          <small>
+                            {s.prefecture ?? "地域未登録"}
+                            {s.city ? ` ${s.city}` : ""}
+                          </small>
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        data-comment-trigger
+                        className={`shop-comment-trigger search-comment-trigger${commentOpen ? " active" : ""}`}
+                        aria-label={`${s.name}のコメント${commentCount}件を表示`}
+                        aria-expanded={commentOpen}
+                        aria-controls={
+                          commentOpen ? "latest-shop-comment" : undefined
+                        }
+                        onClick={(event) =>
+                          toggleShopComment(s.id, event.currentTarget)
+                        }
+                      >
+                        <MessageCircle
+                          size={18}
+                          strokeWidth={1.8}
+                          aria-hidden="true"
+                        />
+                        {commentCount > 0 && (
+                          <span
+                            className="shop-comment-count"
+                            aria-hidden="true"
+                          >
+                            {commentCount}
+                          </span>
+                        )}
+                      </button>
+                    </div>
+                  );
+                })}
+                {results.shopsHasMore && (
+                  <div className="search-results-more">
+                    <button
+                      type="button"
+                      className="button ghost small"
+                      disabled={loadingMoreSearchShops}
+                      onClick={() => void loadMoreSearchShops()}
+                    >
+                      {loadingMoreSearchShops
+                        ? "読み込んでいます…"
+                        : "酒屋をもっと見る"}
+                    </button>
+                  </div>
+                )}
                 {!results.brands.length && !results.shops.length && (
                   <p className="muted">該当する銘柄・酒屋がありません</p>
                 )}
@@ -690,8 +842,13 @@ export function Home({
               onClick={() =>
                 navigator.geolocation?.getCurrentPosition(
                   (p) => {
+                    const location: [number, number] = [
+                      p.coords.latitude,
+                      p.coords.longitude,
+                    ];
                     setPreserveMapZoom(false);
-                    setCenter([p.coords.latitude, p.coords.longitude]);
+                    setUserLocation(location);
+                    setCenter(location);
                   },
                   () =>
                     setError(

@@ -16,7 +16,7 @@ const contributionLevels = [
   { target: 5, name: "酒屋めぐり" },
   { target: 20, name: "地酒案内人" },
   { target: 50, name: "まちの酒通" },
-  { target: 100, name: "さけたん名人" },
+  { target: 100, name: "酒名人" },
 ] as const;
 
 export function contributionAchievement(count: number) {

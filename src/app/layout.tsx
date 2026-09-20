@@ -7,8 +7,8 @@ import { Header } from "@/components/header";
 import { ToastProvider } from "@/components/toast-provider";
 export const metadata: Metadata = {
   title: {
-    default: "さけたん｜みんなで作る酒屋マップ",
-    template: "%s | さけたん",
+    default: "さけのありか｜みんなで作る酒屋マップ",
+    template: "%s | さけのありか",
   },
   description:
     "飲みたい酒から店を探せる。近くの店から酒を探せる。ユーザーの発見で育つ、日本酒銘柄と酒屋の取扱情報。",

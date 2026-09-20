@@ -1,7 +1,19 @@
 import Link from "next/link";
 import { EditSearch } from "@/components/edit-search";
 import { viewer } from "@/lib/supabase/server";
-export default async function EditIndex() {
+import type { EntityType } from "@/lib/types";
+
+const entityTypes: EntityType[] = ["brand", "brewery", "shop"];
+
+export default async function EditIndex({
+  searchParams,
+}: {
+  searchParams: Promise<{ type?: string; q?: string }>;
+}) {
+  const params = await searchParams;
+  const initialTarget = entityTypes.includes(params.type as EntityType)
+    ? (params.type as EntityType)
+    : "brand";
   const { user, admin, anonymous } = await viewer();
   return (
     <main id="main" className="page narrow">
@@ -14,7 +26,12 @@ export default async function EditIndex() {
           更新履歴
         </Link>
       </div>
-      <EditSearch admin={admin} signedIn={Boolean(user && !anonymous)} />
+      <EditSearch
+        admin={admin}
+        signedIn={Boolean(user && !anonymous)}
+        initialTarget={initialTarget}
+        initialQuery={params.q?.slice(0, 150) ?? ""}
+      />
     </main>
   );
 }

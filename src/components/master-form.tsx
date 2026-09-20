@@ -14,6 +14,7 @@ export function MasterForm({
   initial,
   initialBrewery,
   shopId,
+  afterSaveHref,
   kanaOnly = false,
 }: {
   type: EntityType;
@@ -21,6 +22,7 @@ export function MasterForm({
   initial: Record<string, unknown>;
   initialBrewery: Brewery | null;
   shopId?: string;
+  afterSaveHref?: string;
   kanaOnly?: boolean;
 }) {
   const router = useRouter();
@@ -145,11 +147,13 @@ export function MasterForm({
           : `${entityLabels[type]}を登録しました`,
       );
       router.push(
-        type === "shop"
-          ? "/shops/" + result.id
-          : type === "brand" && shopId
-            ? "/post?shop_id=" + shopId + "&brand_id=" + result.id
-            : "/history?type=" + type + "&id=" + result.id,
+        type === "shop" && id && afterSaveHref
+          ? afterSaveHref
+          : type === "shop"
+            ? "/shops/" + result.id
+            : type === "brand" && shopId
+              ? "/post?shop_id=" + shopId + "&brand_id=" + result.id
+              : "/history?type=" + type + "&id=" + result.id,
       );
       router.refresh();
     } catch (e) {

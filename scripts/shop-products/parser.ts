@@ -215,11 +215,19 @@ function extractProfileGroups(
   const breweryPattern = profile.breweryPattern
     ? new RegExp(profile.breweryPattern, "u")
     : null;
+  const itemHrefPattern = profile.itemHrefPattern
+    ? new RegExp(profile.itemHrefPattern, "u")
+    : null;
+  const brandPattern = profile.brandPattern
+    ? new RegExp(profile.brandPattern, "gu")
+    : null;
   const brandSplitPattern = profile.brandSplitPattern
     ? new RegExp(profile.brandSplitPattern, "u")
     : null;
   $(profile.itemContainerSelector).each((_, node) => {
     const container = $(node);
+    const itemHref = container.find("a[href]").first().attr("href") ?? "";
+    if (itemHrefPattern && !itemHrefPattern.test(itemHref)) return;
     const breweryText = profile.brewerySelector
       ? container.find(profile.brewerySelector).first().text()
       : "";
@@ -234,18 +242,27 @@ function extractProfileGroups(
       if (!name) return;
       for (const splitName of brandSplitPattern
         ? name.split(brandSplitPattern)
-        : [name])
-        pushProduct(
-          results,
-          splitName,
-          elementUrl(brand, pageUrl),
-          pageUrl,
-          "selector",
-          {
-            sourceBreweryName: breweryName,
-            evidence: breweryName ? `${name} / ${breweryName}` : name,
-          },
-        );
+        : [name]) {
+        const brandNames = brandPattern
+          ? [...splitName.matchAll(brandPattern)]
+              .map((match) => match[1])
+              .filter((brandName): brandName is string => Boolean(brandName))
+          : [splitName];
+        for (const brandName of brandNames) {
+          if (!brandName.trim()) continue;
+          pushProduct(
+            results,
+            brandName,
+            elementUrl(brand, pageUrl),
+            pageUrl,
+            "selector",
+            {
+              sourceBreweryName: breweryName,
+              evidence: breweryName ? `${name} / ${breweryName}` : name,
+            },
+          );
+        }
+      }
     });
   });
   return results;
@@ -360,6 +377,12 @@ export function extractProducts(
   profile: SourceProfile | null = null,
 ) {
   const $ = load(html);
+  if (profile?.dedicatedProfile)
+    return deduplicate(extractProfileGroups($, profile, pageUrl));
+  if (profile?.dedicatedSelector)
+    return deduplicate(
+      extractElements($, profile.dedicatedSelector, pageUrl, "category"),
+    );
   const products = extractJsonLd($, pageUrl);
   products.push(...extractProfileGroups($, profile, pageUrl));
   if (customSelector)

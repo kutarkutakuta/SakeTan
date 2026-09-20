@@ -427,6 +427,32 @@ test("brand, kana, brewery and shop search; bounds and brand filters", async () 
     0,
   );
 });
+test("shop candidate search orders by distance and supports paging", async () => {
+  await db.exec("reset role");
+  await db.query(
+    `insert into public.shops(name,name_kana,latitude,longitude) values
+      ('距離順 遠い店','きょりじゅん とおいみせ',36,139),
+      ('距離順 近い店','きょりじゅん ちかいみせ',35.001,139),
+      ('距離順 中間店','きょりじゅん ちゅうかんみせ',35.1,139)`,
+  );
+  await asUser(null);
+
+  const firstPage = await db.query<{ name: string }>(
+    "select name from public.search_shop_candidates('距離順',35,139,2,0)",
+  );
+  const secondPage = await db.query<{ name: string }>(
+    "select name from public.search_shop_candidates('距離順',35,139,2,2)",
+  );
+
+  assert.deepEqual(
+    firstPage.rows.map(({ name }) => name),
+    ["距離順 近い店", "距離順 中間店"],
+  );
+  assert.deepEqual(
+    secondPage.rows.map(({ name }) => name),
+    ["距離順 遠い店"],
+  );
+});
 test("only owner/admin can edit sighting; dates recompute on edit and soft delete", async () => {
   await asUser(bob);
   await assert.rejects(
