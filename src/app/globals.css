@@ -907,6 +907,7 @@ nav {
   transform-origin: center bottom;
 }
 .shop-map-marker-registered {
+  border-color: #ad5047;
   background: #dd9489;
   color: #4d2523;
 }
@@ -931,9 +932,9 @@ nav {
   color: white;
 }
 .shop-map-marker-unregistered {
-  border-color: #716d68;
-  background: white;
-  color: #716d68;
+  border-color: #403c39;
+  background: #ddd9d4;
+  color: #76726d;
 }
 .shop-map-marker-loading {
   background: #e7e3dc;
