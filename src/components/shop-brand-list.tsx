@@ -28,7 +28,7 @@ export function ShopBrandList({
   );
   const [selectedTargets, setSelectedTargets] = useState<
     Set<BrandFilterTarget>
-  >(() => new Set(["brand", "brewery"]));
+  >(() => new Set(["brand"]));
   const [selectedKana, setSelectedKana] = useState<Set<KanaGroup>>(new Set());
   const [sort, setSort] = useState<BrandCatalogSort>("brand");
   const visible = useMemo(
