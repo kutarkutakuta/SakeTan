@@ -257,6 +257,13 @@ export function PostForm({
         <div className="post-page-title">
           <h1>取扱銘柄の編集</h1>
           <AvailabilityInfo />
+          <span
+            className="post-title-count"
+            aria-label={`${visibleBrands.length}件表示、全${catalog.length}件`}
+            aria-live="polite"
+          >
+            {visibleBrands.length}件<span> / {catalog.length}件</span>
+          </span>
         </div>
         <div className="post-page-head-meta">
           <BrandFilterCount

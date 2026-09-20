@@ -1982,6 +1982,9 @@ nav {
   align-items: center;
   min-width: 0;
 }
+.post-title-count {
+  display: none;
+}
 .post-page-head-meta {
   display: flex;
   align-items: center;
@@ -3257,9 +3260,27 @@ nav {
   .post-page-head {
     align-items: flex-start;
   }
+  .post-page-title {
+    width: 100%;
+  }
+  .post-title-count {
+    display: inline-flex;
+    flex: none;
+    margin-left: auto;
+    color: var(--primary);
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .post-title-count > span {
+    color: var(--muted);
+  }
   .post-page-head-meta {
     width: 100%;
     flex-wrap: wrap;
+  }
+  .post-page-head-meta > .brand-filter-count {
+    display: none;
   }
   .post-page {
     padding-bottom: 12px;
