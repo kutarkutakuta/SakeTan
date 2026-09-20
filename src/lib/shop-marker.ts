@@ -1,10 +1,22 @@
 export type ShopMarkerStatus = "loading" | "registered" | "unregistered";
+export type ShopMarkerLevel = 1 | 2 | 3 | 4 | 5;
 
 export function shopMarkerStatus(
   brandTotal: number | undefined,
 ): ShopMarkerStatus {
   if (brandTotal === undefined) return "loading";
   return brandTotal > 0 ? "registered" : "unregistered";
+}
+
+export function shopMarkerLevel(
+  brandTotal: number | undefined,
+): ShopMarkerLevel | undefined {
+  if (brandTotal === undefined || brandTotal <= 0) return undefined;
+  if (brandTotal < 25) return 1;
+  if (brandTotal < 50) return 2;
+  if (brandTotal < 100) return 3;
+  if (brandTotal < 150) return 4;
+  return 5;
 }
 
 export function shopMarkerTitle(

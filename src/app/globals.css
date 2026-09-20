@@ -900,14 +900,34 @@ nav {
   place-items: center;
   border: 1px solid white;
   border-radius: 50%;
-  box-shadow: 0 3px 9px rgb(37 37 34 / 30%);
+  box-shadow: 0 2px 5px rgb(37 37 34 / 22%);
   transition:
     box-shadow 0.15s ease,
     transform 0.15s ease;
   transform-origin: center bottom;
 }
 .shop-map-marker-registered {
-  background: #71382f;
+  background: #dd9489;
+  color: #4d2523;
+}
+.shop-map-marker-registered.shop-map-marker-level-1 {
+  background: #f8ebe8;
+  color: #7b302b;
+}
+.shop-map-marker-registered.shop-map-marker-level-2 {
+  background: #efcbc5;
+  color: #6c2e2a;
+}
+.shop-map-marker-registered.shop-map-marker-level-3 {
+  background: #dd9489;
+  color: #4d2523;
+}
+.shop-map-marker-registered.shop-map-marker-level-4 {
+  background: #b3544b;
+  color: white;
+}
+.shop-map-marker-registered.shop-map-marker-level-5 {
+  background: #3b3031;
   color: white;
 }
 .shop-map-marker-unregistered {
@@ -920,7 +940,7 @@ nav {
   color: #817b74;
 }
 .shop-map-marker.is-highlighted {
-  box-shadow: 0 4px 13px rgb(37 37 34 / 38%);
+  box-shadow: 0 3px 8px rgb(37 37 34 / 28%);
   transform: scale(1.15);
 }
 .map-top {

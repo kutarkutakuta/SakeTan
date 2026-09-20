@@ -1,11 +1,30 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { shopMarkerStatus, shopMarkerTitle } from "@/lib/shop-marker";
+import {
+  shopMarkerLevel,
+  shopMarkerStatus,
+  shopMarkerTitle,
+} from "@/lib/shop-marker";
 
 test("shop marker status distinguishes loading, registered, and unregistered shops", () => {
   assert.equal(shopMarkerStatus(undefined), "loading");
   assert.equal(shopMarkerStatus(0), "unregistered");
   assert.equal(shopMarkerStatus(3), "registered");
+});
+
+test("shop marker level divides registered brand totals into five ranges", () => {
+  assert.equal(shopMarkerLevel(undefined), undefined);
+  assert.equal(shopMarkerLevel(0), undefined);
+  assert.equal(shopMarkerLevel(1), 1);
+  assert.equal(shopMarkerLevel(24), 1);
+  assert.equal(shopMarkerLevel(25), 2);
+  assert.equal(shopMarkerLevel(49), 2);
+  assert.equal(shopMarkerLevel(50), 3);
+  assert.equal(shopMarkerLevel(99), 3);
+  assert.equal(shopMarkerLevel(100), 4);
+  assert.equal(shopMarkerLevel(149), 4);
+  assert.equal(shopMarkerLevel(150), 5);
+  assert.equal(shopMarkerLevel(200), 5);
 });
 
 test("shop marker title explains its brand registration status", () => {

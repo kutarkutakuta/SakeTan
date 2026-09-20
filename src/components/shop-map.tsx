@@ -5,6 +5,7 @@ import type { Bounds, Shop } from "@/lib/types";
 import { hasUsableCoordinates } from "@/lib/utils";
 import type { MapView } from "@/lib/map-view";
 import {
+  shopMarkerLevel,
   shopMarkerStatus,
   shopMarkerTitle,
   type ShopMarkerStatus,
@@ -24,15 +25,21 @@ const storeIconPaths = [
   "M17.774 10.31a1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.451 0 1.12 1.12 0 0 0-1.548 0 2.5 2.5 0 0 1-3.452 0 1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.77-3.248l2.889-4.184A2 2 0 0 1 7 2h10a2 2 0 0 1 1.653.873l2.895 4.192a2.5 2.5 0 0 1-3.774 3.244",
   "M4 10.95V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.05",
 ];
+const selectedMarkerColor = "#d93b20";
 const selectedStoreGlyph = `data:image/svg+xml,${encodeURIComponent(
-  `<svg xmlns="${svgNamespace}" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${storeIconPaths
+  `<svg xmlns="${svgNamespace}" viewBox="0 0 24 24" fill="none" stroke="${selectedMarkerColor}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${storeIconPaths
     .map((pathData) => `<path d="${pathData}"/>`)
     .join("")}</svg>`,
 )}`;
 
-function createStoreMarker(status: ShopMarkerStatus) {
+function createStoreMarker(
+  status: ShopMarkerStatus,
+  brandTotal: number | undefined,
+) {
   const content = document.createElement("div");
   content.className = `shop-map-marker shop-map-marker-${status}`;
+  const level = shopMarkerLevel(brandTotal);
+  if (level) content.classList.add(`shop-map-marker-level-${level}`);
   content.setAttribute("aria-hidden", "true");
 
   const icon = document.createElementNS(svgNamespace, "svg");
@@ -202,12 +209,15 @@ export default function ShopMap({
     markerInstances.current.forEach(({ marker }) => (marker.map = null));
     markerInstances.current = shops.filter(hasUsableCoordinates).map((shop) => {
       const brandTotal = brandTotals?.[shop.id];
-      const shopContent = createStoreMarker(shopMarkerStatus(brandTotal));
+      const shopContent = createStoreMarker(
+        shopMarkerStatus(brandTotal),
+        brandTotal,
+      );
       const selectedPin = new libraries.marker.PinElement({
-        background: "#b84a3a",
-        borderColor: "#ffffff",
+        background: "#fff8f4",
+        borderColor: selectedMarkerColor,
         glyphSrc: selectedStoreGlyph,
-        scale: 1.55,
+        scale: 1.65,
       });
       const marker = new libraries.marker.AdvancedMarkerElement({
         map: map.current,
