@@ -53,11 +53,17 @@ export function BrandFilterControls({
   emphasizeKana?: boolean;
 }) {
   const [prefecturesOpen, setPrefecturesOpen] = useState(false);
+  const [kanaOpen, setKanaOpen] = useState(false);
   const prefectureOptionsId = useId();
+  const kanaOptionsId = useId();
   const hasFilters = selectedPrefectures.size > 0 || selectedKana.size > 0;
   const selectedPrefectureNames = prefectures.filter((value) =>
     selectedPrefectures.has(value),
   );
+  const selectedKanaNames = [
+    ...kanaGroups.filter((value) => selectedKana.has(value)),
+    ...(selectedKana.has("other") ? ["他"] : []),
+  ];
   const prefectureSummary =
     selectedPrefectureNames.length === 0
       ? "すべて"
@@ -67,6 +73,12 @@ export function BrandFilterControls({
             .slice(0, 2)
             .map(shortPrefecture)
             .join("・")}ほか${selectedPrefectureNames.length - 2}`;
+  const kanaSummary =
+    selectedKanaNames.length === 0
+      ? "すべて"
+      : selectedKanaNames.length <= 4
+        ? selectedKanaNames.join("・")
+        : `${selectedKanaNames.slice(0, 4).join("・")}ほか${selectedKanaNames.length - 4}`;
   return (
     <div className="brand-filter-panel">
       <button
@@ -108,8 +120,23 @@ export function BrandFilterControls({
           </button>
         ))}
       </div>
+      <button
+        type="button"
+        className={`prefecture-filter-toggle kana-filter-toggle${emphasizeKana ? " filter-attention" : ""}`}
+        aria-expanded={kanaOpen}
+        aria-controls={kanaOptionsId}
+        aria-label={`かなフィルター、${selectedKanaNames.join("、") || "すべて"}、${kanaOpen ? "閉じる" : "開く"}`}
+        onClick={() => setKanaOpen((open) => !open)}
+      >
+        <span>かな</span>
+        <span className="prefecture-filter-selection">{kanaSummary}</span>
+        <span className="prefecture-filter-action">
+          {kanaOpen ? "閉じる" : selectedKanaNames.length ? "変更" : "選ぶ"}
+        </span>
+      </button>
       <div
-        className={`filter-links combined-filter-links kana-links${emphasizeKana ? " filter-attention" : ""}`}
+        id={kanaOptionsId}
+        className={`filter-links combined-filter-links kana-links${kanaOpen ? " open" : ""}${emphasizeKana ? " filter-attention" : ""}`}
         aria-label="銘柄・蔵元と頭文字で絞り込む"
       >
         {(["brand", "brewery"] as const).map((value) => (
@@ -155,7 +182,6 @@ export function BrandFilterControls({
             </button>
           )}
           <label className="sort-select">
-            <span>並び順</span>
             <select
               value={sort}
               onChange={(event) =>

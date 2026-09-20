@@ -3339,6 +3339,12 @@ nav {
     min-height: 42px;
     padding-inline: 4px;
   }
+  .kana-links {
+    display: none;
+  }
+  .kana-links.open {
+    display: flex;
+  }
   .availability-tooltip {
     width: min(260px, calc(100vw - 40px));
   }
