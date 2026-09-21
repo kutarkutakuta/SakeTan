@@ -7,23 +7,26 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from "react";
+import { ShopCommentsLoader } from "./shop-comments-loader";
 
 type ShopPageTab = "brands" | "comments";
 
 export function ShopPageTabs({
   initialTab,
   brandCount,
-  commentCount,
+  shopId,
   brands,
-  comments,
 }: {
   initialTab: ShopPageTab;
   brandCount: number;
-  commentCount: number;
+  shopId: string;
   brands: ReactNode;
-  comments: ReactNode;
 }) {
   const [activeTab, setActiveTab] = useState<ShopPageTab>(initialTab);
+  const [commentsRequested, setCommentsRequested] = useState(
+    initialTab === "comments",
+  );
+  const [commentCount, setCommentCount] = useState<number | null>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
   const brandTabRef = useRef<HTMLButtonElement>(null);
   const commentTabRef = useRef<HTMLButtonElement>(null);
@@ -36,6 +39,7 @@ export function ShopPageTabs({
         url.searchParams.get("tab") === "comments"
       ) {
         setActiveTab("comments");
+        setCommentsRequested(true);
       } else if (url.searchParams.get("tab") === "brands") {
         setActiveTab("brands");
       }
@@ -52,6 +56,7 @@ export function ShopPageTabs({
 
   function selectTab(nextTab: ShopPageTab, moveFocus = false) {
     setActiveTab(nextTab);
+    if (nextTab === "comments") setCommentsRequested(true);
 
     const url = new URL(window.location.href);
     if (nextTab === "comments") {
@@ -119,7 +124,9 @@ export function ShopPageTabs({
           onKeyDown={handleTabKeyDown}
         >
           <span>コメント</span>
-          <span className="shop-tab-count">{commentCount}</span>
+          {commentCount !== null && (
+            <span className="shop-tab-count">{commentCount}</span>
+          )}
         </button>
       </div>
 
@@ -139,7 +146,9 @@ export function ShopPageTabs({
         aria-labelledby="shop-comments-tab"
         hidden={activeTab !== "comments"}
       >
-        {comments}
+        {commentsRequested && (
+          <ShopCommentsLoader shopId={shopId} onCountChange={setCommentCount} />
+        )}
       </div>
     </div>
   );

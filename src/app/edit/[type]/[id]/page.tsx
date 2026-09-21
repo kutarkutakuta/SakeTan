@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, History } from "lucide-react";
-import { configured, supabase, viewer } from "@/lib/supabase/server";
+import { authorization, configured, supabase } from "@/lib/supabase/server";
 import { LoginRequired } from "@/components/login-required";
 import { MasterForm } from "@/components/master-form";
 import type { Brewery, EntityType } from "@/lib/types";
@@ -31,8 +31,8 @@ export default async function EditPage({
     q.return_to === "/edit" || q.return_to?.startsWith("/edit?")
       ? q.return_to
       : undefined;
-  const db = await supabase();
-  const { user, admin, anonymous } = await viewer();
+  const [db, account] = await Promise.all([supabase(), authorization()]);
+  const { user, admin, anonymous } = account;
   const nextParams = new URLSearchParams();
   if (q.shop_id) nextParams.set("shop_id", q.shop_id);
   if (q.name) nextParams.set("name", q.name.slice(0, 150));
@@ -47,18 +47,24 @@ export default async function EditPage({
     !id && type === "brand" && q.name ? { name: q.name.slice(0, 150) } : {};
   let brewery: Brewery | null = null;
   if (id && db) {
-    const { data, error } = await db
+    const fields = {
+      shop: "id,name,name_kana,prefecture,city,latitude,longitude,google_place_id,geocode_source,geocode_precision,is_active",
+      brand: "id,name,name_kana,brewery_id,is_active",
+      brewery: "id,name,name_kana,prefecture,website_url,is_active",
+    }[type];
+    const { data: rawData, error } = await db
       .from(entity.table)
-      .select("*")
+      .select(fields)
       .eq("id", id)
       .maybeSingle();
     if (error) throw new Error("登録情報を取得できませんでした");
-    if (!data) notFound();
+    if (!rawData) notFound();
+    const data = rawData as unknown as Record<string, unknown>;
     initial = data;
-    if (type === "brand" && data.brewery_id) {
+    if (type === "brand" && typeof data.brewery_id === "string") {
       const { data: b } = await db
         .from("breweries")
-        .select("*")
+        .select("id,name,name_kana,prefecture,website_url,is_active")
         .eq("id", data.brewery_id)
         .maybeSingle();
       brewery = b;

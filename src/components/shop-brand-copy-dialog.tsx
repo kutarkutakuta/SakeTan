@@ -37,7 +37,7 @@ export function ShopBrandCopyDialog({
   onClose,
   onCopied,
 }: {
-  sourceShop: Shop;
+  sourceShop: Pick<Shop, "id" | "name">;
   availableCount: number;
   onClose: () => void;
   onCopied: (result: ShopBrandCopyResult) => void;

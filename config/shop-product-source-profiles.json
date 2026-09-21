@@ -1,5 +1,79 @@
 [
   {
+    "name": "yamazaki-seiichi-sake-brand-brewery-list",
+    "host": "www.yamazakiseiichishouten.com",
+    "pathPrefix": "/item",
+    "dedicatedProfile": true,
+    "itemContainerSelector": ".japanese-item > ul > li",
+    "brandSelector": "a",
+    "brandPattern": "^\\s*([^／/]+?)\\s*[／/]",
+    "brewerySelector": "a",
+    "breweryPattern": "^[^／/]+[／/]\\s*([^（(]+?)\\s*[（(]",
+    "maxPages": 1
+  },
+  {
+    "name": "ikusakaya-shinshu-sake-brewery-table",
+    "host": "ikusakaya.com",
+    "pathPrefix": "/collections/%E4%BF%A1%E5%B7%9E%E3%81%AE%E5%9C%B0%E9%85%92",
+    "dedicatedProfile": true,
+    "itemContainerSelector": ".collection-header__description.rte table tr:not(:first-child)",
+    "brandSelector": "td:nth-child(2)",
+    "brewerySelector": "td:nth-child(3)",
+    "maxPages": 1
+  },
+  {
+    "name": "ikusakaya-national-sake-brewery-table",
+    "host": "ikusakaya.com",
+    "pathPrefix": "/collections/%E5%85%A8%E5%9B%BD%E3%81%AE%E5%9C%B0%E9%85%92",
+    "dedicatedProfile": true,
+    "itemContainerSelector": ".collection-header__description.rte table tr:not(:first-child)",
+    "brandSelector": "td:nth-child(3), th:nth-child(3)",
+    "brandSplitPattern": "[・･/／、,，]+",
+    "brewerySelector": "td:nth-child(4), th:nth-child(4)",
+    "maxPages": 1
+  },
+  {
+    "name": "nakasake-sake-brewery-list",
+    "host": "www.nakasake.com",
+    "pathPrefix": "/fp/nihonshu.htm",
+    "dedicatedProfile": true,
+    "itemContainerSelector": ".mainFrame .c_list > div:has(> a.listlink)",
+    "brandSelector": "strong.s_ttl",
+    "brewerySelector": "a.listlink",
+    "breweryPattern": "^[\\s\\S]*?[\\s　]+(.+?)(?:\\s*[（(][^）)]*県[）)])?$",
+    "maxPages": 1
+  },
+  {
+    "name": "mashidaya-sake-category-brand-links",
+    "host": "www.mashidaya.co.jp",
+    "pathPrefix": "/SHOP/",
+    "dedicatedProfile": true,
+    "itemContainerSelector": ".category section nav ul > li.listcat3.child",
+    "brandSelector": "a",
+    "brandPattern": "^(?:[^\\s　]+(?:都|道|府|県)[\\s　]+)?(.+)$",
+    "brandSplitPattern": "[・･]",
+    "ignoreNamePatterns": ["^その他日本酒$"],
+    "maxPages": 50
+  },
+  {
+    "name": "hitomi-sake-brand-filter-links",
+    "host": "hitomi-sake.ocnk.net",
+    "pathPrefix": "/product-list/",
+    "dedicatedSelector": ".h_maincategory1 > ul.sub_menu > li:not(.all_items) a.item_list_link, .h_maincategory6 > ul.sub_menu > li:not(.all_items) a.item_list_link",
+    "maxPages": 20
+  },
+  {
+    "name": "sake-jazz-sake-brand-category-panels",
+    "host": "sake-jazz.fun",
+    "pathPrefix": "/",
+    "dedicatedProfile": true,
+    "itemContainerSelector": "li:has(> a[href*=category_id=55]), li:has(> a[href*=category_id=56])",
+    "brandSelector": "ul > li > a",
+    "brandPattern": "^([^（(]+)",
+    "ignoreNamePatterns": ["^発泡生酒$"],
+    "maxPages": 1
+  },
+  {
     "name": "miyosawa-sake-brand-region-panel",
     "host": "miyosawa.co.jp",
     "pathPrefix": "/",

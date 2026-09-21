@@ -16,12 +16,14 @@ export function ShopComments({
   userId,
   admin,
   ready,
+  onChanged,
 }: {
   shopId: string;
   comments: ShopComment[];
   userId: string | null;
   admin: boolean;
   ready: boolean;
+  onChanged?: () => Promise<void>;
 }) {
   const router = useRouter();
   const { showToast } = useToast();
@@ -41,7 +43,8 @@ export function ShopComments({
       });
       setComment("");
       showToast("コメントを投稿しました");
-      router.refresh();
+      if (onChanged) await onChanged();
+      else router.refresh();
     } catch (reason) {
       showToast(
         reason instanceof Error ? reason.message : "コメントできませんでした",
@@ -64,7 +67,8 @@ export function ShopComments({
       });
       setEditing(null);
       showToast(remove ? "コメントを削除しました" : "コメントを変更しました");
-      router.refresh();
+      if (onChanged) await onChanged();
+      else router.refresh();
     } catch (reason) {
       showToast(
         reason instanceof Error ? reason.message : "変更できませんでした",

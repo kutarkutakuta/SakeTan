@@ -14,7 +14,12 @@ import {
   type BrandFilterTarget,
   type KanaGroup,
 } from "@/lib/brand-index";
-import type { Brand, Shop, ShopBrand, ShopBrandStatus } from "@/lib/types";
+import type {
+  Brand,
+  PostShop,
+  PostShopRelation,
+  ShopBrandStatus,
+} from "@/lib/types";
 import { AvailabilityInfo } from "./availability-info";
 import { BrandFilterControls, BrandFilterCount } from "./brand-filter-controls";
 import {
@@ -38,8 +43,8 @@ export function PostForm({
   shopRelations,
   copyAllowed,
 }: {
-  shop: Shop;
-  shopRelations: ShopBrand[];
+  shop: PostShop;
+  shopRelations: PostShopRelation[];
   copyAllowed: boolean;
 }) {
   const { showToast } = useToast();

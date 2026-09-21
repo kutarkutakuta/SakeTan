@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { LoginOptions } from "@/components/login-options";
 import { ToastOnMount } from "@/components/toast-provider";
-import { configured, viewer } from "@/lib/supabase/server";
+import { configured, viewerIdentity } from "@/lib/supabase/server";
 import { safeNext } from "@/lib/utils";
 
 export default async function LoginPage({
@@ -12,7 +12,7 @@ export default async function LoginPage({
 }) {
   const query = await searchParams;
   const next = safeNext(query.next);
-  const account = await viewer();
+  const account = await viewerIdentity();
   return (
     <main id="main" className="page narrow">
       <Link className="back" href={next}>

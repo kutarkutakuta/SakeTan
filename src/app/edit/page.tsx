@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { EditSearch } from "@/components/edit-search";
-import { viewer } from "@/lib/supabase/server";
+import { authorization } from "@/lib/supabase/server";
 import type { EntityType } from "@/lib/types";
 
 const entityTypes: EntityType[] = ["brand", "brewery", "shop"];
@@ -14,7 +14,7 @@ export default async function EditIndex({
   const initialTarget = entityTypes.includes(params.type as EntityType)
     ? (params.type as EntityType)
     : "brand";
-  const { user, admin, anonymous } = await viewer();
+  const { user, admin, anonymous } = await authorization();
   return (
     <main id="main" className="page narrow">
       <Link href="/" className="back">

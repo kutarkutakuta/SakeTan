@@ -57,6 +57,18 @@ export type ShopBrand = {
 };
 export type ShopBrandStatus = "available" | "unavailable" | "incorrect";
 
+export type PostShop = Pick<Shop, "id" | "name" | "is_active">;
+export type PostShopRelation = Pick<
+  ShopBrand,
+  | "id"
+  | "shop_id"
+  | "brand_id"
+  | "is_active"
+  | "status"
+  | "first_seen_at"
+  | "last_seen_at"
+>;
+
 export type BrandRequest = {
   id: string;
   name: string;
@@ -76,6 +88,12 @@ export type ShopComment = {
   commented_on: string;
   is_deleted: boolean;
   users: { name: string } | null;
+};
+export type ShopCommentThread = {
+  comments: ShopComment[];
+  userId: string | null;
+  admin: boolean;
+  ready: boolean;
 };
 export type LatestShopComment = {
   id: string;

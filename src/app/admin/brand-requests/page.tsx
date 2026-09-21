@@ -2,20 +2,22 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { BrandRequestActions } from "@/components/brand-request-actions";
-import { supabase, viewer } from "@/lib/supabase/server";
+import { authorization, supabase } from "@/lib/supabase/server";
 import type { BrandRequest } from "@/lib/types";
 
 export default async function BrandRequestsPage() {
-  const account = await viewer();
+  const account = await authorization();
   if (!account.admin) notFound();
   const db = await supabase();
   const { data, error } = await db!
     .from("brand_requests")
-    .select("*,shops(name)")
+    .select(
+      "id,name,brewery_name,note,shop_id,submitted_by,status,created_at,shops(name)",
+    )
     .eq("status", "pending")
     .order("created_at", { ascending: false });
   if (error) throw new Error("未登録銘柄の報告を取得できませんでした");
-  const requests = (data ?? []) as BrandRequest[];
+  const requests = (data ?? []) as unknown as BrandRequest[];
   return (
     <main id="main" className="page narrow">
       <Link className="back" href="/history">

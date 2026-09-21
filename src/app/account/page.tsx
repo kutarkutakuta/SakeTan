@@ -11,14 +11,16 @@ import {
   contributionAchievement,
   type ContributionSummary,
 } from "@/lib/contribution";
-import { supabase, viewer } from "@/lib/supabase/server";
+import { supabase, viewerIdentity } from "@/lib/supabase/server";
 import {
   isIdentityProvider,
   loginProviderForIdentity,
 } from "@/lib/auth-identities";
 
 export default async function AccountPage() {
-  const account = await viewer();
+  const db = await supabase();
+  if (!db) redirect("/login?next=/account");
+  const account = await viewerIdentity();
   if (!account.user || account.anonymous) redirect("/login?next=/account");
   const identities = account.user.identities ?? [];
   const linkedIdentities = identities.flatMap((identity): LinkedIdentity[] =>
@@ -36,8 +38,7 @@ export default async function AccountPage() {
       loginProviderForIdentity(identity.provider),
     ),
   );
-  const db = await supabase();
-  const { data, error } = await db!.rpc("get_my_contribution_summary");
+  const { data, error } = await db.rpc("get_my_contribution_summary");
   if (error) throw new Error("貢献記録を取得できませんでした");
   const contribution = data as unknown as ContributionSummary;
   const achievement = contributionAchievement(contribution.shop_brand_count);
