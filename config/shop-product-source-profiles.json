@@ -1,5 +1,50 @@
 [
   {
+    "name": "yokozeki-sake-brand-brewery-table",
+    "host": "www.yokozeki.info",
+    "pathPrefix": "/sake",
+    "dedicatedProfile": true,
+    "itemContainerSelector": "table.m-table-item tr",
+    "brandSelector": "td:nth-last-child(2)",
+    "brandSplitPattern": "[・･]+",
+    "brewerySelector": "td:last-child",
+    "maxPages": 1
+  },
+  {
+    "name": "kubo-yama-sake-brand-categories",
+    "host": "kubo-yama.com",
+    "pathPrefix": "/products/list",
+    "dedicatedProfile": true,
+    "itemContainerSelector": ".ec-childCategoryRole li:not(.titleLabel)",
+    "brandSelector": "a",
+    "brandPattern": "^(.+?)(?=\\s*(?:[-ｰー]\\s*[A-Za-z]|$))",
+    "maxPages": 50
+  },
+  {
+    "name": "hara-igeta-sake-brewery-list",
+    "host": "hara-igeta.jp",
+    "pathPrefix": "/sake",
+    "dedicatedProfile": true,
+    "itemContainerSelector": ".p-entry__body .wp-block-group:has(> .wp-block-group__inner-container > .wp-block-heading)",
+    "brandSelector": "p.wp-block-paragraph",
+    "brandPattern": "【銘[\\s　]*柄】\\s*([^【]+)",
+    "brandSplitPattern": "[／/・、,，]+",
+    "brewerySelector": "h2.wp-block-heading",
+    "breweryPattern": "^(.+?)\\s*【",
+    "maxPages": 1
+  },
+  {
+    "name": "miyajima-sake-brand-list",
+    "host": "mssakaya.com",
+    "pathPrefix": "/zizake",
+    "dedicatedProfile": true,
+    "itemContainerSelector": "#introduce_list .introduce_list_col.article",
+    "brandSelector": "h3.title",
+    "brandPattern": "^([^（(]+)",
+    "brewerySelector": ".cat-brewery",
+    "maxPages": 50
+  },
+  {
     "name": "mishimaya-nihonshu-brewery-brands",
     "host": "www.mishimaya.sake-ten.jp",
     "pathPrefix": "/nihon.htm",

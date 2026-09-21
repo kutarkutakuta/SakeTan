@@ -41,7 +41,11 @@ export default function HelpPage() {
 
       <section className="info-hero" aria-labelledby="help-title">
         <p className="info-lead">
-          「<span className="logo-title" style={{fontSize:"20px"}}>さけのありか</span>」
+          「
+          <span className="logo-title" style={{ fontSize: "20px" }}>
+            さけのありか
+          </span>
+          」
           は、飲みたい日本酒から取扱店を探したり、近くの酒屋から取扱銘柄を探したりできる、
           みんなで育てる酒屋マップです。
         </p>
@@ -56,7 +60,11 @@ export default function HelpPage() {
               <h3>見つけた情報を、次の人へ</h3>
             </div>
             <p>
-              「<span className="logo-title" style={{fontSize:"18px"}}>さけのありか</span>」は、
+              「
+              <span className="logo-title" style={{ fontSize: "18px" }}>
+                さけのありか
+              </span>
+              」は、
               みなさんの投稿で成り立っています。探していたお酒や酒屋を見つけて「役に立った」と思ったら、店頭で見かけた銘柄や変わっていた取扱情報を、ぜひ積極的に更新してください。ひとつひとつの更新が、次に探す人の助けになります。
             </p>
           </article>
@@ -96,6 +104,75 @@ export default function HelpPage() {
             </p>
           </article>
         </div>
+      </section>
+
+      <section className="info-section" aria-labelledby="marker-colors-title">
+        <h2 id="marker-colors-title">地図の色について</h2>
+        <p className="info-section-intro">
+          酒蔵アイコンは、登録されている取扱銘柄数に応じて色が変わります。色が濃いほど、登録銘柄が多いことを示します。0件は取扱情報がまだ登録されていない状態で、実際に取扱がないとは限りません。
+        </p>
+        <ul className="marker-color-legend">
+          <li>
+            <span
+              className="marker-color-swatch marker-color-swatch-0"
+              aria-hidden="true"
+            />
+            <span>
+              <strong>0件</strong>
+              <small>取扱情報が未登録</small>
+            </span>
+          </li>
+          <li>
+            <span
+              className="marker-color-swatch marker-color-swatch-1"
+              aria-hidden="true"
+            />
+            <span>
+              <strong>1〜19件</strong>
+              <small>少なめ</small>
+            </span>
+          </li>
+          <li>
+            <span
+              className="marker-color-swatch marker-color-swatch-2"
+              aria-hidden="true"
+            />
+            <span>
+              <strong>20〜49件</strong>
+              <small>やや多め</small>
+            </span>
+          </li>
+          <li>
+            <span
+              className="marker-color-swatch marker-color-swatch-3"
+              aria-hidden="true"
+            />
+            <span>
+              <strong>50〜99件</strong>
+              <small>中程度</small>
+            </span>
+          </li>
+          <li>
+            <span
+              className="marker-color-swatch marker-color-swatch-4"
+              aria-hidden="true"
+            />
+            <span>
+              <strong>100〜199件</strong>
+              <small>多め</small>
+            </span>
+          </li>
+          <li>
+            <span
+              className="marker-color-swatch marker-color-swatch-5"
+              aria-hidden="true"
+            />
+            <span>
+              <strong>200件以上</strong>
+              <small>とても多い</small>
+            </span>
+          </li>
+        </ul>
       </section>
 
       <section className="info-section" aria-labelledby="usage-title">

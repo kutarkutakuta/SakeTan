@@ -912,29 +912,29 @@ nav {
   color: #4d2523;
 }
 .shop-map-marker-registered.shop-map-marker-level-1 {
-  background: #f8ebe8;
+  background: #fff4f2;
   color: #7b302b;
 }
 .shop-map-marker-registered.shop-map-marker-level-2 {
-  background: #efcbc5;
+  background: #f7cdc8;
   color: #6c2e2a;
 }
 .shop-map-marker-registered.shop-map-marker-level-3 {
-  background: #dd9489;
+  background: #eca097;
   color: #4d2523;
 }
 .shop-map-marker-registered.shop-map-marker-level-4 {
-  background: #b3544b;
+  background: #cd625d;
   color: white;
 }
 .shop-map-marker-registered.shop-map-marker-level-5 {
-  background: #3b3031;
+  background: #481b29;
   color: white;
 }
 .shop-map-marker-unregistered {
   border-color: #403c39;
-  background: #ddd9d4;
-  color: #76726d;
+  background: #b8bec6;
+  color: #4e5863;
 }
 .shop-map-marker-loading {
   background: #e7e3dc;
@@ -1080,6 +1080,62 @@ nav {
   font-size: 16px;
   line-height: 1.8;
   text-wrap: pretty;
+}
+.marker-color-legend {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 22px;
+  margin: 0;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  list-style: none;
+}
+.marker-color-legend li {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 48px;
+}
+.marker-color-swatch {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #9d9993;
+  border-radius: 50%;
+  box-shadow: 0 2px 5px rgb(37 37 34 / 15%);
+}
+.marker-color-swatch-0 {
+  background: #b8bec6;
+}
+.marker-color-swatch-1 {
+  background: #fff4f2;
+}
+.marker-color-swatch-2 {
+  background: #f7cdc8;
+}
+.marker-color-swatch-3 {
+  background: #eca097;
+}
+.marker-color-swatch-4 {
+  background: #cd625d;
+}
+.marker-color-swatch-5 {
+  border-color: #481b29;
+  background: #481b29;
+}
+.marker-color-legend li > span:last-child {
+  display: grid;
+  gap: 1px;
+}
+.marker-color-legend strong {
+  font-size: 16px;
+}
+.marker-color-legend small {
+  color: #5e5c56;
+  font-size: 14px;
+  line-height: 1.5;
 }
 .help-callout-grid,
 .help-access-grid {
@@ -3245,6 +3301,9 @@ nav {
   }
   .help-callout-grid,
   .help-access-grid {
+    grid-template-columns: 1fr;
+  }
+  .marker-color-legend {
     grid-template-columns: 1fr;
   }
   .help-callout,

@@ -12,10 +12,10 @@ export function shopMarkerLevel(
   brandTotal: number | undefined,
 ): ShopMarkerLevel | undefined {
   if (brandTotal === undefined || brandTotal <= 0) return undefined;
-  if (brandTotal < 25) return 1;
+  if (brandTotal < 20) return 1;
   if (brandTotal < 50) return 2;
   if (brandTotal < 100) return 3;
-  if (brandTotal < 150) return 4;
+  if (brandTotal < 200) return 4;
   return 5;
 }
 

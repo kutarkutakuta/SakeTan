@@ -137,6 +137,8 @@ function usage(): never {
       "  npm run import:shop-products -- --shop-id=<UUID> --url=<商品一覧URL> --parse [--selector=<CSS>]",
       "  review.json の approved を確認後:",
       "  npm run import:shop-products -- --shop-id=<UUID> --url=<商品一覧URL> --import",
+      "  取得済みデータを再利用して確実な一致だけ登録:",
+      "  npm run import:shop-products -- --shop-id=<UUID> --url=<商品一覧URL> --parse --auto --force",
       "  確実な一致だけ自動登録し、例外をレポート:",
       "  npm run import:shop-products -- --shop-id=<UUID> --url=<一覧URLまたはPDF> --auto",
       "  登録せず結果だけ確認する場合は --auto --dry-run を使います。",
@@ -190,15 +192,21 @@ function parseOptions(): Options {
   const all = argumentsList.includes("--all");
   const auto = argumentsList.includes("--auto");
   const dryRun = argumentsList.includes("--dry-run");
+  const parseOnly =
+    argumentsList.includes("--parse") && !argumentsList.includes("--fetch");
   const extracted = selectedValue(argumentsList, "--extracted") ?? undefined;
   const phases: Phase[] = auto
     ? extracted
       ? dryRun
         ? ["parse"]
         : ["parse", "import"]
-      : dryRun
-        ? ["fetch", "parse"]
-        : ["fetch", "parse", "import"]
+      : parseOnly
+        ? dryRun
+          ? ["parse"]
+          : ["parse", "import"]
+        : dryRun
+          ? ["fetch", "parse"]
+          : ["fetch", "parse", "import"]
     : all
       ? ["fetch", "parse"]
       : (["fetch", "parse", "import"] as const).filter((phase) =>
