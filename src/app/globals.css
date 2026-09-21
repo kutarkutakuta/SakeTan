@@ -1162,6 +1162,9 @@ nav {
   border-color: #e4c98e;
   background: #fff8e9;
 }
+.help-callout-contact {
+  grid-column: 1 / -1;
+}
 .help-callout-heading,
 .help-access-heading {
   display: flex;
@@ -1246,6 +1249,10 @@ nav {
   border-top: 1px solid var(--line);
 }
 .help-contact {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
   color: var(--muted);
   font-size: 16px;
 }

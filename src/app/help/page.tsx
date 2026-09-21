@@ -8,6 +8,7 @@ import {
   ExternalLink,
   HeartHandshake,
   LogIn,
+  Mail,
   UserRound,
 } from "lucide-react";
 
@@ -101,6 +102,18 @@ export default function HelpPage() {
                 特に入手困難な人気銘柄（十四代、新政、而今、花陽浴、ソガペールなど）は、購入条件があったり、店頭販売されていない場合があります。
               </strong>
               掲載されていても購入できるとは限らないため、ご注意ください。
+            </p>
+          </article>
+
+          <article className="help-callout help-callout-contact">
+            <div className="help-callout-heading">
+              <Mail size={22} aria-hidden="true" />
+              <h3>掲載内容の修正・削除について</h3>
+            </div>
+            <p>
+              店舗関係者の方で掲載を希望されない場合や、掲載内容の修正・削除をご希望の場合は、お問い合わせください。
+              <br />
+              内容を確認のうえ、速やかに対応します。
             </p>
           </article>
         </div>
@@ -239,9 +252,19 @@ export default function HelpPage() {
             href="https://x.com/kutakutakutar"
             target="_blank"
             rel="noopener noreferrer"
+            aria-label="X（クタクター）"
+            title="X（クタクター）"
           >
-            <XLogo />
-            クタクター
+            <XLogo size={18} />
+          </a>
+          <a
+            href="https://mail.google.com/mail/?view=cm&fs=1&to=kutarkutakuta@gmail.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="メールでお問い合わせ（kutarkutakuta@gmail.com）"
+            title="メールでお問い合わせ"
+          >
+            <Mail size={18} aria-hidden="true" />
           </a>
         </p>
         <Link href="/privacy">

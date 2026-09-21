@@ -1,5 +1,27 @@
 [
   {
+    "name": "miyosawa-sake-brand-region-panel",
+    "host": "miyosawa.co.jp",
+    "pathPrefix": "/",
+    "dedicatedProfile": true,
+    "itemContainerSelector": "#menu-osake",
+    "brandSelector": "li",
+    "brandPattern": "^([^（(]+)",
+    "maxPages": 1
+  },
+  {
+    "name": "isobe-sake-producer-brand-list",
+    "host": "isobe-sake.com",
+    "pathPrefix": "/pages/producer",
+    "dedicatedProfile": true,
+    "itemContainerSelector": ".shopify-section:has(h2.section-header__title:contains(日本酒銘柄一覧)) .logo-item--grid",
+    "brandSelector": ".logo-list__text",
+    "brandPattern": "^([^（(]+)",
+    "brewerySelector": ".logo-list__text",
+    "breweryPattern": "^[^（(]*[（(]\\s*([^,，、)）]+)",
+    "maxPages": 1
+  },
+  {
     "name": "yokozeki-sake-brand-brewery-table",
     "host": "www.yokozeki.info",
     "pathPrefix": "/sake",
