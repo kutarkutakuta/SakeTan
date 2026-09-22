@@ -6,13 +6,38 @@ import "@fontsource/noto-sans-jp/700.css";
 import "./globals.css";
 import { Header } from "@/components/header";
 import { ToastProvider } from "@/components/toast-provider";
+
+const siteName = "さけのありか";
+const title = "さけのありか｜みんなで作る酒屋マップ";
+const description =
+  "飲みたい酒から酒屋を探せる。近くの酒屋から酒を探せる。みんなで作る日本酒銘柄と酒販店の取扱情報。";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "http://127.0.0.1:3000",
+  ),
+  applicationName: siteName,
   title: {
-    default: "さけのありか｜みんなで作る酒屋マップ",
+    default: title,
     template: "%s | さけのありか",
   },
-  description:
-    "飲みたい酒から店を探せる。近くの店から酒を探せる。ユーザーの発見で育つ、日本酒銘柄と酒屋の取扱情報。",
+  description,
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title,
+    description,
+    url: "/",
+    siteName,
+    locale: "ja_JP",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+  },
 };
 export default function Layout({
   children,
