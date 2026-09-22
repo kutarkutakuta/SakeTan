@@ -9,6 +9,12 @@ import { ToastProvider } from "@/components/toast-provider";
 
 const siteName = "さけのありか";
 const siteUrl = new URL("https://xn--l8jsqp0k5g.jp/");
+const socialImage = {
+  url: "/og-background.png",
+  width: 1730,
+  height: 909,
+  alt: "さけのありか — 飲みたい酒から酒屋を探せる、みんなで作る酒屋マップ",
+};
 const title = "さけのありか｜みんなで作る酒屋マップ";
 const description =
   "飲みたい酒から酒屋を探せる。近くの酒屋から酒を探せる。みんなで作る日本酒銘柄と酒販店の取扱情報。";
@@ -31,11 +37,13 @@ export const metadata: Metadata = {
     siteName,
     locale: "ja_JP",
     type: "website",
+    images: [socialImage],
   },
   twitter: {
     card: "summary_large_image",
     title,
     description,
+    images: [socialImage.url],
   },
 };
 export default function Layout({
