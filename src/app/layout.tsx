@@ -8,14 +8,13 @@ import { Header } from "@/components/header";
 import { ToastProvider } from "@/components/toast-provider";
 
 const siteName = "さけのありか";
+const siteUrl = new URL("https://xn--l8jsqp0k5g.jp/");
 const title = "さけのありか｜みんなで作る酒屋マップ";
 const description =
   "飲みたい酒から酒屋を探せる。近くの酒屋から酒を探せる。みんなで作る日本酒銘柄と酒販店の取扱情報。";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "http://127.0.0.1:3000",
-  ),
+  metadataBase: siteUrl,
   applicationName: siteName,
   title: {
     default: title,
@@ -23,12 +22,12 @@ export const metadata: Metadata = {
   },
   description,
   alternates: {
-    canonical: "/",
+    canonical: siteUrl,
   },
   openGraph: {
     title,
     description,
-    url: "/",
+    url: siteUrl,
     siteName,
     locale: "ja_JP",
     type: "website",
