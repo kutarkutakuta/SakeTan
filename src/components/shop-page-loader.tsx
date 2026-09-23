@@ -17,6 +17,7 @@ type ShopPageData = {
     "id" | "name" | "prefecture" | "city" | "google_place_id" | "is_active"
   >;
   relations: ShopBrand[];
+  commentCount: number;
   error?: string;
 };
 
@@ -146,6 +147,7 @@ export function ShopPageLoader() {
           searchParams.get("tab") === "comments" ? "comments" : "brands"
         }
         brandCount={listedBrands.length}
+        commentCount={data.commentCount}
         shopId={id}
         brands={
           <div className="shop-content">

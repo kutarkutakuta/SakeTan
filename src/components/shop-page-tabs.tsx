@@ -14,11 +14,13 @@ type ShopPageTab = "brands" | "comments";
 export function ShopPageTabs({
   initialTab,
   brandCount,
+  commentCount,
   shopId,
   brands,
 }: {
   initialTab: ShopPageTab;
   brandCount: number;
+  commentCount: number;
   shopId: string;
   brands: ReactNode;
 }) {
@@ -26,7 +28,7 @@ export function ShopPageTabs({
   const [commentsRequested, setCommentsRequested] = useState(
     initialTab === "comments",
   );
-  const [commentCount, setCommentCount] = useState<number | null>(null);
+  const [commentCountValue, setCommentCount] = useState(commentCount);
   const tabsRef = useRef<HTMLDivElement>(null);
   const brandTabRef = useRef<HTMLButtonElement>(null);
   const commentTabRef = useRef<HTMLButtonElement>(null);
@@ -124,9 +126,7 @@ export function ShopPageTabs({
           onKeyDown={handleTabKeyDown}
         >
           <span>コメント</span>
-          {commentCount !== null && (
-            <span className="shop-tab-count">{commentCount}</span>
-          )}
+          <span className="shop-tab-count">{commentCountValue}</span>
         </button>
       </div>
 

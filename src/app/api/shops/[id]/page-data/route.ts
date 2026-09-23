@@ -15,7 +15,7 @@ export async function GET(
       { status: 503 },
     );
 
-  const [shopResult, relationsResult] = await Promise.all([
+  const [shopResult, relationsResult, commentCountResult] = await Promise.all([
     db
       .from("shops")
       .select("id,name,prefecture,city,google_place_id,is_active")
@@ -27,8 +27,13 @@ export async function GET(
         "id,shop_id,brand_id,is_active,status,first_seen_at,last_seen_at,brands(id,name,name_kana,is_active,breweries(id,name,name_kana,prefecture))",
       )
       .eq("shop_id", id.data),
+    db
+      .from("shop_comments")
+      .select("id", { count: "exact", head: true })
+      .eq("shop_id", id.data)
+      .eq("is_deleted", false),
   ]);
-  if (shopResult.error || relationsResult.error)
+  if (shopResult.error || relationsResult.error || commentCountResult.error)
     return Response.json(
       { error: "酒屋情報を読み込めませんでした" },
       { status: 500 },
@@ -37,7 +42,11 @@ export async function GET(
     return Response.json({ error: "酒屋が見つかりません" }, { status: 404 });
 
   return Response.json(
-    { shop: shopResult.data, relations: relationsResult.data ?? [] },
+    {
+      shop: shopResult.data,
+      relations: relationsResult.data ?? [],
+      commentCount: commentCountResult.count ?? 0,
+    },
     { headers: { "Cache-Control": "private, no-store" } },
   );
 }
