@@ -45,6 +45,7 @@ export function ShopBrandList({
             ),
         ),
         sort,
+        query,
       ),
     [items, query, selectedKana, selectedPrefectures, selectedTargets, sort],
   );

@@ -409,6 +409,15 @@ test("shop brands sort by Japanese catalog fields", () => {
     sortShopBrands(items, "brewery").map((value) => value.id),
     ["1", "2"],
   );
+  const queryItems = [
+    item("3", "あざくら", "阿櫻酒造", "秋田県"),
+    item("4", "作", "清水清三郎商店", "三重県"),
+  ];
+  queryItems[1].brands.name_kana = "ざく";
+  assert.deepEqual(
+    sortShopBrands(queryItems, "brand", "ざく").map((value) => value.id),
+    ["4", "3"],
+  );
 });
 
 test("contribution achievements advance on valid shop-brand totals", () => {

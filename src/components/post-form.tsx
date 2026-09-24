@@ -130,7 +130,7 @@ export function PostForm({
         return aOrder - bOrder;
       });
     }
-    return sortBrands(filtered, sort);
+    return sortBrands(filtered, sort, query);
   }, [
     catalog,
     isBrowsingCatalog,

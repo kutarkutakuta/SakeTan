@@ -68,6 +68,9 @@ before(async () => {
     "insert into public.brands(name,name_kana,brewery_id,source,source_id) values('試験の酒','しけんのさけ',$1,'sakenowa','brand-1') returning id",
     [brewery],
   );
+  await scalar(
+    "insert into public.brands(name,name_kana,source,source_id) values('作','ざく','sakenowa','brand-zaku') returning id",
+  );
   otherBrand = await scalar(
     "insert into public.brands(name,source,source_id) values('別の試験酒','sakenowa','brand-2') returning id",
   );
@@ -398,6 +401,14 @@ test("brand, kana, brewery and shop search; bounds and brand filters", async () 
     (await db.query("select * from public.search_brands('しけんしゅぞう')"))
       .rows.length,
     1,
+  );
+  assert.equal(
+    (
+      await db.query<{ name: string }>(
+        "select name from public.search_brands('ざく')",
+      )
+    ).rows[0].name,
+    "作",
   );
   assert.equal(
     (await db.query("select * from public.search_brands('しけんのさけ')")).rows

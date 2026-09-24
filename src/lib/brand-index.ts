@@ -175,7 +175,7 @@ export function matchesBrandFilters(
 }
 
 export function matchesBrandQuery(brand: Brand, query: string) {
-  const normalized = query.trim().normalize("NFKC").toLocaleLowerCase();
+  const normalized = normalizeSearchText(query);
   if (!normalized) return true;
   return [
     brand.name,
@@ -183,8 +183,46 @@ export function matchesBrandQuery(brand: Brand, query: string) {
     brand.breweries?.name,
     brand.breweries?.name_kana,
     brand.brewery_name,
-  ].some((value) =>
-    value?.normalize("NFKC").toLocaleLowerCase().includes(normalized),
+  ].some((value) => value && normalizeSearchText(value).includes(normalized));
+}
+
+function normalizeSearchText(value: string) {
+  return value.trim().normalize("NFKC").toLocaleLowerCase();
+}
+
+function brandSearchRank(brand: Brand, query: string) {
+  const normalized = normalizeSearchText(query);
+  if (!normalized) return null;
+  const fields = [
+    brand.name,
+    brand.name_kana,
+    brand.breweries?.name,
+    brand.breweries?.name_kana,
+    brand.brewery_name,
+  ];
+  const matches = fields.flatMap((value, index) => {
+    if (!value) return [];
+    const text = normalizeSearchText(value);
+    const position = text.indexOf(normalized);
+    if (position < 0) return [];
+    const kind =
+      text === normalized
+        ? 0
+        : position === 0
+          ? index < 2
+            ? 2
+            : 4
+          : index < 2
+            ? 6
+            : 8;
+    return [{ kind, ratio: normalized.length / Math.max(text.length, 1) }];
+  });
+  if (!matches.length) return null;
+  return matches.reduce((left, right) =>
+    left.kind < right.kind ||
+    (left.kind === right.kind && left.ratio >= right.ratio)
+      ? left
+      : right,
   );
 }
 
@@ -210,15 +248,33 @@ function compareBrands(
 export function sortBrands(
   brands: Brand[],
   by: Exclude<BrandCatalogSort, "recent">,
+  query = "",
 ) {
-  return [...brands].sort((a, b) => compareBrands(a, b, by));
+  return [...brands].sort((a, b) => {
+    const aRank = brandSearchRank(a, query);
+    const bRank = brandSearchRank(b, query);
+    if (aRank && bRank) {
+      if (aRank.kind !== bRank.kind) return aRank.kind - bRank.kind;
+      if (aRank.ratio !== bRank.ratio) return bRank.ratio - aRank.ratio;
+    } else if (aRank) return -1;
+    else if (bRank) return 1;
+    return compareBrands(a, b, by);
+  });
 }
 
 export function sortShopBrands(
   items: ShopBrandSummary[],
   by: BrandCatalogSort,
+  query = "",
 ) {
   return [...items].sort((a, b) => {
+    const aRank = brandSearchRank(a.brands, query);
+    const bRank = brandSearchRank(b.brands, query);
+    if (aRank && bRank) {
+      if (aRank.kind !== bRank.kind) return aRank.kind - bRank.kind;
+      if (aRank.ratio !== bRank.ratio) return bRank.ratio - aRank.ratio;
+    } else if (aRank) return -1;
+    else if (bRank) return 1;
     if (by === "recent") {
       const recent = (b.last_seen_at ?? "").localeCompare(a.last_seen_at ?? "");
       if (recent) return recent;
