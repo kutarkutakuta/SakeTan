@@ -5,6 +5,7 @@ export function ShopBrandTags({
   brands,
   expanded,
   loading,
+  onBrandSelect,
   onToggle,
   preview,
   shopId,
@@ -12,6 +13,7 @@ export function ShopBrandTags({
   brands?: Brand[];
   expanded: boolean;
   loading: boolean;
+  onBrandSelect: (brand: Brand) => void;
   onToggle: () => void;
   preview?: ShopBrandPreview;
   shopId: string;
@@ -25,9 +27,15 @@ export function ShopBrandTags({
   return (
     <div className="shop-card-brands" id={contentId}>
       {brands.map((brand) => (
-        <span className="shop-card-brand" key={brand.id}>
+        <button
+          type="button"
+          className="shop-card-brand"
+          key={brand.id}
+          onClick={() => onBrandSelect(brand)}
+          aria-label={`${brand.name}で絞り込む`}
+        >
           {brand.name}
-        </span>
+        </button>
       ))}
       {preview && preview.total > 10 && (
         <button

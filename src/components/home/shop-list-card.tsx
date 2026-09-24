@@ -10,6 +10,7 @@ export function ShopListCard({
   expanded,
   commentCount,
   loading,
+  onBrandSelect,
   onCommentToggle,
   onHighlight,
   onSelect,
@@ -25,6 +26,7 @@ export function ShopListCard({
   expanded: boolean;
   commentCount: number;
   loading: boolean;
+  onBrandSelect: (brand: Brand) => void;
   onCommentToggle: (anchor: HTMLElement) => void;
   onHighlight: (shopId: string | null) => void;
   onSelect: () => void;
@@ -95,6 +97,7 @@ export function ShopListCard({
         brands={brands}
         expanded={expanded}
         loading={loading}
+        onBrandSelect={onBrandSelect}
         onToggle={onToggleBrands}
         preview={preview}
         shopId={shop.id}

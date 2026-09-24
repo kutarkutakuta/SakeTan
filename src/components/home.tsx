@@ -103,6 +103,7 @@ export function Home({
   );
   const [shops, setShops] = useState<Shop[]>(initialShop ? [initialShop] : []);
   const [query, setQuery] = useState("");
+  const [hideSearchResults, setHideSearchResults] = useState(false);
   const [results, setResults] = useState<SearchResults>(emptySearchResults);
   const [brand, setBrand] = useState<Brand | null>(initialBrand);
   const [selected, setSelected] = useState<string | null>(
@@ -139,6 +140,7 @@ export function Home({
   const manualMapFocus = useRef(false);
   const selectedRef = useRef(selected);
   const shopListRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const shopSheetRef = useRef<HTMLElement>(null);
   const sheetDragStart = useRef<number | null>(null);
   const sheetDragMoved = useRef(false);
@@ -362,6 +364,13 @@ export function Home({
     );
   }
 
+  function chooseBrandFromShop(value: Brand) {
+    chooseBrand(value);
+    setQuery(value.name);
+    setHideSearchResults(true);
+    window.requestAnimationFrame(() => searchInputRef.current?.focus());
+  }
+
   function chooseShop(shop: Shop) {
     manualMapFocus.current = true;
     searchAtLocation.current = false;
@@ -505,14 +514,21 @@ export function Home({
               <label className="searchbox">
                 <Search size={21} />
                 <input
+                  ref={searchInputRef}
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={(e) => {
+                    setHideSearchResults(false);
+                    setQuery(e.target.value);
+                  }}
                   placeholder="銘柄・酒屋を検索"
                   aria-label="銘柄・酒屋を検索"
                 />
                 {query && (
                   <button
-                    onClick={() => setQuery("")}
+                    onClick={() => {
+                      setHideSearchResults(false);
+                      setQuery("");
+                    }}
                     aria-label="検索をクリア"
                   >
                     <X size={18} />
@@ -541,7 +557,7 @@ export function Home({
                 </button>
               </div>
             )}
-            {query.trim() && (
+            {query.trim() && !hideSearchResults && (
               <div className="search-results" aria-live="polite">
                 <h3>銘柄</h3>
                 {results.brands.map((b) => (
@@ -730,6 +746,7 @@ export function Home({
                     commentCount={commentSummary?.total ?? 0}
                     expanded={expanded}
                     loading={loadingBrandShop === s.id}
+                    onBrandSelect={chooseBrandFromShop}
                     onCommentToggle={(anchor) =>
                       toggleShopComment(s.id, anchor)
                     }

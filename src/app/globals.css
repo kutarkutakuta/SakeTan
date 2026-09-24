@@ -616,12 +616,23 @@ nav {
 .shop-card-brand,
 .shop-card-more {
   display: inline-flex;
+  border: 0;
   padding: 2px 7px;
   border-radius: 6px;
   background: var(--tint);
   color: var(--text);
   font-size: 14px;
   line-height: 1.5;
+}
+.shop-card-brand {
+  cursor: pointer;
+  pointer-events: auto;
+}
+.shop-card-brand:hover,
+.shop-card-brand:focus-visible {
+  background: var(--line);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .shop-card-more {
   border: 1px solid var(--line);
