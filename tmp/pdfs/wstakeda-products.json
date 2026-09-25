@@ -1,0 +1,826 @@
+{
+  "version": 1,
+  "sourceUrl": "https://www.wstakeda.com/products.html",
+  "generatedAt": "2026-09-25T15:00:00Z",
+  "items": [
+    {
+      "sourceName": "男 山",
+      "sourceBreweryName": "男山",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 2,
+      "evidence": "2026.6地酒リスト.pdf p.2: 男 山 / 男山",
+      "method": "ai"
+    },
+    {
+      "sourceName": "田酒",
+      "sourceBreweryName": "西田酒造店",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 2,
+      "evidence": "2026.6地酒リスト.pdf p.2: 田酒 / 西田酒造店",
+      "method": "ai"
+    },
+    {
+      "sourceName": "喜久泉",
+      "sourceBreweryName": "西田酒造店",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 2,
+      "evidence": "2026.6地酒リスト.pdf p.2: 喜久泉 / 西田酒造店",
+      "method": "ai"
+    },
+    {
+      "sourceName": "鳩正宗",
+      "sourceBreweryName": "鳩正宗",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 2,
+      "evidence": "2026.6地酒リスト.pdf p.2: 鳩正宗 / 鳩正宗",
+      "method": "ai"
+    },
+    {
+      "sourceName": "陸奥八仙",
+      "sourceBreweryName": "八戸酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 2,
+      "evidence": "2026.6地酒リスト.pdf p.2: 陸奥八仙 / 八戸酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "陸奥男山",
+      "sourceBreweryName": "八戸酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 2,
+      "evidence": "2026.6地酒リスト.pdf p.2: 陸奥男山 / 八戸酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "やまとしずく",
+      "sourceBreweryName": "秋田清酒",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 2,
+      "evidence": "2026.6地酒リスト.pdf p.2: やまとしずく / 秋田清酒",
+      "method": "ai"
+    },
+    {
+      "sourceName": "刈 穂",
+      "sourceBreweryName": "秋田清酒",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 2,
+      "evidence": "2026.6地酒リスト.pdf p.2: 刈 穂 / 秋田清酒",
+      "method": "ai"
+    },
+    {
+      "sourceName": "一白水成",
+      "sourceBreweryName": "福禄寿酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 2,
+      "evidence": "2026.6地酒リスト.pdf p.2: 一白水成 / 福禄寿酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "生成",
+      "sourceBreweryName": "新政酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 2,
+      "evidence": "2026.6地酒リスト.pdf p.2: 生成 / 新政酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "亜麻猫",
+      "sourceBreweryName": "新政酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 2,
+      "evidence": "2026.6地酒リスト.pdf p.2: 亜麻猫 / 新政酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "陽乃鳥",
+      "sourceBreweryName": "新政酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 2,
+      "evidence": "2026.6地酒リスト.pdf p.2: 陽乃鳥 / 新政酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "山本",
+      "sourceBreweryName": "山本酒造店",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 2,
+      "evidence": "2026.6地酒リスト.pdf p.2: 山本 / 山本酒造店",
+      "method": "ai"
+    },
+    {
+      "sourceName": "交酒 花風",
+      "sourceBreweryName": "稲とアガベ醸造所",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 2,
+      "evidence": "2026.6地酒リスト.pdf p.2: 交酒 花風 / 稲とアガベ醸造所",
+      "method": "ai"
+    },
+    {
+      "sourceName": "南部美人",
+      "sourceBreweryName": "南部美人",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 3,
+      "evidence": "2026.6地酒リスト.pdf p.3: 南部美人 / 南部美人",
+      "method": "ai"
+    },
+    {
+      "sourceName": "くどき上手",
+      "sourceBreweryName": "亀の井酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 3,
+      "evidence": "2026.6地酒リスト.pdf p.3: くどき上手 / 亀の井酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "出羽桜",
+      "sourceBreweryName": "出羽桜酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 3,
+      "evidence": "2026.6地酒リスト.pdf p.3: 出羽桜 / 出羽桜酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "楯野川",
+      "sourceBreweryName": "楯の川酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 3,
+      "evidence": "2026.6地酒リスト.pdf p.3: 楯野川 / 楯の川酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "山和",
+      "sourceBreweryName": "山和酒造店",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 3,
+      "evidence": "2026.6地酒リスト.pdf p.3: 山和 / 山和酒造店",
+      "method": "ai"
+    },
+    {
+      "sourceName": "日髙見",
+      "sourceBreweryName": "平孝酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 3,
+      "evidence": "2026.6地酒リスト.pdf p.3: 日髙見 / 平孝酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "冩樂",
+      "sourceBreweryName": "宮泉銘醸",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 3,
+      "evidence": "2026.6地酒リスト.pdf p.3: 冩樂 / 宮泉銘醸",
+      "method": "ai"
+    },
+    {
+      "sourceName": "ロ万",
+      "sourceBreweryName": "花泉酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 3,
+      "evidence": "2026.6地酒リスト.pdf p.3: ロ万 / 花泉酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "鳳凰美田",
+      "sourceBreweryName": "小林酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 4,
+      "evidence": "2026.6地酒リスト.pdf p.4: 鳳凰美田 / 小林酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "仙禽 モダン",
+      "sourceBreweryName": "せんきん",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 4,
+      "evidence": "2026.6地酒リスト.pdf p.4: 仙禽 モダン / せんきん",
+      "method": "ai"
+    },
+    {
+      "sourceName": "仙禽 クラシック",
+      "sourceBreweryName": "せんきん",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 4,
+      "evidence": "2026.6地酒リスト.pdf p.4: 仙禽 クラシック / せんきん",
+      "method": "ai"
+    },
+    {
+      "sourceName": "仙禽 レトロ",
+      "sourceBreweryName": "せんきん",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 4,
+      "evidence": "2026.6地酒リスト.pdf p.4: 仙禽 レトロ / せんきん",
+      "method": "ai"
+    },
+    {
+      "sourceName": "来福",
+      "sourceBreweryName": "来福酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 4,
+      "evidence": "2026.6地酒リスト.pdf p.4: 来福 / 来福酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "Raifuku",
+      "sourceBreweryName": "来福酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 4,
+      "evidence": "2026.6地酒リスト.pdf p.4: Raifuku / 来福酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "神 亀",
+      "sourceBreweryName": "神亀酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 4,
+      "evidence": "2026.6地酒リスト.pdf p.4: 神 亀 / 神亀酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "シン・ツチダ",
+      "sourceBreweryName": "土田酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 4,
+      "evidence": "2026.6地酒リスト.pdf p.4: シン・ツチダ / 土田酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "開運",
+      "sourceBreweryName": "土井酒造場",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 4,
+      "evidence": "2026.6地酒リスト.pdf p.4: 開運 / 土井酒造場",
+      "method": "ai"
+    },
+    {
+      "sourceName": "〆張鶴",
+      "sourceBreweryName": "宮尾酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 4,
+      "evidence": "2026.6地酒リスト.pdf p.4: 〆張鶴 / 宮尾酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "越乃寒梅",
+      "sourceBreweryName": "石本酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 5,
+      "evidence": "2026.6地酒リスト.pdf p.5: 越乃寒梅 / 石本酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "鶴の友",
+      "sourceBreweryName": "樋木酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 5,
+      "evidence": "2026.6地酒リスト.pdf p.5: 鶴の友 / 樋木酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "荷札酒",
+      "sourceBreweryName": "加茂錦酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 5,
+      "evidence": "2026.6地酒リスト.pdf p.5: 荷札酒 / 加茂錦酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "越乃景虎",
+      "sourceBreweryName": "諸橋酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 5,
+      "evidence": "2026.6地酒リスト.pdf p.5: 越乃景虎 / 諸橋酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "呼友",
+      "sourceBreweryName": "朝日酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 5,
+      "evidence": "2026.6地酒リスト.pdf p.5: 呼友 / 朝日酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "久保田",
+      "sourceBreweryName": "朝日酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 5,
+      "evidence": "2026.6地酒リスト.pdf p.5: 久保田 / 朝日酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "清 泉",
+      "sourceBreweryName": "久須美酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 6,
+      "evidence": "2026.6地酒リスト.pdf p.6: 清 泉 / 久須美酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "八海山",
+      "sourceBreweryName": "八海山",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 6,
+      "evidence": "2026.6地酒リスト.pdf p.6: 八海山 / 八海山",
+      "method": "ai"
+    },
+    {
+      "sourceName": "雪中梅",
+      "sourceBreweryName": "丸山酒造場",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 6,
+      "evidence": "2026.6地酒リスト.pdf p.6: 雪中梅 / 丸山酒造場",
+      "method": "ai"
+    },
+    {
+      "sourceName": "千代の光",
+      "sourceBreweryName": "千代の光酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 6,
+      "evidence": "2026.6地酒リスト.pdf p.6: 千代の光 / 千代の光酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "北 雪",
+      "sourceBreweryName": "北雪酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 6,
+      "evidence": "2026.6地酒リスト.pdf p.6: 北 雪 / 北雪酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "満寿泉",
+      "sourceBreweryName": "枡田酒造店",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 6,
+      "evidence": "2026.6地酒リスト.pdf p.6: 満寿泉 / 枡田酒造店",
+      "method": "ai"
+    },
+    {
+      "sourceName": "立 山",
+      "sourceBreweryName": "立山酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 6,
+      "evidence": "2026.6地酒リスト.pdf p.6: 立 山 / 立山酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "菊 姫",
+      "sourceBreweryName": "菊姫",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 6,
+      "evidence": "2026.6地酒リスト.pdf p.6: 菊 姫 / 菊姫",
+      "method": "ai"
+    },
+    {
+      "sourceName": "手取川",
+      "sourceBreweryName": "吉田酒造店",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 6,
+      "evidence": "2026.6地酒リスト.pdf p.6: 手取川 / 吉田酒造店",
+      "method": "ai"
+    },
+    {
+      "sourceName": "吉田蔵 u",
+      "sourceBreweryName": "吉田酒造店",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 7,
+      "evidence": "2026.6地酒リスト.pdf p.7: 吉田蔵 u / 吉田酒造店",
+      "method": "ai"
+    },
+    {
+      "sourceName": "天狗舞",
+      "sourceBreweryName": "車多酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 7,
+      "evidence": "2026.6地酒リスト.pdf p.7: 天狗舞 / 車多酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "五凛",
+      "sourceBreweryName": "車多酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 7,
+      "evidence": "2026.6地酒リスト.pdf p.7: 五凛 / 車多酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "九頭龍",
+      "sourceBreweryName": "黒龍酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 7,
+      "evidence": "2026.6地酒リスト.pdf p.7: 九頭龍 / 黒龍酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "黒 龍",
+      "sourceBreweryName": "黒龍酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 7,
+      "evidence": "2026.6地酒リスト.pdf p.7: 黒 龍 / 黒龍酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "三千盛",
+      "sourceBreweryName": "三千盛",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 7,
+      "evidence": "2026.6地酒リスト.pdf p.7: 三千盛 / 三千盛",
+      "method": "ai"
+    },
+    {
+      "sourceName": "醸し人九平次",
+      "sourceBreweryName": "萬乗醸造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 7,
+      "evidence": "2026.6地酒リスト.pdf p.7: 醸し人九平次 / 萬乗醸造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "黒 牛",
+      "sourceBreweryName": "名手酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 8,
+      "evidence": "2026.6地酒リスト.pdf p.8: 黒 牛 / 名手酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "紀 土 KID",
+      "sourceBreweryName": "平和酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 8,
+      "evidence": "2026.6地酒リスト.pdf p.8: 紀 土 KID / 平和酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "七本鎗",
+      "sourceBreweryName": "冨田酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 8,
+      "evidence": "2026.6地酒リスト.pdf p.8: 七本鎗 / 冨田酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "Te to Te",
+      "sourceBreweryName": "浪乃音酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 8,
+      "evidence": "2026.6地酒リスト.pdf p.8: Te to Te / 浪乃音酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "十石",
+      "sourceBreweryName": "松本酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 8,
+      "evidence": "2026.6地酒リスト.pdf p.8: 十石 / 松本酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "みむろ杉",
+      "sourceBreweryName": "今西酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 8,
+      "evidence": "2026.6地酒リスト.pdf p.8: みむろ杉 / 今西酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "王祿",
+      "sourceBreweryName": "王祿酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 8,
+      "evidence": "2026.6地酒リスト.pdf p.8: 王祿 / 王祿酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "超王祿",
+      "sourceBreweryName": "王祿酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 9,
+      "evidence": "2026.6地酒リスト.pdf p.9: 超王祿 / 王祿酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "渓（けい）",
+      "sourceBreweryName": "王祿酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 9,
+      "evidence": "2026.6地酒リスト.pdf p.9: 渓（けい） / 王祿酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "渓",
+      "sourceBreweryName": "王祿酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 9,
+      "evidence": "2026.6地酒リスト.pdf p.9: 渓 / 王祿酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "天寶一",
+      "sourceBreweryName": "天寶一",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 9,
+      "evidence": "2026.6地酒リスト.pdf p.9: 天寶一 / 天寶一",
+      "method": "ai"
+    },
+    {
+      "sourceName": "9代目 於多福",
+      "sourceBreweryName": "柄酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 9,
+      "evidence": "2026.6地酒リスト.pdf p.9: 9代目 於多福 / 柄酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "長陽福娘",
+      "sourceBreweryName": "岩崎酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 9,
+      "evidence": "2026.6地酒リスト.pdf p.9: 長陽福娘 / 岩崎酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "貴",
+      "sourceBreweryName": "永山本家酒造場",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 9,
+      "evidence": "2026.6地酒リスト.pdf p.9: 貴 / 永山本家酒造場",
+      "method": "ai"
+    },
+    {
+      "sourceName": "大嶺",
+      "sourceBreweryName": "大嶺酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 9,
+      "evidence": "2026.6地酒リスト.pdf p.9: 大嶺 / 大嶺酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "獺 祭",
+      "sourceBreweryName": "獺祭",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 9,
+      "evidence": "2026.6地酒リスト.pdf p.9: 獺 祭 / 獺祭",
+      "method": "ai"
+    },
+    {
+      "sourceName": "天美",
+      "sourceBreweryName": "長州酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 10,
+      "evidence": "2026.6地酒リスト.pdf p.10: 天美 / 長州酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "南",
+      "sourceBreweryName": "南酒造場",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 10,
+      "evidence": "2026.6地酒リスト.pdf p.10: 南 / 南酒造場",
+      "method": "ai"
+    },
+    {
+      "sourceName": "酔 鯨",
+      "sourceBreweryName": "酔鯨酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 10,
+      "evidence": "2026.6地酒リスト.pdf p.10: 酔 鯨 / 酔鯨酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "庭のうぐいす",
+      "sourceBreweryName": "山口酒造場",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 10,
+      "evidence": "2026.6地酒リスト.pdf p.10: 庭のうぐいす / 山口酒造場",
+      "method": "ai"
+    },
+    {
+      "sourceName": "山の壽",
+      "sourceBreweryName": "山の壽酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 10,
+      "evidence": "2026.6地酒リスト.pdf p.10: 山の壽 / 山の壽酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "三井の寿",
+      "sourceBreweryName": "みいの寿",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 10,
+      "evidence": "2026.6地酒リスト.pdf p.10: 三井の寿 / みいの寿",
+      "method": "ai"
+    },
+    {
+      "sourceName": "ちえびじん",
+      "sourceBreweryName": "中野酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 10,
+      "evidence": "2026.6地酒リスト.pdf p.10: ちえびじん / 中野酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "光栄菊",
+      "sourceBreweryName": "光栄菊酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 10,
+      "evidence": "2026.6地酒リスト.pdf p.10: 光栄菊 / 光栄菊酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "御前酒",
+      "sourceBreweryName": "辻本店",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 11,
+      "evidence": "2026.6地酒リスト.pdf p.11: 御前酒 / 辻本店",
+      "method": "ai"
+    },
+    {
+      "sourceName": "大典白菊",
+      "sourceBreweryName": "白菊酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 11,
+      "evidence": "2026.6地酒リスト.pdf p.11: 大典白菊 / 白菊酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "竹 林",
+      "sourceBreweryName": "丸本酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 11,
+      "evidence": "2026.6地酒リスト.pdf p.11: 竹 林 / 丸本酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "神心",
+      "sourceBreweryName": "嘉美心酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 11,
+      "evidence": "2026.6地酒リスト.pdf p.11: 神心 / 嘉美心酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "酒一筋",
+      "sourceBreweryName": "利守酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 11,
+      "evidence": "2026.6地酒リスト.pdf p.11: 酒一筋 / 利守酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "武蔵の里",
+      "sourceBreweryName": "田中酒造場",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 11,
+      "evidence": "2026.6地酒リスト.pdf p.11: 武蔵の里 / 田中酒造場",
+      "method": "ai"
+    },
+    {
+      "sourceName": "宙狐",
+      "sourceBreweryName": "田中酒造場",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 11,
+      "evidence": "2026.6地酒リスト.pdf p.11: 宙狐 / 田中酒造場",
+      "method": "ai"
+    },
+    {
+      "sourceName": "（ちゅうこ）",
+      "sourceBreweryName": "田中酒造場",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 11,
+      "evidence": "2026.6地酒リスト.pdf p.11: （ちゅうこ） / 田中酒造場",
+      "method": "ai"
+    },
+    {
+      "sourceName": "多賀治",
+      "sourceBreweryName": "十八盛酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 12,
+      "evidence": "2026.6地酒リスト.pdf p.12: 多賀治 / 十八盛酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "十八盛",
+      "sourceBreweryName": "十八盛酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 12,
+      "evidence": "2026.6地酒リスト.pdf p.12: 十八盛 / 十八盛酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "三冠",
+      "sourceBreweryName": "三冠酒造",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 12,
+      "evidence": "2026.6地酒リスト.pdf p.12: 三冠 / 三冠酒造",
+      "method": "ai"
+    },
+    {
+      "sourceName": "百万年の一滴",
+      "sourceBreweryName": "落酒造場",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 12,
+      "evidence": "2026.6地酒リスト.pdf p.12: 百万年の一滴 / 落酒造場",
+      "method": "ai"
+    },
+    {
+      "sourceName": "大正の鶴",
+      "sourceBreweryName": "落酒造場",
+      "sourceUrl": "https://www.wstakeda.com/products.html",
+      "pageUrl": "https://www.wstakeda.com/products.html",
+      "pageNumber": 12,
+      "evidence": "2026.6地酒リスト.pdf p.12: 大正の鶴 / 落酒造場",
+      "method": "ai"
+    }
+  ]
+}
