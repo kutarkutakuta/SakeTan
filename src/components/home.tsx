@@ -375,7 +375,9 @@ export function Home({
     chooseBrand(value);
     setQuery(value.name);
     setHideSearchResults(true);
-    window.requestAnimationFrame(() => searchInputRef.current?.focus());
+    if (window.matchMedia("(min-width: 801px)").matches) {
+      window.requestAnimationFrame(() => searchInputRef.current?.focus());
+    }
   }
 
   function chooseShop(shop: Shop) {
