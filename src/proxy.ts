@@ -7,6 +7,11 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|icon.png|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|map|woff|woff2|ttf|otf)$).*)",
+    // Route Handlers can persist refreshed cookies themselves. Proxy is only
+    // needed before Server Components that read authentication state.
+    "/account/:path*",
+    "/admin/:path*",
+    "/edit/:path*",
+    "/login",
   ],
 };
