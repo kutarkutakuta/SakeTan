@@ -85,7 +85,6 @@ export function ShopListCard({
             className="shop-page-link"
             href={shopHref}
             aria-label={`${shop.name}の詳細を見る`}
-            onClick={onSelect}
             onNavigate={onShopNavigate}
           >
             詳しく見る

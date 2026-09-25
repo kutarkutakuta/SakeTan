@@ -29,7 +29,12 @@ import { ShopListCard } from "./home/shop-list-card";
 import { ListingNotice } from "./home/listing-notice";
 import { useShopMetadata } from "./home/use-shop-metadata";
 import { useToast } from "./toast-provider";
-import { mapAwareShopPath, mapReturnPath, type MapView } from "@/lib/map-view";
+import {
+  mapAwareShopPath,
+  mapReturnPath,
+  saveSessionMapView,
+  type MapView,
+} from "@/lib/map-view";
 import { mapBoundsCenter, visibleShopList } from "@/lib/shop-order";
 import type { Brand, Bounds, Shop } from "@/lib/types";
 
@@ -229,7 +234,7 @@ export function Home({
   useEffect(() => {
     if (requestedInitialArea.current || !ready) return;
     requestedInitialArea.current = true;
-    if (initialShopPosition) {
+    if (initialShopPosition || initialMapView) {
       searchAtLocation.current = true;
       return;
     }
@@ -238,12 +243,9 @@ export function Home({
         setResolvingInitialArea(false);
         return;
       }
-      void loadShops(
-        initialBrand,
-        undefined,
-        null,
-        initialMapView?.center,
-      ).finally(() => setResolvingInitialArea(false));
+      void loadShops(initialBrand).finally(() =>
+        setResolvingInitialArea(false),
+      );
     };
     if (!navigator.geolocation) {
       loadDefaultShops();
@@ -267,7 +269,12 @@ export function Home({
       loadDefaultShops,
       { timeout: 8000, maximumAge: 300000 },
     );
-  }, [initialBrand, initialShopPosition, loadShops, ready]);
+  }, [initialBrand, initialMapView, initialShopPosition, loadShops, ready]);
+
+  const handleMapViewChange = useCallback((view: MapView) => {
+    setMapView(view);
+    saveSessionMapView(view);
+  }, []);
   useEffect(() => {
     const seq = ++searchSequence.current;
     setLoadingMoreSearchShops(false);
@@ -483,9 +490,8 @@ export function Home({
     ? listCommentSummaries[openComment]
     : undefined;
   const returnPathForShop = useCallback(
-    (shopId: string) =>
-      mapReturnPath({ brandId: brand?.id, shopId, view: mapView }),
-    [brand?.id, mapView],
+    (shopId: string) => mapReturnPath({ brandId: brand?.id, shopId }),
+    [brand?.id],
   );
   const shopPagePath = useCallback(
     (shopId: string) => mapAwareShopPath(shopId, returnPathForShop(shopId)),
@@ -845,7 +851,7 @@ export function Home({
             }}
             center={center}
             initialZoom={initialMapView?.zoom}
-            onViewChange={setMapView}
+            onViewChange={handleMapViewChange}
             preserveZoom={preserveMapZoom}
             mobileSelectionOffsetY={56}
           />

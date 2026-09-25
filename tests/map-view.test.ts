@@ -4,14 +4,15 @@ import {
   mapAwareShopPath,
   mapReturnPath,
   parseMapView,
+  readSessionMapView,
   safeMapReturnPath,
+  saveSessionMapView,
 } from "@/lib/map-view";
 
-test("map view round-trips through a shop page return URL", () => {
+test("shop return URL preserves selection without map coordinates", () => {
   const returnPath = mapReturnPath({
     brandId: "brand-1",
     shopId: "shop-1",
-    view: { center: [35.681236, 139.767125], zoom: 16.25 },
   });
   const shopPath = mapAwareShopPath("shop-1", returnPath);
   const encodedReturnPath = new URL(
@@ -19,18 +20,7 @@ test("map view round-trips through a shop page return URL", () => {
     "https://saketan.local",
   ).searchParams.get("return_to");
 
-  assert.equal(
-    encodedReturnPath,
-    "/?shop_id=shop-1&brand_id=brand-1&map_lat=35.681236&map_lng=139.767125&map_zoom=16.25",
-  );
-  assert.deepEqual(
-    parseMapView(
-      Object.fromEntries(
-        new URL(encodedReturnPath!, "https://saketan.local").searchParams,
-      ),
-    ),
-    { center: [35.681236, 139.767125], zoom: 16.25 },
-  );
+  assert.equal(encodedReturnPath, "/?shop_id=shop-1&brand_id=brand-1");
 });
 
 test("invalid map coordinates are ignored", () => {
@@ -42,6 +32,33 @@ test("invalid map coordinates are ignored", () => {
     parseMapView({ map_lat: "35", map_lng: "139", map_zoom: "zoom" }),
     undefined,
   );
+});
+
+test("last map position survives a page remount in the same session", () => {
+  const previousWindow = Object.getOwnPropertyDescriptor(globalThis, "window");
+  const saved = new Map<string, string>();
+  Object.defineProperty(globalThis, "window", {
+    configurable: true,
+    value: {
+      sessionStorage: {
+        getItem: (key: string) => saved.get(key) ?? null,
+        setItem: (key: string, value: string) => saved.set(key, value),
+      },
+    },
+  });
+  try {
+    saveSessionMapView({ center: [35.681236, 139.767125], zoom: 16.25 });
+    assert.deepEqual(readSessionMapView(), {
+      center: [35.681236, 139.767125],
+      zoom: 16.25,
+    });
+    saved.set("saketan:last-map-view", "map_lat=91&map_lng=139&map_zoom=14");
+    assert.equal(readSessionMapView(), undefined);
+  } finally {
+    if (previousWindow)
+      Object.defineProperty(globalThis, "window", previousWindow);
+    else Reflect.deleteProperty(globalThis, "window");
+  }
 });
 
 test("shop return URLs cannot leave the map route", () => {

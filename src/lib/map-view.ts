@@ -3,6 +3,8 @@ export type MapView = {
   zoom: number;
 };
 
+const lastMapViewKey = "saketan:last-map-view";
+
 type MapSearchParams = {
   map_lat?: string;
   map_lng?: string;
@@ -33,22 +35,39 @@ export function parseMapView(params: MapSearchParams): MapView | undefined {
   return { center: [latitude, longitude], zoom };
 }
 
+export function readSessionMapView(): MapView | undefined {
+  try {
+    const saved = window.sessionStorage.getItem(lastMapViewKey);
+    return saved
+      ? parseMapView(Object.fromEntries(new URLSearchParams(saved)))
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function saveSessionMapView(view: MapView) {
+  try {
+    const params = new URLSearchParams({
+      map_lat: formatCoordinate(view.center[0]),
+      map_lng: formatCoordinate(view.center[1]),
+      map_zoom: formatZoom(view.zoom),
+    });
+    window.sessionStorage.setItem(lastMapViewKey, params.toString());
+  } catch {
+    // The map still works when browser storage is unavailable.
+  }
+}
+
 export function mapReturnPath({
   brandId,
   shopId,
-  view,
 }: {
   brandId?: string;
   shopId: string;
-  view?: MapView;
 }) {
   const params = new URLSearchParams({ shop_id: shopId });
   if (brandId) params.set("brand_id", brandId);
-  if (view) {
-    params.set("map_lat", formatCoordinate(view.center[0]));
-    params.set("map_lng", formatCoordinate(view.center[1]));
-    params.set("map_zoom", formatZoom(view.zoom));
-  }
   return `/?${params.toString()}`;
 }
 

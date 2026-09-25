@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Home } from "@/components/home";
-import { parseMapView } from "@/lib/map-view";
+import { parseMapView, readSessionMapView, type MapView } from "@/lib/map-view";
 import type { Brand, Shop } from "@/lib/types";
 
 type ExploreContext = {
@@ -17,6 +17,13 @@ export function HomePageLoader({ ready }: { ready: boolean }) {
   const [initialParams] = useState(() =>
     Object.fromEntries(searchParams.entries()),
   );
+  const urlMapView = useMemo(
+    () => parseMapView(initialParams),
+    [initialParams],
+  );
+  const [savedMapView, setSavedMapView] = useState<MapView | null | undefined>(
+    undefined,
+  );
   const brandId = initialParams.brand_id ?? "";
   const shopId = initialParams.shop_id ?? "";
   const contextQuery = useMemo(() => {
@@ -29,6 +36,10 @@ export function HomePageLoader({ ready }: { ready: boolean }) {
     contextQuery ? null : { brand: null, shop: null },
   );
   const [loadError, setLoadError] = useState("");
+
+  useEffect(() => {
+    setSavedMapView(readSessionMapView() ?? null);
+  }, []);
 
   useEffect(() => {
     if (!contextQuery) {
@@ -61,13 +72,14 @@ export function HomePageLoader({ ready }: { ready: boolean }) {
     return () => controller.abort();
   }, [contextQuery]);
 
-  if (!context) return <main id="main" className="explore" />;
+  if (!context || (!urlMapView && savedMapView === undefined))
+    return <main id="main" className="explore" />;
 
   return (
     <Home
       initialBrand={context.brand}
       initialShop={context.shop}
-      initialMapView={parseMapView(initialParams)}
+      initialMapView={urlMapView ?? savedMapView ?? undefined}
       ready={ready}
       initialError={loadError || initialParams.error || undefined}
     />
