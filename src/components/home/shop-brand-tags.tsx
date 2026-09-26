@@ -44,6 +44,11 @@ export function ShopBrandTags({
           disabled={loading}
           aria-expanded={expanded}
           aria-controls={contentId}
+          aria-label={
+            expanded
+              ? "取扱銘柄を折りたたむ"
+              : `ほか${preview.total - 10}銘柄を表示`
+          }
           onClick={onToggle}
         >
           {loading

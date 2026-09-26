@@ -562,15 +562,6 @@
       "method": "ai"
     },
     {
-      "sourceName": "渓（けい）",
-      "sourceBreweryName": "王祿酒造",
-      "sourceUrl": "https://www.wstakeda.com/products.html",
-      "pageUrl": "https://www.wstakeda.com/products.html",
-      "pageNumber": 9,
-      "evidence": "2026.6地酒リスト.pdf p.9: 渓（けい） / 王祿酒造",
-      "method": "ai"
-    },
-    {
       "sourceName": "渓",
       "sourceBreweryName": "王祿酒造",
       "sourceUrl": "https://www.wstakeda.com/products.html",
@@ -766,15 +757,6 @@
       "pageUrl": "https://www.wstakeda.com/products.html",
       "pageNumber": 11,
       "evidence": "2026.6地酒リスト.pdf p.11: 宙狐 / 田中酒造場",
-      "method": "ai"
-    },
-    {
-      "sourceName": "（ちゅうこ）",
-      "sourceBreweryName": "田中酒造場",
-      "sourceUrl": "https://www.wstakeda.com/products.html",
-      "pageUrl": "https://www.wstakeda.com/products.html",
-      "pageNumber": 11,
-      "evidence": "2026.6地酒リスト.pdf p.11: （ちゅうこ） / 田中酒造場",
       "method": "ai"
     },
     {

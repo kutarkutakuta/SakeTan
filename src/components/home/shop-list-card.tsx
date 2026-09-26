@@ -87,7 +87,7 @@ export function ShopListCard({
             aria-label={`${shop.name}の詳細を見る`}
             onNavigate={onShopNavigate}
           >
-            詳しく見る
+            詳細へ
             <ChevronRight size={16} strokeWidth={2} aria-hidden="true" />
           </Link>
         </div>

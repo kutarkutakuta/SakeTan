@@ -11,6 +11,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   ChevronDown,
+  ChevronRight,
   ChevronUp,
   GripHorizontal,
   Search,
@@ -599,6 +600,7 @@ export function Home({
                 {results.shops.map((s) => {
                   const commentSummary = listCommentSummaries[s.id];
                   const commentCount = commentSummary?.total ?? 0;
+                  const brandCount = shopBrandTotals[s.id];
                   const commentOpen = openComment === s.id;
                   return (
                     <div
@@ -613,39 +615,64 @@ export function Home({
                       >
                         <span>
                           <strong>{s.name}</strong>
-                          <small>
-                            {s.prefecture ?? "地域未登録"}
-                            {s.city ? ` ${s.city}` : ""}
-                          </small>
+                          <span className="search-shop-result-meta">
+                            <small>
+                              {s.prefecture ?? "地域未登録"}
+                              {s.city ? ` ${s.city}` : ""}
+                            </small>
+                            {brandCount !== undefined && (
+                              <span
+                                className="search-shop-brand-count"
+                                aria-label={`取扱銘柄${brandCount}件`}
+                              >
+                                {brandCount}銘柄
+                              </span>
+                            )}
+                          </span>
                         </span>
                       </button>
-                      <button
-                        type="button"
-                        data-comment-trigger
-                        className={`shop-comment-trigger search-comment-trigger${commentOpen ? " active" : ""}`}
-                        aria-label={`${s.name}のコメント${commentCount}件を表示`}
-                        aria-expanded={commentOpen}
-                        aria-controls={
-                          commentOpen ? "latest-shop-comment" : undefined
-                        }
-                        onClick={(event) =>
-                          toggleShopComment(s.id, event.currentTarget)
-                        }
-                      >
-                        <MessageCircle
-                          size={18}
-                          strokeWidth={1.8}
-                          aria-hidden="true"
-                        />
-                        {commentCount > 0 && (
-                          <span
-                            className="shop-comment-count"
+                      <div className="search-shop-result-actions">
+                        <button
+                          type="button"
+                          data-comment-trigger
+                          className={`shop-comment-trigger${commentOpen ? " active" : ""}`}
+                          aria-label={`${s.name}のコメント${commentCount}件を表示`}
+                          aria-expanded={commentOpen}
+                          aria-controls={
+                            commentOpen ? "latest-shop-comment" : undefined
+                          }
+                          onClick={(event) =>
+                            toggleShopComment(s.id, event.currentTarget)
+                          }
+                        >
+                          <MessageCircle
+                            size={18}
+                            strokeWidth={1.8}
                             aria-hidden="true"
-                          >
-                            {commentCount}
-                          </span>
-                        )}
-                      </button>
+                          />
+                          {commentCount > 0 && (
+                            <span
+                              className="shop-comment-count"
+                              aria-hidden="true"
+                            >
+                              {commentCount}
+                            </span>
+                          )}
+                        </button>
+                        <Link
+                          className="shop-page-link search-shop-page-link"
+                          href={shopPagePath(s.id)}
+                          aria-label={`${s.name}の詳細を見る`}
+                          onNavigate={() => prepareShopNavigation(s.id)}
+                        >
+                          詳細へ
+                          <ChevronRight
+                            size={16}
+                            strokeWidth={2}
+                            aria-hidden="true"
+                          />
+                        </Link>
+                      </div>
                     </div>
                   );
                 })}

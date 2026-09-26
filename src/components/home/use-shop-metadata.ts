@@ -72,7 +72,9 @@ export function useShopMetadata(
 
   useEffect(() => {
     const abort = new AbortController();
-    const ids = mapShops.map((shop) => shop.id);
+    const ids = Array.from(
+      new Set([...mapShops, ...commentShops].map((shop) => shop.id)),
+    );
     if (!ids.length) {
       setBrandTotals({});
       return () => abort.abort();
@@ -90,7 +92,7 @@ export function useShopMetadata(
           setError(errorMessage(reason, "取扱銘柄数を取得できませんでした"));
       });
     return () => abort.abort();
-  }, [mapShops, setError]);
+  }, [commentShops, mapShops, setError]);
 
   const toggleBrands = useCallback(
     async (shopId: string) => {

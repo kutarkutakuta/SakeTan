@@ -57,6 +57,8 @@ def extract(path):
                     source_name = cells[1] if len(cells) > 1 else ""
                     if not source_name:
                         continue
+                    if re.fullmatch(r"（[^）]+）", source_name):
+                        continue
                     if current_brewery is None:
                         orphans.append({"page": page_number, "code": first, "sourceName": source_name})
                         continue
@@ -77,13 +79,15 @@ def extract(path):
 
 def dedupe(items):
     result = []
-    seen = set()
+    positions = {}
     for item in items:
-        key = (compact(item["sourceName"]), compact(item["sourceBreweryName"]))
-        if key in seen:
-            continue
-        seen.add(key)
-        result.append(item)
+        brand_key = compact(re.sub(r"（[^）]+）", "", item["sourceName"]))
+        key = (brand_key, compact(item["sourceBreweryName"]))
+        if key not in positions:
+            positions[key] = len(result)
+            result.append(item)
+        elif "（" in result[positions[key]]["sourceName"] and "（" not in item["sourceName"]:
+            result[positions[key]] = item
     return result
 
 

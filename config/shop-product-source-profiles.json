@@ -275,5 +275,55 @@
       "ビール",
       "リキュール"
     ]
+  },
+  {
+    "name": "katidoki-sake-brand-table",
+    "host": "katidoki.com",
+    "pathPrefix": "/brand-sake/",
+    "dedicatedProfile": true,
+    "itemContainerSelector": "#sake_content table.items-all tr:has(td:nth-child(2))",
+    "brandSelector": "td:first-child",
+    "brewerySelector": "td:nth-child(2)",
+    "canonicalizeBrandPrefix": true,
+    "ignoreNamePatterns": ["^銘柄$"] ,
+    "maxPages": 1
+  },
+  {
+    "name": "mimasuya-regional-sake-table",
+    "host": "mimasu-ya.com",
+    "pathPrefix": "/introduction/",
+    "dedicatedProfile": true,
+    "itemContainerSelector": "table:lt(6) tr:has(td:nth-child(2))",
+    "brandSelector": "td:first-child",
+    "brandSplitPattern": "[・･/／、,，]+",
+    "brewerySelector": "td:nth-child(2)",
+    "canonicalizeBrandPrefix": true,
+    "maxPages": 1
+  },
+  {
+    "name": "jiyugaoka-yamaya-sake-cards",
+    "host": "www.jiyugaokayamaya.com",
+    "pathPrefix": "/sake",
+    "dedicatedProfile": true,
+    "itemContainerSelector": "div:has(> h2.bD0vt9)",
+    "brandSelector": "h2.bD0vt9",
+    "brandPattern": "^([^\\s　|｜]+)",
+    "canonicalizeBrandPrefix": true,
+    "ignoreNamePatterns": ["^2026$"],
+    "maxPages": 1
+  },
+  {
+    "name": "wakamatsuya-sake-brand-table",
+    "host": "wakamatsuyasaketen.com",
+    "pathPrefix": "/menu/",
+    "dedicatedProfile": true,
+    "itemContainerSelector": "table:lt(1) tr",
+    "brandSelector": "td:nth-child(2), td a",
+    "brandPattern": "^([^/／]+)",
+    "brandSplitPattern": "[、,，]+",
+    "brewerySelector": "td:nth-child(3)",
+    "canonicalizeBrandPrefix": true,
+    "ignoreNamePatterns": ["^銘柄$"],
+    "maxPages": 1
   }
 ]
