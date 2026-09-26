@@ -204,16 +204,19 @@ function brandSearchRank(brand: Brand, query: string) {
     const text = normalizeSearchText(value);
     const position = text.indexOf(normalized);
     if (position < 0) return [];
+    const brandField = index < 2;
     const kind =
       text === normalized
-        ? 0
+        ? brandField
+          ? 0
+          : 1
         : position === 0
-          ? index < 2
+          ? brandField
             ? 2
-            : 4
-          : index < 2
-            ? 6
-            : 8;
+            : 3
+          : brandField
+            ? 4
+            : 5;
     return [{ kind, ratio: normalized.length / Math.max(text.length, 1) }];
   });
   if (!matches.length) return null;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Copy, Plus, Search, Store, X } from "lucide-react";
 import { errorMessage, fetchJson, mutate } from "@/lib/client";
@@ -60,6 +60,7 @@ export function PostForm({
   const [sort, setSort] = useState<BrandCatalogSort>("brand");
   const [catalogBusy, setCatalogBusy] = useState(true);
   const [working, setWorking] = useState<Set<string>>(new Set());
+  const pendingAdds = useRef(new Set<string>());
   const [relationStatuses, setRelationStatuses] = useState(
     () =>
       new Map<string, ShopBrandStatus>(
@@ -154,6 +155,14 @@ export function PostForm({
     query.trim().length > 0 &&
     visibleBrands.length === 0 &&
     (selectedPrefectures.size > 0 || selectedKana.size > 0);
+  const firstAddableBrand =
+    !catalogBusy &&
+    isBrowsingCatalog &&
+    visibleBrands.length > 0 &&
+    !relationStatuses.has(visibleBrands[0].id) &&
+    !working.has(visibleBrands[0].id)
+      ? visibleBrands[0]
+      : null;
 
   function copied(result: ShopBrandCopyResult) {
     setCopyOpen(false);
@@ -163,7 +172,8 @@ export function PostForm({
   }
 
   async function addBrand(brand: Brand) {
-    if (working.has(brand.id)) return;
+    if (pendingAdds.current.has(brand.id)) return;
+    pendingAdds.current.add(brand.id);
     setWorking((current) => new Set(current).add(brand.id));
     try {
       await mutate({
@@ -185,6 +195,7 @@ export function PostForm({
         "error",
       );
     } finally {
+      pendingAdds.current.delete(brand.id);
       setWorking((current) => {
         const next = new Set(current);
         next.delete(brand.id);
@@ -309,8 +320,21 @@ export function PostForm({
             setQuery(event.target.value);
             setRequestOpen(false);
           }}
+          onKeyDown={(event) => {
+            if (
+              event.key !== "Enter" ||
+              event.repeat ||
+              event.nativeEvent.isComposing ||
+              event.nativeEvent.keyCode === 229 ||
+              !firstAddableBrand
+            )
+              return;
+            event.preventDefault();
+            void addBrand(firstAddableBrand);
+          }}
           placeholder="銘柄名・酒蔵名・かなで検索"
           aria-label="銘柄名・酒蔵名・かなで検索"
+          aria-keyshortcuts={firstAddableBrand ? "Enter" : undefined}
         />
         {query && (
           <button
@@ -343,9 +367,19 @@ export function PostForm({
 
       <div className="brand-options" aria-live="polite">
         <div className="brand-options-title">
-          {isBrowsingCatalog
-            ? "全銘柄からの絞り込み結果"
-            : "この酒屋の取扱情報"}
+          <span className="brand-options-title-text">
+            {isBrowsingCatalog
+              ? "全銘柄からの絞り込み結果"
+              : "この酒屋の取扱情報"}
+          </span>
+          <span
+            className={
+              "brand-options-shortcut" + (firstAddableBrand ? "" : " hidden")
+            }
+            aria-hidden={!firstAddableBrand}
+          >
+            Enterで先頭を追加
+          </span>
         </div>
         {visibleBrands.map((brand) => {
           const isWorking = working.has(brand.id);
@@ -353,7 +387,15 @@ export function PostForm({
           const resolvedBreweryName = breweryName(brand);
           const prefecture = brandPrefecture(brand);
           return (
-            <div className="brand-option" key={brand.id}>
+            <div
+              className={
+                "brand-option" +
+                (firstAddableBrand?.id === brand.id
+                  ? " brand-option-keyboard-target"
+                  : "")
+              }
+              key={brand.id}
+            >
               <span>
                 <span className="brand-option-meta">
                   {resolvedBreweryName === "酒蔵未登録" ? (

@@ -1720,10 +1720,33 @@ nav {
   position: sticky;
   top: 0;
   z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 38px;
   padding: 8px 14px;
   border-bottom: 1px solid var(--line);
   background: #faf9f5;
   font-size: 14px;
+  line-height: 21px;
+  white-space: nowrap;
+}
+.brand-options-title-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.brand-options-shortcut {
+  flex: none;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: var(--tint);
+  color: var(--primary);
+  font-weight: 700;
+}
+.brand-options-shortcut.hidden {
+  visibility: hidden;
 }
 .brand-option {
   display: flex;
@@ -1737,6 +1760,10 @@ nav {
 }
 .brand-option:hover {
   background: var(--tint);
+}
+.brand-option-keyboard-target {
+  background: var(--tint);
+  box-shadow: inset 3px 0 var(--primary);
 }
 .brand-option > span {
   min-width: 0;

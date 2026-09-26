@@ -16,6 +16,7 @@ import { featuredShopBrands } from "../src/lib/shop-brand-order";
 import {
   brandFilterCriteriaLabel,
   kanaGroup,
+  sortBrands,
   sortShopBrands,
 } from "../src/lib/brand-index";
 import { contributionAchievement } from "../src/lib/contribution";
@@ -30,6 +31,40 @@ import {
   namedRows,
   rankingSchema,
 } from "../scripts/sakenowa-data";
+
+test("brand matches outrank brewery matches", () => {
+  const brewery = {
+    id: "brewery-1",
+    name: "一ノ蔵",
+    name_kana: "いちのくら",
+    prefecture: "宮城県",
+  };
+  const results = sortBrands(
+    [
+      {
+        id: "again",
+        name: "Again",
+        name_kana: "あげいん",
+        brewery_id: brewery.id,
+        breweries: brewery,
+      },
+      {
+        id: "ichinokura",
+        name: "一ノ蔵",
+        name_kana: "いちのくら",
+        brewery_id: brewery.id,
+        breweries: brewery,
+      },
+    ],
+    "brand",
+    "いちのくら",
+  );
+  assert.deepEqual(
+    results.map((brand) => brand.name),
+    ["一ノ蔵", "Again"],
+  );
+});
+
 test("OAuth return path stays on origin", () => {
   for (const url of [
     "https://evil.invalid",
