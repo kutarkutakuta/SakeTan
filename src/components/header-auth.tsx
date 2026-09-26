@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { LogIn, UserRound } from "lucide-react";
+import { fetchJson } from "@/lib/client";
 
 type HeaderViewer = {
   signedIn: boolean;
@@ -15,11 +16,12 @@ export function HeaderAuth() {
 
   useEffect(() => {
     const controller = new AbortController();
-    void fetch("/api/viewer", { cache: "no-store", signal: controller.signal })
-      .then(async (response) => {
-        if (!response.ok) throw new Error();
-        setViewer((await response.json()) as HeaderViewer);
-      })
+    void fetchJson<HeaderViewer>(
+      "/api/viewer",
+      { cache: "no-store", signal: controller.signal },
+      "アカウント情報を取得できませんでした",
+    )
+      .then(setViewer)
       .catch(() => undefined);
     return () => controller.abort();
   }, []);

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Link2Off } from "lucide-react";
 import { useToast } from "@/components/toast-provider";
+import { errorMessage, fetchJson } from "@/lib/client";
 import {
   identityProviderNames,
   type IdentityProvider,
@@ -52,19 +53,18 @@ export function IdentityManager({
 
     setBusyIdentityId(identity.identityId);
     try {
-      const response = await fetch("/auth/unlink", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          identity_id: identity.identityId,
-          provider: identity.provider,
-        }),
-      });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok)
-        throw new Error(
-          result.error ?? "ログイン方法の連携を解除できませんでした",
-        );
+      await fetchJson<unknown>(
+        "/auth/unlink",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            identity_id: identity.identityId,
+            provider: identity.provider,
+          }),
+        },
+        "ログイン方法の連携を解除できませんでした",
+      );
 
       setRemovedIdentityIds((current) => {
         const next = new Set(current);
@@ -75,9 +75,7 @@ export function IdentityManager({
       router.refresh();
     } catch (reason) {
       showToast(
-        reason instanceof Error
-          ? reason.message
-          : "ログイン方法の連携を解除できませんでした",
+        errorMessage(reason, "ログイン方法の連携を解除できませんでした"),
         "error",
       );
     } finally {

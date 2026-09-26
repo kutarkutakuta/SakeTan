@@ -34,6 +34,23 @@ import type {
 
 const userAgent = "SAKETAN-ShopImporter";
 const maximumResponseBytes = 25 * 1024 * 1024;
+const extractionMethodSchema = z.enum([
+  "json-ld",
+  "microdata",
+  "selector",
+  "brand-table",
+  "category",
+  "pdf-text",
+  "ai",
+  "heuristic",
+]);
+const matchKindSchema = z.enum([
+  "exact",
+  "alias",
+  "suggested",
+  "ambiguous",
+  "unmatched",
+]);
 
 type Phase = "fetch" | "parse" | "import";
 type Options = {
@@ -62,6 +79,7 @@ const reviewSchema = z.object({
     z.object({
       sourceName: z.string().min(1).max(300),
       sourceBreweryName: z.string().nullable().optional().default(null),
+      sourcePrefecture: z.string().max(100).nullable().optional().default(null),
       sourceUrl: z.url().nullable(),
       pageUrl: z.url(),
       pageNumber: z
@@ -72,23 +90,8 @@ const reviewSchema = z.object({
         .optional()
         .default(null),
       evidence: z.string().nullable().optional().default(null),
-      method: z.enum([
-        "json-ld",
-        "microdata",
-        "selector",
-        "brand-table",
-        "category",
-        "pdf-text",
-        "ai",
-        "heuristic",
-      ]),
-      matchKind: z.enum([
-        "exact",
-        "alias",
-        "suggested",
-        "ambiguous",
-        "unmatched",
-      ]),
+      method: extractionMethodSchema,
+      matchKind: matchKindSchema,
       candidates: z.array(
         z.object({
           brandId: z.uuid(),
@@ -111,20 +114,12 @@ const standardExtractionSchema = z.object({
     z.object({
       sourceName: z.string().min(1).max(300),
       sourceBreweryName: z.string().min(1).max(200).nullable(),
+      sourcePrefecture: z.string().max(100).nullable().default(null),
       sourceUrl: z.url().nullable(),
       pageUrl: z.url(),
       pageNumber: z.number().int().positive().nullable(),
       evidence: z.string().max(1000).nullable(),
-      method: z.enum([
-        "json-ld",
-        "microdata",
-        "selector",
-        "brand-table",
-        "category",
-        "pdf-text",
-        "ai",
-        "heuristic",
-      ]),
+      method: extractionMethodSchema,
     }),
   ),
 });
@@ -564,13 +559,16 @@ async function loadShopAndCatalog(shopId: string) {
     id: string;
     name: string;
     name_kana: string | null;
-    breweries: { name: string } | Array<{ name: string }> | null;
+    breweries:
+      | { name: string; prefecture: string | null }
+      | Array<{ name: string; prefecture: string | null }>
+      | null;
   };
   const rows = await paged<BrandRow>(
     (from, to) =>
       db
         .from("brands")
-        .select("id,name,name_kana,breweries(name)")
+        .select("id,name,name_kana,breweries(name,prefecture)")
         .eq("is_active", true)
         .range(from, to) as unknown as PromiseLike<{
         data: BrandRow[] | null;
@@ -586,6 +584,7 @@ async function loadShopAndCatalog(shopId: string) {
       name: brand.name,
       nameKana: brand.name_kana,
       breweryName: brewery?.name ?? null,
+      prefecture: brewery?.prefecture ?? null,
     };
   });
   return { shop, catalog };
@@ -646,6 +645,7 @@ async function writeReport(
     needsReview: needsReview.map((item) => ({
       sourceName: item.sourceName,
       sourceBreweryName: item.sourceBreweryName,
+      sourcePrefecture: item.sourcePrefecture,
       pageUrl: item.pageUrl,
       pageNumber: item.pageNumber,
       reason: item.matchKind,
@@ -672,7 +672,10 @@ async function writeReport(
   lines.push("", "## 登録できなかった銘柄", "");
   if (!needsReview.length) lines.push("なし");
   else {
-    lines.push("| 銘柄 | 蔵名 | 理由 | 候補 | 出典 |", "|---|---|---|---|---|");
+    lines.push(
+      "| 銘柄 | 掲載県 | 蔵名 | 理由 | 候補 | 出典 |",
+      "|---|---|---|---|---|---|",
+    );
     for (const item of needsReview) {
       const candidates = item.candidates
         .map(
@@ -684,7 +687,7 @@ async function writeReport(
         ? `${item.pageUrl} PDF ${item.pageNumber}ページ`
         : item.pageUrl;
       lines.push(
-        `| ${markdownCell(item.sourceName)} | ${markdownCell(item.sourceBreweryName)} | ${item.matchKind} | ${markdownCell(candidates)} | ${markdownCell(location)} |`,
+        `| ${markdownCell(item.sourceName)} | ${markdownCell(item.sourcePrefecture)} | ${markdownCell(item.sourceBreweryName)} | ${item.matchKind} | ${markdownCell(candidates)} | ${markdownCell(location)} |`,
       );
     }
   }

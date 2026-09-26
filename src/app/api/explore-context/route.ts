@@ -43,6 +43,6 @@ export async function GET(request: Request) {
     );
   return Response.json(
     { brand: brandResult.data, shop: shopResult.data },
-    { headers: { "Cache-Control": "public, max-age=60, s-maxage=300" } },
+    { headers: { "Cache-Control": "private, no-store" } },
   );
 }

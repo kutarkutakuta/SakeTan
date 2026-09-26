@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronRight, Plus, Search, X } from "lucide-react";
 import { KanaEditDialog } from "@/components/kana-edit-dialog";
 import { useToast } from "@/components/toast-provider";
+import { errorMessage, fetchJson } from "@/lib/client";
 import type { Brand, Brewery, EntityType, Shop } from "@/lib/types";
 
 type SearchItem = Brand | Brewery | Shop;
@@ -87,19 +88,19 @@ export function EditSearch({
           target === "brewery"
             ? `/api/breweries?q=${encodeURIComponent(normalizedQuery)}`
             : `/api/search?scope=${target === "brand" ? "brands" : "shops"}&q=${encodeURIComponent(normalizedQuery)}`;
-        const response = await fetch(endpoint, { signal: abort.signal });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error ?? "検索できませんでした");
+        const data = await fetchJson<
+          Record<string, SearchItem[]> | SearchItem[]
+        >(endpoint, { signal: abort.signal }, "検索できませんでした");
         const items =
           target === "brewery"
             ? data
-            : data[target === "brand" ? "brands" : "shops"];
+            : (data as Record<string, SearchItem[]>)[
+                target === "brand" ? "brands" : "shops"
+              ];
         setResults(Array.isArray(items) ? items : []);
       } catch (reason) {
         if (!abort.signal.aborted)
-          setError(
-            reason instanceof Error ? reason.message : "検索できませんでした",
-          );
+          setError(errorMessage(reason, "検索できませんでした"));
       } finally {
         if (!abort.signal.aborted) setBusy(false);
       }

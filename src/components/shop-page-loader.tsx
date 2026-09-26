@@ -6,7 +6,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { ArrowLeft, ExternalLink, History, Pencil, Plus } from "lucide-react";
 import { ShopBrandList } from "@/components/shop-brand-list";
 import { ShopPageTabs } from "@/components/shop-page-tabs";
-import type { ShopBrandSummary } from "@/lib/brand-index";
+import { errorMessage, fetchJson, isAbortError } from "@/lib/client";
 import { safeMapReturnPath } from "@/lib/map-view";
 import type { Shop, ShopBrand } from "@/lib/types";
 import { googleMapsShopUrl } from "@/lib/utils";
@@ -34,22 +34,15 @@ export function ShopPageLoader() {
       setLoading(true);
       setError("");
       try {
-        const response = await fetch(`/api/shops/${id}/page-data`, {
-          cache: "no-store",
-          signal,
-        });
-        const result = (await response.json()) as ShopPageData;
-        if (!response.ok)
-          throw new Error(result.error ?? "酒屋情報を読み込めませんでした");
+        const result = await fetchJson<ShopPageData>(
+          `/api/shops/${id}/page-data`,
+          { cache: "no-store", signal },
+          "酒屋情報を読み込めませんでした",
+        );
         setData(result);
       } catch (reason) {
-        if (reason instanceof DOMException && reason.name === "AbortError")
-          return;
-        setError(
-          reason instanceof Error
-            ? reason.message
-            : "酒屋情報を読み込めませんでした",
-        );
+        if (isAbortError(reason)) return;
+        setError(errorMessage(reason, "酒屋情報を読み込めませんでした"));
       } finally {
         if (!signal?.aborted) setLoading(false);
       }
@@ -153,10 +146,7 @@ export function ShopPageLoader() {
           <div className="shop-content">
             <section className="card shop-brands-card">
               {listedBrands.length ? (
-                <ShopBrandList
-                  items={listedBrands as ShopBrandSummary[]}
-                  title="取扱銘柄"
-                />
+                <ShopBrandList items={listedBrands} title="取扱銘柄" />
               ) : (
                 <>
                   <div className="shop-brands-heading">

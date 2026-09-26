@@ -5,9 +5,26 @@ import {
   mapReturnPath,
   parseMapView,
   readSessionMapView,
+  resolveInitialMapTarget,
   safeMapReturnPath,
   saveSessionMapView,
 } from "@/lib/map-view";
+
+test("shop selection overrides the remembered map position and zoom", () => {
+  const remembered = { center: [35, 139] as [number, number], zoom: 8 };
+  const shopPosition = [34.6937, 135.5023] as [number, number];
+
+  assert.deepEqual(resolveInitialMapTarget(remembered, shopPosition), {
+    center: shopPosition,
+    initialZoom: undefined,
+    preserveZoom: false,
+  });
+  assert.deepEqual(resolveInitialMapTarget(remembered, undefined), {
+    center: remembered.center,
+    initialZoom: remembered.zoom,
+    preserveZoom: true,
+  });
+});
 
 test("shop return URL preserves selection without map coordinates", () => {
   const returnPath = mapReturnPath({

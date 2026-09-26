@@ -27,6 +27,7 @@ export type CrawlManifest = {
 export type ExtractedProduct = {
   sourceName: string;
   sourceBreweryName?: string | null;
+  sourcePrefecture?: string | null;
   sourceUrl: string | null;
   pageUrl: string;
   pageNumber?: number | null;
@@ -46,6 +47,7 @@ export type CatalogBrand = {
   name: string;
   nameKana: string | null;
   breweryName: string | null;
+  prefecture?: string | null;
 };
 
 export type BrandMatch = {

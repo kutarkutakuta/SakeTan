@@ -49,8 +49,38 @@ const genericSakeTerms = new Set(
   ].map((value) => normalizeProductName(value)),
 );
 
+const prefectureNamePattern = /^(?:北海道|東京都|京都府|大阪府|.+県)$/u;
+const prefectureInTextPattern =
+  /(?:北海道|東京都|京都府|大阪府|[一-龯々ヶ]+県)/u;
+
 function cleanProductName(value: string) {
   return value.normalize("NFKC").replace(/\s+/g, " ").trim();
+}
+
+function prefectureName(value: string) {
+  const cleaned = cleanProductName(value);
+  return prefectureNamePattern.test(cleaned) ? cleaned : null;
+}
+
+function prefectureFromText(value: string) {
+  const match = cleanProductName(value)
+    .replace(/[＜＞<>]/gu, " ")
+    .match(prefectureInTextPattern);
+  return match?.[0] ?? null;
+}
+
+function annotateTablePrefectures(html: string) {
+  return html.replace(
+    /(<table\b[^>]*)(>[\s\S]*?<\/table>)/giu,
+    (whole, opening: string, remainder: string) => {
+      const prefecture = prefectureFromText(
+        remainder.match(/＜[^＞]+＞/u)?.[0] ?? "",
+      );
+      return prefecture
+        ? `${opening} data-source-prefecture="${prefecture}"${remainder}`
+        : whole;
+    },
+  );
 }
 
 function readableElementText($: CheerioAPI, element: Cheerio<AnyNode>) {
@@ -125,7 +155,10 @@ function pushProduct(
   pageUrl: string,
   method: ExtractionMethod,
   details: Partial<
-    Pick<ExtractedProduct, "sourceBreweryName" | "pageNumber" | "evidence">
+    Pick<
+      ExtractedProduct,
+      "sourceBreweryName" | "sourcePrefecture" | "pageNumber" | "evidence"
+    >
   > = {},
 ) {
   if (typeof name !== "string") return;
@@ -134,6 +167,9 @@ function pushProduct(
   results.push({
     sourceName: cleaned,
     sourceBreweryName: details.sourceBreweryName ?? null,
+    ...(details.sourcePrefecture !== undefined
+      ? { sourcePrefecture: details.sourcePrefecture ?? null }
+      : {}),
     sourceUrl:
       typeof sourceUrl === "string" ? absoluteUrl(sourceUrl, pageUrl) : null,
     pageUrl,
@@ -231,6 +267,7 @@ function extractProfileGroups(
     const breweryText = profile.brewerySelector
       ? container.find(profile.brewerySelector).first().text()
       : "";
+    const sourcePrefecture = prefectureFromText(breweryText);
     const breweryName = breweryText
       ? cleanProductName(
           breweryPattern?.exec(breweryText)?.[1] ?? breweryText,
@@ -258,6 +295,7 @@ function extractProfileGroups(
             "selector",
             {
               sourceBreweryName: breweryName,
+              sourcePrefecture,
               evidence: breweryName ? `${name} / ${breweryName}` : name,
             },
           );
@@ -294,6 +332,13 @@ function deduplicate(products: ExtractedProduct[]) {
 function extractBrandTables($: CheerioAPI, pageUrl: string) {
   const results: ExtractedProduct[] = [];
   $("table").each((_, tableNode) => {
+    const table = $(tableNode);
+    const tableHeading =
+      table.find("tr.thead, caption").first().text() ||
+      table.find("a[id]").first().text() ||
+      table.prevAll("a[id]").first().text();
+    const tablePrefecture =
+      table.attr("data-source-prefecture") ?? prefectureFromText(tableHeading);
     const rows = $(tableNode)
       .find("tr")
       .map((_, rowNode) => {
@@ -302,6 +347,10 @@ function extractBrandTables($: CheerioAPI, pageUrl: string) {
         const brandCell =
           cells.length >= 3 ? cells.eq(cells.length - 2) : cells.eq(0);
         const breweryCell = cells.eq(cells.length - 1);
+        const sourcePrefecture =
+          cells.length >= 3
+            ? prefectureName(cells.eq(0).text())
+            : tablePrefecture;
         const brandNames = cleanProductName(brandCell.text());
         const breweryName = cleanProductName(breweryCell.text());
         if (
@@ -311,7 +360,7 @@ function extractBrandTables($: CheerioAPI, pageUrl: string) {
           breweryName.length > 150
         )
           return null;
-        return { brandNames, breweryName };
+        return { brandNames, breweryName, sourcePrefecture };
       })
       .get()
       .filter(
@@ -320,6 +369,7 @@ function extractBrandTables($: CheerioAPI, pageUrl: string) {
         ): row is {
           brandNames: string;
           breweryName: string;
+          sourcePrefecture: string | null;
         } => Boolean(row),
       );
     if (rows.length < 5) return;
@@ -331,6 +381,7 @@ function extractBrandTables($: CheerioAPI, pageUrl: string) {
       for (const brandName of row.brandNames.split(/\s+/))
         pushProduct(results, brandName, null, pageUrl, "brand-table", {
           sourceBreweryName: row.breweryName,
+          sourcePrefecture: row.sourcePrefecture,
           evidence: `${row.brandNames} / ${row.breweryName}`,
         });
     }
@@ -350,7 +401,9 @@ function extractCategoryBrands($: CheerioAPI, pageUrl: string) {
       return;
     const bracket = title.match(/【([^】]+)】/);
     if (title.startsWith("【")) return;
-    const breweryName = bracket?.[1].replace(/^\S+\s+/, "").trim() || null;
+    const bracketText = bracket?.[1] ?? "";
+    const sourcePrefecture = prefectureName(bracketText.split(/\s+/u)[0] ?? "");
+    const breweryName = bracketText.replace(/^\S+\s+/, "").trim() || null;
     const brandPart = title.replace(/【[^】]*】/g, "").trim();
     for (const brandName of brandPart
       .split(/[/／]/)
@@ -363,9 +416,70 @@ function extractCategoryBrands($: CheerioAPI, pageUrl: string) {
         "category",
         {
           sourceBreweryName: breweryName,
+          sourcePrefecture,
           evidence: title,
         },
       );
+  });
+  return results;
+}
+
+function extractBrandImageAlts($: CheerioAPI, pageUrl: string) {
+  const results: ExtractedProduct[] = [];
+  $("#sake.brand-list img[alt]").each((_, node) => {
+    const element = $(node);
+    const name = element.attr("alt");
+    pushProduct(
+      results,
+      name,
+      elementUrl(element, pageUrl),
+      pageUrl,
+      "category",
+      { evidence: `画像alt: ${name ?? ""}` },
+    );
+  });
+  return results;
+}
+
+function extractRegionalBrandLists($: CheerioAPI, pageUrl: string) {
+  const results: ExtractedProduct[] = [];
+  $("#sake .border__normal--dark").each((_, node) => {
+    const block = $(node);
+    const prefecture = cleanProductName(
+      block.find(".item__area--title").first().text(),
+    );
+    if (!prefectureName(prefecture)) return;
+    block.find(".row-cols-lg-3 .col").each((__, brandNode) => {
+      const brandCell = $(brandNode);
+      const sourceName = cleanProductName(brandCell.text());
+      for (const brandName of sourceName.split(/[／/]/u)) {
+        pushProduct(results, brandName, null, pageUrl, "category", {
+          sourcePrefecture: prefecture,
+          evidence: `${prefecture} / ${sourceName}`,
+        });
+      }
+    });
+  });
+  return results;
+}
+
+function extractDiamondLeadingBrands($: CheerioAPI, pageUrl: string) {
+  const results: ExtractedProduct[] = [];
+  $('td[align="left"][bgcolor="#ffffff"]').each((_, node) => {
+    const element = $(node);
+    const text = readableElementText($, element)
+      .replace(/\u00a0/g, " ")
+      .trim();
+    const match = text.match(/^◇\s*([^\s　]+)/u);
+    if (!match) return;
+    pushProduct(
+      results,
+      match[1],
+      elementUrl(element, pageUrl),
+      pageUrl,
+      "category",
+      { evidence: `◇ ${text}` },
+    );
   });
   return results;
 }
@@ -376,7 +490,7 @@ export function extractProducts(
   customSelector?: string,
   profile: SourceProfile | null = null,
 ) {
-  const $ = load(html);
+  const $ = load(annotateTablePrefectures(html));
   if (profile?.dedicatedProfile)
     return deduplicate(extractProfileGroups($, profile, pageUrl));
   if (profile?.dedicatedSelector)
@@ -388,6 +502,9 @@ export function extractProducts(
   if (customSelector)
     products.push(...extractElements($, customSelector, pageUrl, "selector"));
   products.push(...extractCategoryBrands($, pageUrl));
+  products.push(...extractBrandImageAlts($, pageUrl));
+  products.push(...extractRegionalBrandLists($, pageUrl));
+  products.push(...extractDiamondLeadingBrands($, pageUrl));
   products.push(...extractBrandTables($, pageUrl));
   products.push(
     ...extractElements(
@@ -568,7 +685,16 @@ function matchScore(product: ExtractedProduct, brand: CatalogBrand) {
       brewery.includes(sourceBrewery))
       ? 100
       : 0;
-  if (productName === brandName) return 1000 + brandName.length + breweryScore;
+  const sourcePrefecture = normalizeProductName(product.sourcePrefecture ?? "");
+  const brandPrefecture = normalizeProductName(brand.prefecture ?? "");
+  const prefectureScore =
+    sourcePrefecture && brandPrefecture
+      ? sourcePrefecture === brandPrefecture
+        ? 250
+        : -250
+      : 0;
+  if (productName === brandName)
+    return 1000 + brandName.length + breweryScore + prefectureScore;
   if (brandName.length < 2) return 0;
   if (genericSakeTerms.has(brandName)) return 0;
   if (
@@ -589,7 +715,7 @@ function matchScore(product: ExtractedProduct, brand: CatalogBrand) {
   if (startsWithBrand) score += 50;
   if (tokens.some((token) => token === brandName)) score += 25;
   if (brewery.length >= 2 && productName.includes(brewery)) score += 20;
-  score += breweryScore;
+  score += breweryScore + prefectureScore;
   return score;
 }
 

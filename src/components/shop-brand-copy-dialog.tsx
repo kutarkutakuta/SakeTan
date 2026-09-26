@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Check, Copy, Search, X } from "lucide-react";
-import { mutate } from "@/lib/client";
+import { errorMessage, fetchJson, mutate } from "@/lib/client";
 import type { Shop } from "@/lib/types";
 import { useToast } from "@/components/toast-provider";
 
@@ -78,13 +78,11 @@ export function ShopBrandCopyDialog({
       setSearchBusy(true);
       setSearchError("");
       try {
-        const response = await fetch(
+        const data = await fetchJson<{ shops?: Shop[] }>(
           `/api/search?scope=shops&q=${encodeURIComponent(normalizedQuery)}`,
           { signal: abort.signal },
+          "酒屋を検索できませんでした",
         );
-        const data = await response.json();
-        if (!response.ok)
-          throw new Error(data.error ?? "酒屋を検索できませんでした");
         setResults(
           (Array.isArray(data.shops) ? (data.shops as Shop[]) : []).filter(
             (shop) => shop.id !== sourceShop.id,
@@ -92,11 +90,7 @@ export function ShopBrandCopyDialog({
         );
       } catch (reason) {
         if (!abort.signal.aborted)
-          setSearchError(
-            reason instanceof Error
-              ? reason.message
-              : "酒屋を検索できませんでした",
-          );
+          setSearchError(errorMessage(reason, "酒屋を検索できませんでした"));
       } finally {
         if (!abort.signal.aborted) setSearchBusy(false);
       }
@@ -122,20 +116,16 @@ export function ShopBrandCopyDialog({
           source_id: sourceShop.id,
           target_ids: selectedIds.join(","),
         });
-        const response = await fetch(
+        const data = await fetchJson<ShopBrandCopyResult>(
           `/api/shops/brands/copy-preview?${params}`,
           { signal: abort.signal },
+          "コピー内容を確認できませんでした",
         );
-        const data = await response.json();
-        if (!response.ok)
-          throw new Error(data.error ?? "コピー内容を確認できませんでした");
-        setPreview(data as ShopBrandCopyResult);
+        setPreview(data);
       } catch (reason) {
         if (!abort.signal.aborted)
           showToast(
-            reason instanceof Error
-              ? reason.message
-              : "コピー内容を確認できませんでした",
+            errorMessage(reason, "コピー内容を確認できませんでした"),
             "error",
           );
       } finally {

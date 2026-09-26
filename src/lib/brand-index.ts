@@ -66,7 +66,6 @@ export const kanaGroups = [
 export type KanaGroup = (typeof kanaGroups)[number] | "other";
 export type BrandFilterTarget = "brand" | "brewery";
 export type BrandCatalogSort = "brand" | "brewery" | "region" | "recent";
-export type ShopBrandSummary = ShopBrand;
 
 const collator = new Intl.Collator("ja", {
   sensitivity: "base",
@@ -263,7 +262,7 @@ export function sortBrands(
 }
 
 export function sortShopBrands(
-  items: ShopBrandSummary[],
+  items: ShopBrand[],
   by: BrandCatalogSort,
   query = "",
 ) {

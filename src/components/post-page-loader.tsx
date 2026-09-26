@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { ArrowLeft, Store } from "lucide-react";
 import { AvailabilityInfo } from "@/components/availability-info";
 import { PostForm } from "@/components/post-form";
+import { errorMessage, fetchJson, isAbortError } from "@/lib/client";
 import type { PostShop, PostShopRelation } from "@/lib/types";
 
 type PostData = {
@@ -28,22 +29,15 @@ export function PostPageLoader() {
       setLoading(true);
       setError("");
       try {
-        const response = await fetch(`/api/shops/${shopId}/post-data`, {
-          cache: "no-store",
-          signal,
-        });
-        const result = (await response.json()) as PostData;
-        if (!response.ok)
-          throw new Error(result.error ?? "取扱情報を取得できませんでした");
+        const result = await fetchJson<PostData>(
+          `/api/shops/${shopId}/post-data`,
+          { cache: "no-store", signal },
+          "取扱情報を取得できませんでした",
+        );
         setData(result);
       } catch (reason) {
-        if (reason instanceof DOMException && reason.name === "AbortError")
-          return;
-        setError(
-          reason instanceof Error
-            ? reason.message
-            : "取扱情報を取得できませんでした",
-        );
+        if (isAbortError(reason)) return;
+        setError(errorMessage(reason, "取扱情報を取得できませんでした"));
       } finally {
         if (!signal?.aborted) setLoading(false);
       }

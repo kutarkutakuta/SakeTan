@@ -9,8 +9,8 @@ import {
   type BrandCatalogSort,
   type BrandFilterTarget,
   type KanaGroup,
-  type ShopBrandSummary,
 } from "@/lib/brand-index";
+import type { ShopBrand } from "@/lib/types";
 import { BrandFilterControls, BrandFilterCount } from "./brand-filter-controls";
 
 export function ShopBrandList({
@@ -19,7 +19,7 @@ export function ShopBrandList({
   title,
 }: {
   description?: string;
-  items: ShopBrandSummary[];
+  items: ShopBrand[];
   title: string;
 }) {
   const [query, setQuery] = useState("");

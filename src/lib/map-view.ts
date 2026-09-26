@@ -3,6 +3,12 @@ export type MapView = {
   zoom: number;
 };
 
+export type InitialMapTarget = {
+  center: [number, number] | undefined;
+  initialZoom: number | undefined;
+  preserveZoom: boolean;
+};
+
 const lastMapViewKey = "saketan:last-map-view";
 
 type MapSearchParams = {
@@ -10,6 +16,23 @@ type MapSearchParams = {
   map_lng?: string;
   map_zoom?: string;
 };
+
+export function resolveInitialMapTarget(
+  rememberedView: MapView | undefined,
+  shopPosition: [number, number] | undefined,
+): InitialMapTarget {
+  if (shopPosition)
+    return {
+      center: shopPosition,
+      initialZoom: undefined,
+      preserveZoom: false,
+    };
+  return {
+    center: rememberedView?.center,
+    initialZoom: rememberedView?.zoom,
+    preserveZoom: Boolean(rememberedView),
+  };
+}
 
 export function parseMapView(params: MapSearchParams): MapView | undefined {
   const latitude = Number(params.map_lat);

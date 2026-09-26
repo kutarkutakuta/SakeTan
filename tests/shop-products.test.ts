@@ -225,6 +225,47 @@ test("shop product parser recognizes dense brand and brewery tables", () => {
   assert.ok(products.every((product) => product.method === "brand-table"));
 });
 
+test("brand tables retain a prefecture column for matching", () => {
+  const row = (prefecture: string, brand: string, brewery: string) =>
+    `<tr><td>${prefecture}</td><td>${brand}</td><td>${brewery}</td></tr>`;
+  const products = extractProducts(
+    "<table>" +
+      row("北海道", "男山", "男山酒造") +
+      row("山形県", "男山", "羽前男山酒造") +
+      row("新潟県", "菊水", "菊水酒造") +
+      row("高知県", "菊水", "菊水酒造") +
+      row("秋田県", "雪の茅舎", "齋彌酒造店") +
+      "</table>",
+    "https://shop.example/brands",
+  );
+  const maleMountain = products.filter(
+    (product) => product.sourceName === "男山",
+  );
+  assert.deepEqual(
+    maleMountain.map((product) => product.sourcePrefecture).sort(),
+    ["北海道", "山形県"],
+  );
+});
+
+test("brand tables retain a prefecture heading for two-column regional lists", () => {
+  const row = (brand: string, brewery: string) =>
+    `<tr><td>${brand}</td><td>${brewery}</td></tr>`;
+  const products = extractProducts(
+    '<table><tr class="thead"><a id="hokkaido">＜北海道＞</a></tr>' +
+      row("男山", "男山酒造") +
+      row("北の誉", "北の誉酒造") +
+      row("国稀", "国稀酒造") +
+      row("上川大雪", "上川大雪酒造") +
+      row("北の勝", "碓氷勝三郎商店") +
+      "</table>",
+    "https://shop.example/brands",
+  );
+  assert.equal(
+    products.find((product) => product.sourceName === "男山")?.sourcePrefecture,
+    "北海道",
+  );
+});
+
 test("pagination follows only links identified as next", () => {
   const links = paginationLinks(
     '<nav class="pagination">' +
@@ -303,6 +344,40 @@ test("brand matching distinguishes exact, suggested, and unmatched names", () =>
     "unmatched",
   );
   assert.equal(normalizeProductName(" 獺祭・純米大吟醸 "), "獺祭純米大吟醸");
+});
+
+test("brand matching uses the published prefecture to distinguish same-name brands", () => {
+  const brands: CatalogBrand[] = [
+    {
+      id: "10000000-0000-4000-8000-000000000030",
+      name: "男山",
+      nameKana: null,
+      breweryName: "男山酒造",
+      prefecture: "北海道",
+    },
+    {
+      id: "10000000-0000-4000-8000-000000000031",
+      name: "男山",
+      nameKana: null,
+      breweryName: "男山酒造",
+      prefecture: "山形県",
+    },
+  ];
+  const product: ExtractedProduct = {
+    sourceName: "男山",
+    sourcePrefecture: "北海道",
+    sourceUrl: null,
+    pageUrl: "https://shop.example/brands",
+    method: "category",
+  };
+  const matched = matchProduct(product, brands);
+  assert.equal(matched.matchKind, "exact");
+  assert.equal(matched.brandId, brands[0].id);
+  assert.equal(matched.candidates[0].brandId, brands[0].id);
+  assert.equal(
+    matchProduct({ ...product, sourcePrefecture: null }, brands).matchKind,
+    "ambiguous",
+  );
 });
 
 test("trusted product catalogs canonicalize only brand-name prefixes", () => {

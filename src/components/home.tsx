@@ -30,9 +30,11 @@ import { ShopListCard } from "./home/shop-list-card";
 import { ListingNotice } from "./home/listing-notice";
 import { useShopMetadata } from "./home/use-shop-metadata";
 import { useToast } from "./toast-provider";
+import { errorMessage, fetchJson } from "@/lib/client";
 import {
   mapAwareShopPath,
   mapReturnPath,
+  resolveInitialMapTarget,
   saveSessionMapView,
   type MapView,
 } from "@/lib/map-view";
@@ -107,6 +109,10 @@ export function Home({
         : undefined,
     [initialShop],
   );
+  const initialMapTarget = useMemo(
+    () => resolveInitialMapTarget(initialMapView, initialShopPosition),
+    [initialMapView, initialShopPosition],
+  );
   const [shops, setShops] = useState<Shop[]>(initialShop ? [initialShop] : []);
   const [query, setQuery] = useState("");
   const [hideSearchResults, setHideSearchResults] = useState(false);
@@ -118,18 +124,22 @@ export function Home({
   const [focusedShop, setFocusedShop] = useState<string | null>(null);
   const [bounds, setBounds] = useState<Bounds>();
   const [center, setCenter] = useState<[number, number] | undefined>(
-    initialMapView?.center ?? initialShopPosition,
+    initialMapTarget.center,
   );
   const [userLocation, setUserLocation] = useState<
     [number, number] | undefined
   >();
   const [preserveMapZoom, setPreserveMapZoom] = useState(
-    Boolean(initialMapView),
+    initialMapTarget.preserveZoom,
   );
-  const [mapView, setMapView] = useState<MapView | undefined>(initialMapView);
+  const [mapView, setMapView] = useState<MapView | undefined>(
+    initialMapView && initialShopPosition
+      ? { ...initialMapView, center: initialShopPosition }
+      : initialMapView,
+  );
   const [shopListCenter, setShopListCenter] = useState<
     [number, number] | undefined
-  >(initialMapView?.center ?? initialShopPosition);
+  >(initialMapTarget.center);
   const [visibleShopLimit, setVisibleShopLimit] = useState(shopsPerPage);
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -205,11 +215,12 @@ export function Home({
         if (filter) params.set("brand_id", filter.id);
         if (area)
           Object.entries(area).forEach(([k, v]) => params.set(k, String(v)));
-        const res = await fetch("/api/shops?" + params);
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
+        const nextShops = await fetchJson<Shop[]>(
+          "/api/shops?" + params,
+          undefined,
+          "検索できませんでした",
+        );
         if (seq !== areaSequence.current) return;
-        const nextShops = data as Shop[];
         const nextSelected =
           selectedShopId && nextShops.some((shop) => shop.id === selectedShopId)
             ? selectedShopId
@@ -225,7 +236,7 @@ export function Home({
         setDirty(false);
       } catch (e) {
         if (seq === areaSequence.current)
-          setError(e instanceof Error ? e.message : "検索できませんでした");
+          setError(errorMessage(e, "検索できませんでした"));
       } finally {
         if (seq === areaSequence.current) setBusy(false);
       }
@@ -294,12 +305,11 @@ export function Home({
           searchLatitude !== undefined && searchLongitude !== undefined
             ? ([searchLatitude, searchLongitude] as [number, number])
             : undefined;
-        const r = await fetch(
+        const data = await fetchJson<SearchResults>(
           "/api/search?" + searchRequestParams(query.trim(), origin),
           { signal: abort.signal },
+          "検索できませんでした",
         );
-        const data = await r.json();
-        if (!r.ok) throw new Error(data.error);
         if (seq === searchSequence.current)
           setResults({
             brands: data.brands ?? [],
@@ -308,7 +318,7 @@ export function Home({
           });
       } catch (e) {
         if (!abort.signal.aborted)
-          setError(e instanceof Error ? e.message : "検索できませんでした");
+          setError(errorMessage(e, "検索できませんでした"));
       }
     }, 250);
     return () => {
@@ -323,7 +333,7 @@ export function Home({
     const seq = searchSequence.current;
     setLoadingMoreSearchShops(true);
     try {
-      const r = await fetch(
+      const data = await fetchJson<SearchResults>(
         "/api/search?" +
           searchRequestParams(
             normalizedQuery,
@@ -331,9 +341,9 @@ export function Home({
             results.shops.length,
           ) +
           "&scope=shops",
+        undefined,
+        "検索できませんでした",
       );
-      const data = await r.json();
-      if (!r.ok) throw new Error(data.error);
       if (seq !== searchSequence.current) return;
       setResults((current) => {
         const knownIds = new Set(current.shops.map((shop) => shop.id));
@@ -348,7 +358,7 @@ export function Home({
       });
     } catch (e) {
       if (seq === searchSequence.current)
-        setError(e instanceof Error ? e.message : "検索できませんでした");
+        setError(errorMessage(e, "検索できませんでした"));
     } finally {
       if (seq === searchSequence.current) setLoadingMoreSearchShops(false);
     }
@@ -879,7 +889,7 @@ export function Home({
               }
             }}
             center={center}
-            initialZoom={initialMapView?.zoom}
+            initialZoom={initialMapTarget.initialZoom}
             onViewChange={handleMapViewChange}
             preserveZoom={preserveMapZoom}
             mobileSelectionOffsetY={56}

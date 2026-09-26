@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Copy, Plus, Search, Store, X } from "lucide-react";
-import { mutate } from "@/lib/client";
+import { errorMessage, fetchJson, mutate } from "@/lib/client";
 import {
   brandFilterCriteriaLabel,
   brandPrefecture,
@@ -76,18 +76,16 @@ export function PostForm({
     const abort = new AbortController();
     void (async () => {
       try {
-        const response = await fetch("/api/brands?all=1", {
-          signal: abort.signal,
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error);
+        const data = await fetchJson<Brand[]>(
+          "/api/brands?all=1",
+          { signal: abort.signal },
+          "銘柄一覧を取得できませんでした",
+        );
         setCatalog(data);
       } catch (reason) {
         if (!abort.signal.aborted)
           showToast(
-            reason instanceof Error
-              ? reason.message
-              : "銘柄一覧を取得できませんでした",
+            errorMessage(reason, "銘柄一覧を取得できませんでした"),
             "error",
           );
       } finally {

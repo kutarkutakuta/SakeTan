@@ -3,6 +3,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { ArrowRight, Store } from "lucide-react";
 import { useEffect, useState } from "react";
+import { errorMessage, fetchJson } from "@/lib/client";
 
 type Position = { latitude: number; longitude: number };
 type PlaceSelection = Position & {
@@ -84,15 +85,14 @@ export function LocationPicker({
       });
       if (googlePlaceId) params.set("google_place_id", googlePlaceId);
       try {
-        const response = await fetch(`/api/shops/duplicates?${params}`, {
-          signal: abort.signal,
-        });
-        const result = (await response.json()) as {
+        const result = await fetchJson<{
           exact?: DuplicateCandidate | null;
           nearby?: DuplicateCandidate[];
-          error?: string;
-        };
-        if (!response.ok) throw new Error(result.error);
+        }>(
+          `/api/shops/duplicates?${params}`,
+          { signal: abort.signal },
+          "登録済みの酒屋を確認できませんでした",
+        );
         const exact = result.exact ?? null;
         setExactDuplicate(exact);
         setNearbyDuplicates(result.nearby ?? []);
@@ -105,9 +105,7 @@ export function LocationPicker({
         setExactDuplicate(null);
         setNearbyDuplicates([]);
         setDuplicateError(
-          error instanceof Error
-            ? error.message
-            : "登録済みの酒屋を確認できませんでした",
+          errorMessage(error, "登録済みの酒屋を確認できませんでした"),
         );
         onDuplicateStateChange({ blocking: false, pending: false });
       } finally {

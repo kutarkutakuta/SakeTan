@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { RestoreButton } from "@/components/restore-button";
+import { errorMessage, fetchJson, isAbortError } from "@/lib/client";
 import type { History } from "@/lib/types";
 import { changedFields, labels } from "@/lib/utils";
 
@@ -47,25 +48,18 @@ export function HistoryLoader() {
       setLoading(true);
       setError("");
       try {
-        const response = await fetch(
+        const result = await fetchJson<HistoryData>(
           `/api/history${query ? `?${query}` : ""}`,
           {
             cache: "no-store",
             signal,
           },
+          "履歴を取得できませんでした",
         );
-        const result = (await response.json()) as HistoryData;
-        if (!response.ok)
-          throw new Error(result.error ?? "履歴を取得できませんでした");
         setData(result);
       } catch (reason) {
-        if (reason instanceof DOMException && reason.name === "AbortError")
-          return;
-        setError(
-          reason instanceof Error
-            ? reason.message
-            : "履歴を取得できませんでした",
-        );
+        if (isAbortError(reason)) return;
+        setError(errorMessage(reason, "履歴を取得できませんでした"));
       } finally {
         if (!signal?.aborted) setLoading(false);
       }

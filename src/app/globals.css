@@ -1366,34 +1366,11 @@ nav {
 .card h2 {
   margin-bottom: 18px;
 }
-.detail-grid {
-  display: grid;
-  grid-template-columns: 1.3fr 1fr;
-  gap: 22px;
-}
 .compact-map {
   height: 240px;
   min-height: 240px;
   border-radius: 12px;
   overflow: hidden;
-}
-.map-unavailable {
-  min-height: 220px;
-  border-radius: 12px;
-  background: var(--bg);
-  display: grid;
-  place-content: center;
-  justify-items: center;
-  gap: 8px;
-  padding: 24px;
-  text-align: center;
-  color: var(--muted);
-}
-.map-unavailable strong {
-  color: var(--text);
-}
-.map-unavailable p {
-  font-size: 14px;
 }
 .brand-list {
   display: grid;
@@ -1557,31 +1534,6 @@ nav {
   flex-wrap: wrap;
   gap: 4px 18px;
 }
-.map-link-note {
-  margin-top: 6px;
-  color: var(--muted);
-  font-size: 14px;
-}
-.sighting {
-  padding: 20px 0;
-  border-top: 1px solid var(--line);
-}
-.sighting:first-of-type {
-  border: 0;
-  padding-top: 0;
-}
-.sighting-meta {
-  display: flex;
-  justify-content: space-between;
-  gap: 14px;
-  color: var(--muted);
-  font-size: 14px;
-  margin: 8px 0;
-}
-.sighting p {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
 .form-stack {
   display: grid;
   gap: 22px;
@@ -1590,11 +1542,6 @@ nav {
 .form-stack label > select,
 .form-stack label > textarea {
   margin-top: 8px;
-}
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
 }
 .location-picker {
   display: grid;
@@ -1724,28 +1671,6 @@ nav {
   font-size: 14px;
   font-weight: 600;
   gap: 4px;
-}
-.location-candidates {
-  display: grid;
-  gap: 8px;
-}
-.location-candidates button {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  width: 100%;
-  padding: 12px 14px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  text-align: left;
-}
-.location-candidates button[aria-pressed="true"] {
-  border-color: var(--primary);
-  background: var(--tint);
-}
-.location-candidates small {
-  display: block;
-  color: var(--muted);
 }
 .fixed-shop {
   display: flex;
@@ -2001,27 +1926,6 @@ nav {
 .missing-brand-form textarea {
   min-height: 90px;
 }
-.new-brand-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  color: var(--primary);
-  font-weight: 500;
-}
-.quick-post-settings {
-  border-top: 1px solid var(--line);
-  padding-top: 10px;
-}
-.quick-post-settings summary {
-  color: var(--muted);
-  cursor: pointer;
-  font-size: 14px;
-}
-.quick-post-settings .form-stack {
-  margin-top: 14px;
-  gap: 14px;
-}
 .toast-region {
   position: fixed;
   z-index: 1400;
@@ -2087,10 +1991,6 @@ nav {
   .toast-notification {
     animation: none;
   }
-}
-.fixed-value {
-  display: block;
-  margin-top: 8px;
 }
 .post-page {
   max-width: 1200px;
@@ -2410,18 +2310,6 @@ nav {
   gap: 10px;
   margin-top: 20px;
 }
-.comment-page {
-  max-width: 820px;
-}
-.brand-comment-head {
-  margin-bottom: 22px;
-}
-.brand-comment-head > small {
-  color: var(--muted);
-}
-.brand-comment-head h1 {
-  margin: 2px 0 6px;
-}
 .comments-section {
   margin-top: 20px;
   padding: 20px;
@@ -2619,9 +2507,6 @@ nav {
   font-size: 14px;
   font-weight: 600;
   white-space: nowrap;
-}
-.edit-source-note {
-  margin-top: -12px;
 }
 .edit-result-list {
   overflow: hidden;
@@ -3370,9 +3255,6 @@ nav {
     justify-content: flex-start;
     gap: 10px;
   }
-  .detail-grid {
-    grid-template-columns: 1fr;
-  }
   .brand-list {
     grid-template-columns: 1fr;
   }
@@ -3536,9 +3418,6 @@ nav {
   .diff {
     grid-template-columns: 1fr;
     gap: 2px;
-  }
-  .form-row {
-    grid-template-columns: 1fr;
   }
   .location-picker-head {
     display: grid;

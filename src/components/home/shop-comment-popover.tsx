@@ -5,6 +5,7 @@ import type { CSSProperties, RefObject } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { ChevronRight, X } from "lucide-react";
+import { errorMessage, fetchJson } from "@/lib/client";
 import type { LatestShopComment, ShopCommentPage } from "@/lib/types";
 import { dateLabel } from "@/lib/utils";
 import { CommentText } from "@/components/comment-text";
@@ -113,14 +114,11 @@ export function ShopCommentPopover({
     setLoading(true);
     setError("");
     try {
-      const response = await fetch(
+      const data = await fetchJson<ShopCommentPage>(
         `/api/shops/${shopId}/comments?offset=${nextOffset}`,
         { signal: abort.signal },
+        "コメントを取得できませんでした",
       );
-      const data = (await response.json()) as ShopCommentPage & {
-        error?: string;
-      };
-      if (!response.ok) throw new Error(data.error);
       if (data.latest) {
         setComment(data.latest);
         setOffset(data.offset);
@@ -128,11 +126,7 @@ export function ShopCommentPopover({
       setTotal(data.total);
     } catch (reason) {
       if (!abort.signal.aborted)
-        setError(
-          reason instanceof Error
-            ? reason.message
-            : "コメントを取得できませんでした",
-        );
+        setError(errorMessage(reason, "コメントを取得できませんでした"));
     } finally {
       if (!abort.signal.aborted) setLoading(false);
     }

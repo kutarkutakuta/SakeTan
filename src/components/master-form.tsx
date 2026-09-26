@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Search } from "lucide-react";
-import { mutate } from "@/lib/client";
+import { errorMessage, fetchJson, mutate } from "@/lib/client";
+import { mapReturnPath } from "@/lib/map-view";
 import type { Brewery, EntityType } from "@/lib/types";
 import { LocationPicker } from "@/components/location-picker";
 import { useToast } from "@/components/toast-provider";
@@ -51,17 +52,15 @@ export function MasterForm({
     setSearchError("");
     const timer = setTimeout(async () => {
       try {
-        const r = await fetch("/api/breweries?q=" + encodeURIComponent(query), {
-          signal: abort.signal,
-        });
-        const data = await r.json();
-        if (!r.ok) throw new Error(data.error);
+        const data = await fetchJson<Brewery[]>(
+          "/api/breweries?q=" + encodeURIComponent(query),
+          { signal: abort.signal },
+          "検索できませんでした",
+        );
         setResults(data);
       } catch (e) {
         if (!abort.signal.aborted)
-          setSearchError(
-            e instanceof Error ? e.message : "検索できませんでした",
-          );
+          setSearchError(errorMessage(e, "検索できませんでした"));
       }
     }, 250);
     return () => {
@@ -70,6 +69,15 @@ export function MasterForm({
     };
   }, [query, type]);
   const value = (key: string) => String(initial[key] ?? "");
+  const destinationAfterSave = (resultId: string) => {
+    if (type === "shop") {
+      if (!id) return mapReturnPath({ shopId: resultId });
+      return afterSaveHref ?? "/shops/" + resultId;
+    }
+    if (type === "brand" && shopId)
+      return "/post?shop_id=" + shopId + "&brand_id=" + resultId;
+    return "/history?type=" + type + "&id=" + resultId;
+  };
   async function saveKana(form: HTMLFormElement) {
     if (!id || type === "shop") return;
     setBusy(true);
@@ -85,7 +93,6 @@ export function MasterForm({
       });
       showToast(`${entityLabels[type]}のかなを保存しました`);
       router.push("/history?type=" + type + "&id=" + result.id);
-      router.refresh();
     } catch (e) {
       showToast(
         e instanceof Error ? e.message : "保存できませんでした",
@@ -146,16 +153,7 @@ export function MasterForm({
           ? `${entityLabels[type]}の変更を保存しました`
           : `${entityLabels[type]}を登録しました`,
       );
-      router.push(
-        type === "shop" && id && afterSaveHref
-          ? afterSaveHref
-          : type === "shop"
-            ? "/shops/" + result.id
-            : type === "brand" && shopId
-              ? "/post?shop_id=" + shopId + "&brand_id=" + result.id
-              : "/history?type=" + type + "&id=" + result.id,
-      );
-      router.refresh();
+      router.push(destinationAfterSave(result.id));
     } catch (e) {
       showToast(
         e instanceof Error ? e.message : "保存できませんでした",

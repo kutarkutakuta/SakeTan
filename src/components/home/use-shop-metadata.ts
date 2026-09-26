@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
+import { errorMessage, fetchJson } from "@/lib/client";
 import type { Brand, Shop, ShopCommentSummary } from "@/lib/types";
 
 export type ShopBrandPreview = { brands: Brand[]; total: number };
@@ -107,9 +108,11 @@ export function useShopMetadata(
       setLoadingShopId(shopId);
       setError("");
       try {
-        const response = await fetch(`/api/shops/${shopId}/brands`);
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error);
+        const data = await fetchJson<Brand[]>(
+          `/api/shops/${shopId}/brands`,
+          undefined,
+          "取扱銘柄を取得できませんでした",
+        );
         setAllBrands((current) => ({ ...current, [shopId]: data }));
         setExpandedShopId(shopId);
       } catch (reason) {
@@ -146,15 +149,12 @@ async function fetchInChunks<T>(
   );
   const parts = await Promise.all(
     chunks.map(async (chunk) => {
-      const response = await fetch(endpoint(chunk), { signal });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error);
-      return data as Record<string, T>;
+      return fetchJson<Record<string, T>>(
+        endpoint(chunk),
+        { signal },
+        "情報を取得できませんでした",
+      );
     }),
   );
   return Object.assign({}, ...parts) as Record<string, T>;
-}
-
-function errorMessage(reason: unknown, fallback: string) {
-  return reason instanceof Error ? reason.message : fallback;
 }

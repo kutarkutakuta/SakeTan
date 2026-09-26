@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { errorMessage, fetchJson, isAbortError } from "@/lib/client";
 import type { ShopCommentThread } from "@/lib/types";
 import { ShopComments } from "./shop-comments";
 
@@ -20,25 +21,16 @@ export function ShopCommentsLoader({
       setLoading(true);
       setError("");
       try {
-        const response = await fetch(`/api/shops/${shopId}/comment-thread`, {
-          cache: "no-store",
-          signal,
-        });
-        const result = (await response.json()) as ShopCommentThread & {
-          error?: string;
-        };
-        if (!response.ok)
-          throw new Error(result.error ?? "コメントを取得できませんでした");
+        const result = await fetchJson<ShopCommentThread>(
+          `/api/shops/${shopId}/comment-thread`,
+          { cache: "no-store", signal },
+          "コメントを取得できませんでした",
+        );
         setThread(result);
         onCountChange(result.comments.length);
       } catch (reason) {
-        if (reason instanceof DOMException && reason.name === "AbortError")
-          return;
-        setError(
-          reason instanceof Error
-            ? reason.message
-            : "コメントを取得できませんでした",
-        );
+        if (isAbortError(reason)) return;
+        setError(errorMessage(reason, "コメントを取得できませんでした"));
       } finally {
         if (!signal?.aborted) setLoading(false);
       }

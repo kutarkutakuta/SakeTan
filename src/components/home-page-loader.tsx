@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Home } from "@/components/home";
+import { errorMessage, fetchJson, isAbortError } from "@/lib/client";
 import { parseMapView, readSessionMapView, type MapView } from "@/lib/map-view";
 import type { Brand, Shop } from "@/lib/types";
 
@@ -50,23 +51,15 @@ export function HomePageLoader({ ready }: { ready: boolean }) {
     const controller = new AbortController();
     setContext(null);
     setLoadError("");
-    void fetch(`/api/explore-context?${contextQuery}`, {
-      signal: controller.signal,
-    })
-      .then(async (response) => {
-        const result = (await response.json()) as ExploreContext;
-        if (!response.ok)
-          throw new Error(result.error ?? "表示条件を読み込めませんでした");
-        setContext(result);
-      })
+    void fetchJson<ExploreContext>(
+      `/api/explore-context?${contextQuery}`,
+      { cache: "no-store", signal: controller.signal },
+      "表示条件を読み込めませんでした",
+    )
+      .then(setContext)
       .catch((reason) => {
-        if (reason instanceof DOMException && reason.name === "AbortError")
-          return;
-        setLoadError(
-          reason instanceof Error
-            ? reason.message
-            : "表示条件を読み込めませんでした",
-        );
+        if (isAbortError(reason)) return;
+        setLoadError(errorMessage(reason, "表示条件を読み込めませんでした"));
         setContext({ brand: null, shop: null });
       });
     return () => controller.abort();
