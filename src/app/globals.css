@@ -1151,9 +1151,29 @@ nav {
 .page-head h1 {
   font-size: 30px;
 }
+.shop-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+.shop-title-kana {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
 .page-head p {
   color: var(--muted);
   margin-top: 8px;
+}
+.shop-head .actions {
+  flex: none;
+  flex-wrap: nowrap;
+}
+.shop-head .actions .button {
+  white-space: nowrap;
 }
 .info-page {
   max-width: 1120px;

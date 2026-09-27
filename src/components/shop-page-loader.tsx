@@ -14,7 +14,13 @@ import { googleMapsShopUrl } from "@/lib/utils";
 type ShopPageData = {
   shop: Pick<
     Shop,
-    "id" | "name" | "prefecture" | "city" | "google_place_id" | "is_active"
+    | "id"
+    | "name"
+    | "name_kana"
+    | "prefecture"
+    | "city"
+    | "google_place_id"
+    | "is_active"
   >;
   relations: ShopBrand[];
   commentCount: number;
@@ -95,7 +101,12 @@ export function ShopPageLoader() {
       </Link>
       <div className="page-head shop-head">
         <div>
-          <h1>{data.shop.name}</h1>
+          <h1 className="shop-title">
+            <span>{data.shop.name}</span>
+            {data.shop.name_kana?.trim() && (
+              <span className="shop-title-kana">{data.shop.name_kana}</span>
+            )}
+          </h1>
           <div className="shop-links">
             <a
               className="text-link"
