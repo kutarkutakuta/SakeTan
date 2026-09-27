@@ -7,6 +7,12 @@
   --line: #e6e3db;
   --tint: #f7ece8;
   --radius: 18px;
+  --shop-marker-unregistered: #68727d;
+  --shop-marker-level-1: #a97872;
+  --shop-marker-level-2: #a85f59;
+  --shop-marker-level-3: #9c4d4c;
+  --shop-marker-level-4: #783841;
+  --shop-marker-level-5: #481b29;
 }
 * {
   box-sizing: border-box;
@@ -951,55 +957,98 @@ nav {
   background: #edf0e8;
 }
 .shop-map-marker {
+  position: relative;
   display: grid;
-  width: 38px;
-  height: 38px;
+  width: 44px;
+  height: 56px;
   place-items: center;
-  border: 1px solid white;
-  border-radius: 50%;
-  box-shadow: 0 2px 5px rgb(37 37 34 / 22%);
-  transition:
-    box-shadow 0.15s ease,
-    transform 0.15s ease;
+  --marker-fill: #89837e;
+}
+.shop-map-marker svg {
+  display: block;
+  filter: drop-shadow(0 2px 3px rgb(37 37 34 / 24%));
   transform-origin: center bottom;
+  transition:
+    filter 0.15s ease,
+    transform 0.15s ease;
+}
+.shop-map-marker-pin {
+  fill: var(--marker-fill);
+  stroke: white;
+  stroke-width: 1.1;
+  stroke-linejoin: round;
+}
+.shop-map-marker-diamond {
+  fill: white;
+}
+.shop-map-marker-label-wrap {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  display: none;
+  justify-content: unsafe center;
+  width: 100%;
+  margin-bottom: 3px;
+  pointer-events: none;
+}
+.shop-map-marker-label {
+  display: block;
+  flex: none;
+  width: max-content;
+  max-width: min(240px, 70vw);
+  overflow: hidden;
+  padding: 5px 10px;
+  border: 1px solid #b6a9a1;
+  border-radius: 3px;
+  background: white;
+  box-shadow: 0 2px 4px rgb(37 37 34 / 20%);
+  color: #252522;
+  font-family: Meiryo, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: auto;
+}
+.shop-map-marker-label:hover,
+.shop-map-marker-label:focus-visible {
+  border-color: var(--primary);
+  color: #8c3027;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .shop-map-marker-registered {
-  border-color: #ad5047;
-  background: #dd9489;
-  color: #4d2523;
+  --marker-fill: var(--shop-marker-level-1);
 }
 .shop-map-marker-registered.shop-map-marker-level-1 {
-  background: #fff4f2;
-  color: #7b302b;
+  --marker-fill: var(--shop-marker-level-1);
 }
 .shop-map-marker-registered.shop-map-marker-level-2 {
-  background: #f7cdc8;
-  color: #6c2e2a;
+  --marker-fill: var(--shop-marker-level-2);
 }
 .shop-map-marker-registered.shop-map-marker-level-3 {
-  background: #eca097;
-  color: #4d2523;
+  --marker-fill: var(--shop-marker-level-3);
 }
 .shop-map-marker-registered.shop-map-marker-level-4 {
-  background: #cd625d;
-  color: white;
+  --marker-fill: var(--shop-marker-level-4);
 }
 .shop-map-marker-registered.shop-map-marker-level-5 {
-  background: #481b29;
-  color: white;
+  --marker-fill: var(--shop-marker-level-5);
 }
 .shop-map-marker-unregistered {
-  border-color: #403c39;
-  background: #b8bec6;
-  color: #4e5863;
+  --marker-fill: var(--shop-marker-unregistered);
 }
-.shop-map-marker-loading {
-  background: #e7e3dc;
-  color: #817b74;
+.shop-map-marker.is-highlighted svg {
+  filter: drop-shadow(0 3px 4px rgb(37 37 34 / 32%));
+  transform: scale(1.06);
 }
-.shop-map-marker.is-highlighted {
-  box-shadow: 0 3px 8px rgb(37 37 34 / 28%);
-  transform: scale(1.15);
+.shop-map-marker.is-selected svg {
+  filter: drop-shadow(0 4px 5px rgb(37 37 34 / 34%));
+  transform: scale(1.1);
+}
+.shop-map-marker.is-selected .shop-map-marker-label-wrap {
+  display: flex;
 }
 .map-top {
   position: absolute;
@@ -1164,23 +1213,22 @@ nav {
   box-shadow: 0 2px 5px rgb(37 37 34 / 15%);
 }
 .marker-color-swatch-0 {
-  background: #b8bec6;
+  background: var(--shop-marker-unregistered);
 }
 .marker-color-swatch-1 {
-  background: #fff4f2;
+  background: var(--shop-marker-level-1);
 }
 .marker-color-swatch-2 {
-  background: #f7cdc8;
+  background: var(--shop-marker-level-2);
 }
 .marker-color-swatch-3 {
-  background: #eca097;
+  background: var(--shop-marker-level-3);
 }
 .marker-color-swatch-4 {
-  background: #cd625d;
+  background: var(--shop-marker-level-4);
 }
 .marker-color-swatch-5 {
-  border-color: #481b29;
-  background: #481b29;
+  background: var(--shop-marker-level-5);
 }
 .marker-color-legend li > span:last-child {
   display: grid;

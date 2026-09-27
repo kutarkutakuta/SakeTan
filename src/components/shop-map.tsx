@@ -16,49 +16,62 @@ type MarkerInstance = {
   id: string;
   marker: google.maps.marker.AdvancedMarkerElement;
   shopContent: HTMLDivElement;
-  selectedPin: google.maps.marker.PinElement;
+  latitude: number;
+  longitude: number;
 };
 
 const svgNamespace = "http://www.w3.org/2000/svg";
-const storeIconPaths = [
-  "M15 21v-5a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v5",
-  "M17.774 10.31a1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.451 0 1.12 1.12 0 0 0-1.548 0 2.5 2.5 0 0 1-3.452 0 1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.77-3.248l2.889-4.184A2 2 0 0 1 7 2h10a2 2 0 0 1 1.653.873l2.895 4.192a2.5 2.5 0 0 1-3.774 3.244",
-  "M4 10.95V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.05",
-];
-const selectedMarkerColor = "#d93b20";
-const selectedStoreGlyph = `data:image/svg+xml,${encodeURIComponent(
-  `<svg xmlns="${svgNamespace}" viewBox="0 0 24 24" fill="none" stroke="${selectedMarkerColor}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${storeIconPaths
-    .map((pathData) => `<path d="${pathData}"/>`)
-    .join("")}</svg>`,
-)}`;
 
-function createStoreMarker(
+function updateShopMarker(
+  content: HTMLDivElement,
   status: ShopMarkerStatus,
   brandTotal: number | undefined,
 ) {
-  const content = document.createElement("div");
-  content.className = `shop-map-marker shop-map-marker-${status}`;
+  for (const value of ["loading", "registered", "unregistered"])
+    content.classList.toggle(`shop-map-marker-${value}`, value === status);
   const level = shopMarkerLevel(brandTotal);
-  if (level) content.classList.add(`shop-map-marker-level-${level}`);
-  content.setAttribute("aria-hidden", "true");
+  for (let value = 1; value <= 5; value++)
+    content.classList.toggle(`shop-map-marker-level-${value}`, value === level);
+}
+
+function createShopMarker(
+  status: ShopMarkerStatus,
+  brandTotal: number | undefined,
+  name: string,
+  href: string,
+) {
+  const content = document.createElement("div");
+  content.className = "shop-map-marker";
+  updateShopMarker(content, status, brandTotal);
 
   const icon = document.createElementNS(svgNamespace, "svg");
-  icon.setAttribute("viewBox", "0 0 24 24");
-  icon.setAttribute("width", "21");
-  icon.setAttribute("height", "21");
-  icon.setAttribute("fill", "none");
-  icon.setAttribute("stroke", "currentColor");
-  icon.setAttribute("stroke-width", "2");
-  icon.setAttribute("stroke-linecap", "round");
-  icon.setAttribute("stroke-linejoin", "round");
+  icon.setAttribute("viewBox", "0 0 38 56");
+  icon.setAttribute("width", "38");
+  icon.setAttribute("height", "56");
+  icon.setAttribute("aria-hidden", "true");
 
-  storeIconPaths.forEach((pathData) => {
-    const path = document.createElementNS(svgNamespace, "path");
-    path.setAttribute("d", pathData);
-    icon.append(path);
-  });
+  const pin = document.createElementNS(svgNamespace, "path");
+  pin.setAttribute("class", "shop-map-marker-pin");
+  pin.setAttribute(
+    "d",
+    "M19 54C16 49 2 35 2 21a17 17 0 0 1 34 0c0 14-14 28-17 33Z",
+  );
 
-  content.append(icon);
+  const diamond = document.createElementNS(svgNamespace, "path");
+  diamond.setAttribute("class", "shop-map-marker-diamond");
+  diamond.setAttribute("fill-rule", "evenodd");
+  diamond.setAttribute("d", "M19 11 30 21 19 31 8 21Zm0 3-9 7 9 7 9-7Z");
+
+  const label = document.createElement("a");
+  label.className = "shop-map-marker-label";
+  label.href = href;
+  label.textContent = name;
+  const labelWrap = document.createElement("div");
+  labelWrap.className = "shop-map-marker-label-wrap";
+  labelWrap.append(label);
+
+  icon.append(pin, diamond);
+  content.append(icon, labelWrap);
   return content;
 }
 
@@ -68,6 +81,8 @@ export default function ShopMap({
   selected,
   highlighted,
   onSelect,
+  shopHref,
+  onShopNavigate,
   onBounds,
   onViewChange,
   center,
@@ -81,6 +96,8 @@ export default function ShopMap({
   selected?: string | null;
   highlighted?: string | null;
   onSelect?: (id: string) => void;
+  shopHref: (id: string) => string;
+  onShopNavigate?: (id: string) => void;
   onBounds?: (bounds: Bounds) => void;
   onViewChange?: (view: MapView) => void;
   center?: [number, number];
@@ -95,6 +112,7 @@ export default function ShopMap({
   const markerInstances = useRef<MarkerInstance[]>([]);
   const onBoundsRef = useRef(onBounds);
   const onSelectRef = useRef(onSelect);
+  const onShopNavigateRef = useRef(onShopNavigate);
   const onViewChangeRef = useRef(onViewChange);
   const centerRef = useRef(center);
   const initialZoomRef = useRef(initialZoom);
@@ -105,6 +123,7 @@ export default function ShopMap({
   const [error, setError] = useState("");
   onBoundsRef.current = onBounds;
   onSelectRef.current = onSelect;
+  onShopNavigateRef.current = onShopNavigate;
   onViewChangeRef.current = onViewChange;
   centerRef.current = center;
   selectedRef.current = selected;
@@ -206,18 +225,59 @@ export default function ShopMap({
 
   useEffect(() => {
     if (!libraries || !map.current) return;
-    markerInstances.current.forEach(({ marker }) => (marker.map = null));
-    markerInstances.current = shops.filter(hasUsableCoordinates).map((shop) => {
+    const previous = new Map(
+      markerInstances.current.map((instance) => [instance.id, instance]),
+    );
+    const next: MarkerInstance[] = [];
+    for (const shop of shops.filter(hasUsableCoordinates)) {
       const brandTotal = brandTotals?.[shop.id];
-      const shopContent = createStoreMarker(
+      const existing = previous.get(shop.id);
+      if (existing) {
+        previous.delete(shop.id);
+        updateShopMarker(
+          existing.shopContent,
+          shopMarkerStatus(brandTotal),
+          brandTotal,
+        );
+        const title = shopMarkerTitle(shop.name, brandTotal);
+        if (existing.marker.title !== title) existing.marker.title = title;
+        const label = existing.shopContent.querySelector<HTMLAnchorElement>(
+          ".shop-map-marker-label",
+        );
+        if (label) {
+          if (label.textContent !== shop.name) label.textContent = shop.name;
+          const href = shopHref(shop.id);
+          if (label.getAttribute("href") !== href) label.href = href;
+        }
+        if (
+          existing.latitude !== shop.latitude ||
+          existing.longitude !== shop.longitude
+        ) {
+          existing.marker.position = {
+            lat: shop.latitude,
+            lng: shop.longitude,
+          };
+          existing.latitude = shop.latitude;
+          existing.longitude = shop.longitude;
+        }
+        next.push(existing);
+        continue;
+      }
+      const shopContent = createShopMarker(
         shopMarkerStatus(brandTotal),
         brandTotal,
+        shop.name,
+        shopHref(shop.id),
       );
-      const selectedPin = new libraries.marker.PinElement({
-        background: "#fff8f4",
-        borderColor: selectedMarkerColor,
-        glyphSrc: selectedStoreGlyph,
-        scale: 1.65,
+      const label = shopContent.querySelector<HTMLAnchorElement>(
+        ".shop-map-marker-label",
+      );
+      label?.addEventListener("pointerdown", (event) =>
+        event.stopPropagation(),
+      );
+      label?.addEventListener("click", (event) => {
+        event.stopPropagation();
+        onShopNavigateRef.current?.(shop.id);
       });
       const marker = new libraries.marker.AdvancedMarkerElement({
         map: map.current,
@@ -230,24 +290,26 @@ export default function ShopMap({
       marker.addEventListener("gmp-click", () =>
         onSelectRef.current?.(shop.id),
       );
-      return { id: shop.id, marker, shopContent, selectedPin };
-    });
-    return () => {
-      markerInstances.current.forEach(({ marker }) => (marker.map = null));
-      markerInstances.current = [];
-    };
-  }, [brandTotals, libraries, shops]);
+      next.push({
+        id: shop.id,
+        marker,
+        shopContent,
+        latitude: shop.latitude,
+        longitude: shop.longitude,
+      });
+    }
+    previous.forEach(({ marker }) => (marker.map = null));
+    markerInstances.current = next;
+  }, [brandTotals, libraries, shopHref, shops]);
 
   useEffect(() => {
-    markerInstances.current.forEach(
-      ({ id, marker, selectedPin, shopContent }) => {
-        const isSelected = id === selected;
-        const isHighlighted = id === highlighted && !isSelected;
-        shopContent.classList.toggle("is-highlighted", isHighlighted);
-        marker.content = isSelected ? selectedPin : shopContent;
-        marker.zIndex = isSelected ? 20 : isHighlighted ? 10 : 1;
-      },
-    );
+    markerInstances.current.forEach(({ id, marker, shopContent }) => {
+      const isSelected = id === selected;
+      const isHighlighted = id === highlighted && !isSelected;
+      shopContent.classList.toggle("is-highlighted", isHighlighted);
+      shopContent.classList.toggle("is-selected", isSelected);
+      marker.zIndex = isSelected ? 20 : isHighlighted ? 10 : 1;
+    });
   }, [brandTotals, highlighted, libraries, selected, shops]);
 
   if (error)

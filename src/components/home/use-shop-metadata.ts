@@ -28,10 +28,19 @@ export function useShopMetadata(
   )
     .sort()
     .join(",");
+  const previewShopIds = visibleShops
+    .map((shop) => shop.id)
+    .sort()
+    .join(",");
+  const brandTotalShopIds = Array.from(
+    new Set([...mapShops, ...commentShops].map((shop) => shop.id)),
+  )
+    .sort()
+    .join(",");
 
   useEffect(() => {
     const abort = new AbortController();
-    const ids = visibleShops.map((shop) => shop.id);
+    const ids = previewShopIds ? previewShopIds.split(",") : [];
     if (!ids.length) {
       setBrandPreviews({});
       return () => abort.abort();
@@ -48,7 +57,7 @@ export function useShopMetadata(
           setError(errorMessage(reason, "取扱銘柄を取得できませんでした"));
       });
     return () => abort.abort();
-  }, [setError, visibleShops]);
+  }, [previewShopIds, setError]);
 
   useEffect(() => {
     const abort = new AbortController();
@@ -73,9 +82,7 @@ export function useShopMetadata(
 
   useEffect(() => {
     const abort = new AbortController();
-    const ids = Array.from(
-      new Set([...mapShops, ...commentShops].map((shop) => shop.id)),
-    );
+    const ids = brandTotalShopIds ? brandTotalShopIds.split(",") : [];
     if (!ids.length) {
       setBrandTotals({});
       return () => abort.abort();
@@ -93,7 +100,7 @@ export function useShopMetadata(
           setError(errorMessage(reason, "取扱銘柄数を取得できませんでした"));
       });
     return () => abort.abort();
-  }, [commentShops, mapShops, setError]);
+  }, [brandTotalShopIds, setError]);
 
   const toggleBrands = useCallback(
     async (shopId: string) => {

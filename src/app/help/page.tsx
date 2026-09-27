@@ -122,7 +122,7 @@ export default function HelpPage() {
       <section className="info-section" aria-labelledby="marker-colors-title">
         <h2 id="marker-colors-title">地図の色について</h2>
         <p className="info-section-intro">
-          酒蔵アイコンは、登録されている取扱銘柄数に応じて色が変わります。色が濃いほど、登録銘柄が多いことを示します。0件は取扱情報がまだ登録されていない状態で、実際に取扱がないとは限りません。
+          酒屋のピンは、登録されている取扱銘柄数に応じて色が変わります。色が濃いほど、登録銘柄が多いことを示します。0件は取扱情報がまだ登録されていない状態で、実際に取扱がないとは限りません。
         </p>
         <ul className="marker-color-legend">
           <li>

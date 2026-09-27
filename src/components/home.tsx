@@ -878,6 +878,8 @@ export function Home({
               const shop = shops.find((item) => item.id === id);
               if (shop) selectShop(shop, true, true, false);
             }}
+            shopHref={shopPagePath}
+            onShopNavigate={prepareShopNavigation}
             onBounds={(b) => {
               setBounds(b);
               setDirty(true);
