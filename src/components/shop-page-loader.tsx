@@ -122,10 +122,7 @@ export function ShopPageLoader() {
             <Pencil size={16} />
             店舗の編集
           </Link>
-          <Link
-            className="button ghost small"
-            href={`/history?type=shop&id=${id}`}
-          >
+          <Link className="button ghost small" href={`/history?shop_id=${id}`}>
             <History size={16} />
             更新履歴
           </Link>

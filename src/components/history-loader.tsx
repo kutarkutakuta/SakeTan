@@ -36,6 +36,15 @@ type HistoryData = {
   error?: string;
 };
 
+function historyHeading(history: History, names: Record<string, string>) {
+  if (history.entity_type !== "shop_brand")
+    return String(history.after_data?.name ?? types[history.entity_type]);
+
+  const shopId = history.after_data?.shop_id ?? history.before_data?.shop_id;
+  const brandId = history.after_data?.brand_id ?? history.before_data?.brand_id;
+  return `取扱関係: ${names[String(shopId)] ?? "店舗不明"} / ${names[String(brandId)] ?? "銘柄不明"}`;
+}
+
 export function HistoryLoader() {
   const searchParams = useSearchParams();
   const query = searchParams.toString();
@@ -75,6 +84,7 @@ export function HistoryLoader() {
 
   const type = searchParams.get("type") ?? "";
   const id = searchParams.get("id") ?? "";
+  const shopId = searchParams.get("shop_id") ?? "";
   const paging = (page: number) => {
     const next = new URLSearchParams(query);
     next.set("page", String(page));
@@ -95,7 +105,13 @@ export function HistoryLoader() {
     <main id="main" className="page">
       <Link
         className="back"
-        href={type === "shop" && id ? `/shops/${id}` : "/"}
+        href={
+          shopId
+            ? `/shops/${shopId}`
+            : type === "shop" && id
+              ? `/shops/${id}`
+              : "/"
+        }
       >
         <ArrowLeft size={17} />
         戻る
@@ -131,9 +147,7 @@ export function HistoryLoader() {
         <article className="card history-entry" key={history.id}>
           <div className="history-title">
             <div>
-              <strong>
-                {String(history.after_data?.name ?? types[history.entity_type])}
-              </strong>{" "}
+              <strong>{historyHeading(history, data.names)}</strong>{" "}
               <span className="chip">{verbs[history.action]}</span>
               <div>
                 <small>

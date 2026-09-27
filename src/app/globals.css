@@ -3358,6 +3358,9 @@ nav {
   .brand-options {
     max-height: 58dvh;
   }
+  .brand-options-shortcut {
+    display: none;
+  }
   .brand-option {
     align-items: flex-start;
     flex-wrap: wrap;
