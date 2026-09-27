@@ -878,6 +878,23 @@ nav {
 .comment-link:hover {
   text-decoration-thickness: 2px;
 }
+.comment-link-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin: 0 0.05rem;
+  border-radius: 6px;
+  text-decoration: none;
+  vertical-align: middle;
+  transform: translateY(-2px);
+}
+.comment-link-icon:hover,
+.comment-link-icon:focus-visible {
+  background: var(--tint);
+  text-decoration: none;
+}
 .text-link {
   display: inline-flex;
   align-items: center;
