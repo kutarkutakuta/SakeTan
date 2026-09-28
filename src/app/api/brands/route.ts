@@ -36,7 +36,13 @@ export async function GET(request: Request) {
     if (!data || data.length < 1000) break;
   }
 
-  return Response.json(brands, {
-    headers: { "Cache-Control": "private, max-age=300" },
-  });
+  return Response.json(
+    brands.filter(
+      (brand) =>
+        brand.registration_status === "pending" || Boolean(brand.breweries?.id),
+    ),
+    {
+      headers: { "Cache-Control": "private, no-store" },
+    },
+  );
 }

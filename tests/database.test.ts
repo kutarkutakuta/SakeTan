@@ -510,6 +510,11 @@ test("posting creates relation atomically, out-of-order posts aggregate min/max 
   });
 });
 test("shop brand previews return the total with only the requested top rows", async () => {
+  await db.exec("reset role");
+  await db.query(
+    "update public.shop_brands set is_active=true,status='available' where shop_id=$1 and brand_id=$2",
+    [shop, otherBrand],
+  );
   await asUser(alice);
   const { rows } = await db.query<{
     shop_id: string;
@@ -525,6 +530,11 @@ test("shop brand previews return the total with only the requested top rows", as
   assert.equal(Number(rows[0].total), 1);
   assert.equal(rows[0].brand_id, brand);
   assert.equal(rows[0].brand_name, "試験の酒");
+  await db.exec("reset role");
+  await db.query(
+    "update public.shop_brands set is_active=false,status='unavailable' where shop_id=$1 and brand_id=$2",
+    [shop, otherBrand],
+  );
 });
 test("shop brand totals include requested shops with no active brands", async () => {
   await db.exec("reset role");
@@ -585,6 +595,11 @@ test("invalid sighting rolls back relation and audit history", async () => {
   );
 });
 test("brand, kana, brewery and shop search; bounds and brand filters", async () => {
+  await asUser(guest);
+  const searchablePendingBrand = await scalar(
+    "select public.submit_brand_application('検索中の申請','検索用酒造',null,$1)",
+    [shop],
+  );
   await asUser(null);
   assert.equal(
     (await db.query("select * from public.search_brands('しけんしゅぞう')"))
@@ -596,14 +611,27 @@ test("brand, kana, brewery and shop search; bounds and brand filters", async () 
       await db.query<{ name: string }>(
         "select name from public.search_brands('ざく')",
       )
-    ).rows[0].name,
-    "作",
+    ).rows.length,
+    0,
   );
   assert.equal(
     (await db.query("select * from public.search_brands('しけんのさけ')")).rows
       .length,
     1,
   );
+  assert.deepEqual(
+    (
+      await db.query<{ name: string; registration_status: string }>(
+        "select name,registration_status from public.search_brands('検索中の申請')",
+      )
+    ).rows,
+    [{ name: "検索中の申請", registration_status: "pending" }],
+  );
+  await asUser(admin);
+  await db.query("select public.review_brand_application($1,'reject',null)", [
+    searchablePendingBrand,
+  ]);
+  await asUser(null);
   assert.equal(
     (await db.query("select * from public.search_shops('てすと')")).rows.length,
     1,

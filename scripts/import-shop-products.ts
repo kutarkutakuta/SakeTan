@@ -571,6 +571,9 @@ async function loadShopAndCatalog(shopId: string) {
         .select("id,name,name_kana,breweries(name,prefecture)")
         .eq("is_active", true)
         .eq("registration_status", "approved")
+        // 酒蔵不明の銘柄マスターは一括登録の候補にしない。
+        // 商品名が一致しても unmatched として確認レポートへ回す。
+        .not("brewery_id", "is", null)
         .range(from, to) as unknown as PromiseLike<{
         data: BrandRow[] | null;
         error: { message: string } | null;
@@ -789,7 +792,7 @@ async function runParse(options: Options) {
     contentSha256,
     generatedAt: new Date().toISOString(),
     instructions: options.auto
-      ? "完全一致または確認済み表記揺れだけを自動承認済みです。suggested、ambiguous、unmatchedは登録せずreport.mdへ出力しています。"
+      ? "酒蔵が紐づいた既存銘柄の完全一致または確認済み表記揺れだけを自動承認済みです。酒蔵不明、suggested、ambiguous、unmatchedは登録せずreport.mdへ出力しています。"
       : "登録する項目だけ approved を true にしてください。brandIdは候補を確認し、必要なら正しい既存銘柄UUIDへ変更してください。未登録銘柄は追加せず別途報告してください。",
     items,
   };
