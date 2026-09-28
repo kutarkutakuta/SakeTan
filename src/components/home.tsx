@@ -568,10 +568,19 @@ export function Home({
                 <button
                   type="button"
                   className="chip"
-                  aria-label={`${brand.name}の絞り込みを解除`}
+                  aria-label={`${brand.name}${brand.registration_status === "pending" ? "（申請中）" : ""}の絞り込みを解除`}
                   onClick={() => chooseBrand(null)}
                 >
                   {brand.name}
+                  {brand.registration_status === "pending" && (
+                    <span
+                      className="pending-triangle"
+                      title="申請中"
+                      aria-hidden="true"
+                    >
+                      △
+                    </span>
+                  )}
                   <X size={15} aria-hidden="true" />
                 </button>
               </div>
@@ -583,10 +592,23 @@ export function Home({
                   <button
                     className="search-result"
                     key={b.id}
+                    aria-label={`${b.name}${b.registration_status === "pending" ? "（申請中）" : ""} ${b.brewery_name ?? "酒蔵未登録"} / ${b.prefecture ?? "地域未登録"}`}
                     onClick={() => chooseBrand(b)}
                   >
                     <span>
-                      <strong>{b.name}</strong>
+                      <strong>
+                        {b.name}
+                        {b.registration_status === "pending" && (
+                          <span
+                            className="pending-search-label"
+                            title="申請中"
+                            aria-hidden="true"
+                          >
+                            <span className="pending-triangle">△</span>
+                            申請中
+                          </span>
+                        )}
+                      </strong>
                       <small>
                         {b.brewery_name ?? "酒蔵未登録"} /{" "}
                         {b.prefecture ?? "地域未登録"}

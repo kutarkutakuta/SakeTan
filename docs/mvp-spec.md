@@ -157,7 +157,7 @@ source_id = さけのわ側ID
 UNIQUE(source, source_id)
 ```
 
-ユーザーによる酒蔵・銘柄マスタの新規登録は行いません。登録元はさけのわimportに限定します。
+さけのわimportに加え、利用者から申請された銘柄を管理者が承認した場合に登録できます。申請中の銘柄は登録済み銘柄と明確に区別します。
 
 `brands` にはさらに：
 
@@ -203,7 +203,7 @@ shops
 shop_brands
 sightings
 change_histories
-brand_requests
+brand_applications
 ```
 
 認証ライブラリ用テーブルは別途追加して構いません。
@@ -233,6 +233,10 @@ website_url nullable
 source nullable
 source_id nullable
 created_by nullable → users
+registration_status // pending / approved / rejected / merged
+requested_brewery_name nullable
+registered_at nullable
+merged_into_brand_id nullable → brands
 is_active
 created_at
 updated_at
@@ -341,16 +345,13 @@ restore
 
 履歴は物理削除・編集しません。
 
-### brand_requests
+### brand_applications
 
 ```text
-id uuid PK
-name
-brewery_name nullable
-note nullable
-shop_id nullable → shops
-submitted_by → users
-status            // pending / resolved / dismissed
+brand_id uuid PK → brands
+reason nullable
+resolution        // pending / approved / merged / rejected
+target_brand_id nullable → brands
 created_at
 reviewed_at nullable
 reviewed_by nullable → users
@@ -370,10 +371,10 @@ reviewed_by nullable → users
 5. 更新履歴
 6. ログイン
 7. アカウント
-8. 未登録銘柄の管理
+8. 銘柄の状態
 ```
 
-**銘柄詳細画面は作りません。**
+「銘柄の状態」では、登録日または申請日、登録状態、取扱店舗を誰でも確認できます。管理者には申請の承認・既存銘柄への統合・却下を同じ画面に表示します。
 
 ---
 
@@ -572,7 +573,7 @@ reviewed_by nullable → users
 ＋ 取扱ありとして追加
 ```
 
-最初に、この酒屋ですでにShopBrand登録されている銘柄を表示します。検索・絞り込みを行うと、さけのわから取り込んだ全銘柄を表示します。
+最初に、この酒屋ですでにShopBrand登録されている銘柄を表示します。検索・絞り込みを行うと、登録済みと申請中の全銘柄を表示します。
 
 検索結果には：
 
@@ -588,7 +589,7 @@ reviewed_by nullable → users
 
 さけのわAPIに読み仮名がない場合、勝手に推測して生成しないでください。
 
-銘柄が見つからない場合は、銘柄名・任意の酒蔵名・補足を `brand_requests` に報告します。ここから銘柄マスタを作成してはいけません。
+銘柄が見つからない場合は、銘柄名・酒蔵名・任意の申請理由を入力します。申請中の銘柄を作成して対象店舗の取扱銘柄へ追加し、「申請中」と表示します。
 
 ---
 
@@ -618,9 +619,7 @@ status と is_active を同時更新
 
 # 14. マスタ登録
 
-銘柄・酒蔵マスタの新規登録は、管理者を含めて画面・RPCから禁止します。登録元はさけのわimportだけです。既存データの補正・無効化は管理者に限ります。
-
-見つからない銘柄は `brand_requests` に報告し、管理者が確認済み／却下を記録します。さけのわに追加された場合は通常のimportで取り込みます。
+管理者は「銘柄の状態」画面で申請を承認、既存銘柄へ統合、または却下します。承認時は同名の既存酒蔵を再利用し、見つからない酒蔵は申請内容から登録します。統合時は申請中銘柄に紐づく取扱店舗と投稿を登録済み銘柄へ引き継ぎます。
 
 酒屋がない場合：
 
@@ -643,7 +642,7 @@ status と is_active を同時更新
 
 # 15. 編集・更新履歴
 
-通常アカウントは酒屋マスタを追加・編集できます。銘柄・酒蔵は管理者のみ編集でき、新規登録はできません。ShopBrandの3状態は匿名セッションを含む全ユーザーが変更できます。
+通常アカウントは酒屋マスタを追加・編集でき、銘柄・酒蔵のかなを編集できます。名称・酒蔵の紐付け・有効状態は管理者だけが編集できます。ShopBrandの3状態は匿名セッションを含む全ユーザーが変更できます。
 
 編集時は自動的にChangeHistoryを作成。
 
@@ -656,10 +655,10 @@ status と is_active を同時更新
 変更前 → 変更後
 ```
 
-一般ユーザー：
+ログイン済みユーザー：
 
 ```text
-閲覧のみ
+銘柄・酒蔵のかな変更を、最新値と一致する履歴から変更前のかなへ戻す
 ```
 
 admin：
@@ -685,7 +684,7 @@ action = restore
 ```text
 閲覧可能
 ShopBrandの追加・3状態の変更
-未登録銘柄の報告
+銘柄の登録申請と、申請中銘柄の取扱追加
 ```
 
 操作時には内部で匿名セッションを作成します。ソーシャルアカウントを連携すると、匿名操作の履歴と同じユーザーIDを引き継ぎます。
@@ -695,7 +694,7 @@ ShopBrandの追加・3状態の変更
 ```text
 有効な取扱銘柄登録数
 有効な酒屋登録数
-管理者が解決済みにした銘柄報告数
+管理者が承認した銘柄申請数
 取扱銘柄登録数に応じた達成名と次の達成までの進捗
 ひいきの酒屋（最大3店）
 ```
@@ -710,7 +709,7 @@ ShopBrandの追加・3状態の変更
 表示名変更
 ```
 
-銘柄・酒蔵マスタの編集、未登録銘柄報告の処理、履歴復元はadminだけです。銘柄・酒蔵マスタの新規登録はadminにも許可しません。
+銘柄・酒蔵のかな編集と専用のかな復元は通常アカウントでも可能です。名称・紐付け・有効状態の編集、銘柄申請の承認・統合・却下、レコード全体の履歴復元はadminだけです。
 
 Sightingの編集・削除：
 
@@ -849,8 +848,8 @@ EC
 7. ログイン画面を挟まず、酒屋固定で取扱銘柄を追加できる
 8. ShopBrandがなければSightingとは別に作成される
 9. 誰でも「取扱あり／現在は取扱なし／誤った取扱情報」を変更できる
-10. 見つからない銘柄を、マスタ登録ではなく管理者へ報告できる
-11. 銘柄・酒蔵マスタを利用者が新規登録できない
+10. 見つからない銘柄を申請し、申請中のまま取扱店舗へ追加できる
+11. 銘柄の登録状態と取扱店舗を誰でも確認でき、管理者が承認・統合・却下できる
 12. 匿名操作をソーシャルアカウントに引き継ぎ、表示名を変更できる
 
 ---
@@ -887,7 +886,7 @@ EC
 
 - 酒屋マスタ追加・編集
 - 銘柄・酒蔵マスタの管理者編集
-- 未登録銘柄報告
+- 銘柄登録申請と状態管理
 - ChangeHistory
 - 更新履歴
 - admin復元

@@ -20,7 +20,7 @@ export async function GET(request: Request) {
       ? db
           .from("brands")
           .select(
-            "id,name,name_kana,brewery_id,external_url,brewery_name,prefecture,sakenowa_rank,sakenowa_score,sakenowa_rank_year_month,is_active",
+            "id,name,name_kana,brewery_id,external_url,brewery_name,prefecture,sakenowa_rank,sakenowa_score,sakenowa_rank_year_month,is_active,registration_status,requested_brewery_name,registered_at",
           )
           .eq("id", parsed.data.brand_id)
           .maybeSingle()

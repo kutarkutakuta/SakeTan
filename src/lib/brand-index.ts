@@ -140,6 +140,7 @@ function breweryReading(brand: Brand) {
     brand.breweries?.name_kana?.trim() ||
     brand.breweries?.name ||
     brand.brewery_name ||
+    brand.requested_brewery_name ||
     "酒蔵未登録"
   );
 }
@@ -182,6 +183,7 @@ export function matchesBrandQuery(brand: Brand, query: string) {
     brand.breweries?.name,
     brand.breweries?.name_kana,
     brand.brewery_name,
+    brand.requested_brewery_name,
   ].some((value) => value && normalizeSearchText(value).includes(normalized));
 }
 
@@ -198,6 +200,7 @@ function brandSearchRank(brand: Brand, query: string) {
     brand.breweries?.name,
     brand.breweries?.name_kana,
     brand.brewery_name,
+    brand.requested_brewery_name,
   ];
   const matches = fields.flatMap((value, index) => {
     if (!value) return [];

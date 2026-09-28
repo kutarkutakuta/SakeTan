@@ -570,6 +570,7 @@ async function loadShopAndCatalog(shopId: string) {
         .from("brands")
         .select("id,name,name_kana,breweries(name,prefecture)")
         .eq("is_active", true)
+        .eq("registration_status", "approved")
         .range(from, to) as unknown as PromiseLike<{
         data: BrandRow[] | null;
         error: { message: string } | null;

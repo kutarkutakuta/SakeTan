@@ -19,6 +19,23 @@ export type Brand = {
   sakenowa_rank_year_month?: string | null;
   breweries?: Brewery | null;
   is_active?: boolean;
+  registration_status?: "pending" | "approved" | "rejected" | "merged";
+  requested_brewery_name?: string | null;
+  registered_at?: string | null;
+  created_at?: string;
+};
+
+export type BrandStatusShop = {
+  id: string;
+  name: string;
+  status: "available" | "unavailable";
+};
+
+export type BrandStatusItem = Brand & {
+  registration_status: "pending" | "approved";
+  created_at: string;
+  shops: BrandStatusShop[];
+  application_reason?: string | null;
 };
 export type Shop = {
   id: string;
@@ -69,17 +86,6 @@ export type PostShopRelation = Pick<
   | "last_seen_at"
 >;
 
-export type BrandRequest = {
-  id: string;
-  name: string;
-  brewery_name: string | null;
-  note: string | null;
-  shop_id: string | null;
-  submitted_by: string;
-  status: "pending" | "resolved" | "dismissed";
-  created_at: string;
-  shops?: { name: string } | null;
-};
 export type ShopComment = {
   id: string;
   shop_id: string;

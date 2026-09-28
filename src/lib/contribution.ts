@@ -8,6 +8,7 @@ export type ContributionSummary = {
   shop_brand_count: number;
   shop_count: number;
   resolved_brand_request_count: number;
+  approved_brand_application_count: number;
   favorite_shops: FavoriteShop[];
 };
 

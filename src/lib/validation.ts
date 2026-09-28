@@ -86,11 +86,19 @@ export const actionSchema = z.discriminatedUnion("kind", [
     reason: z.string().trim().max(500).nullable(),
   }),
   z.object({
-    kind: z.literal("brand_request"),
+    kind: z.literal("brand_application"),
     name: z.string().trim().min(1).max(150),
-    brewery_name: z.string().trim().max(150).nullable(),
-    note: z.string().trim().max(500).nullable(),
+    name_kana: optionalText,
+    brewery_id: z.uuid().nullable(),
+    brewery_name: z.string().trim().min(1).max(150),
+    reason: z.string().trim().max(500).nullable(),
     shop_id: z.uuid(),
+  }),
+  z.object({
+    kind: z.literal("brand_application_review"),
+    brand_id: z.uuid(),
+    action: z.enum(["approve", "merge", "reject"]),
+    target_brand_id: z.uuid().nullable(),
   }),
   z.object({
     kind: z.literal("shop_comment"),
@@ -118,6 +126,7 @@ export const actionSchema = z.discriminatedUnion("kind", [
     reason: z.string().trim().max(500).nullable(),
   }),
   z.object({ kind: z.literal("restore"), id: z.uuid() }),
+  z.object({ kind: z.literal("restore_master_kana"), id: z.uuid() }),
   z.object({
     kind: z.literal("shop_brand_copy"),
     source_shop_id: z.uuid(),
@@ -126,10 +135,5 @@ export const actionSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("profile"),
     name: z.string().trim().min(1).max(30),
-  }),
-  z.object({
-    kind: z.literal("brand_request_review"),
-    id: z.uuid(),
-    status: z.enum(["resolved", "dismissed"]),
   }),
 ]);

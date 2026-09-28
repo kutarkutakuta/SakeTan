@@ -16,6 +16,7 @@ import {
 } from "@/lib/brand-index";
 import type {
   Brand,
+  Brewery,
   PostShop,
   PostShopRelation,
   ShopBrandStatus,
@@ -35,7 +36,12 @@ const statusLabels: Record<ShopBrandStatus, string> = {
 };
 
 function breweryName(brand: Brand) {
-  return brand.breweries?.name ?? brand.brewery_name ?? "酒蔵未登録";
+  return (
+    brand.breweries?.name ??
+    brand.brewery_name ??
+    brand.requested_brewery_name ??
+    "酒蔵未登録"
+  );
 }
 
 export function PostForm({
@@ -69,6 +75,14 @@ export function PostForm({
   );
   const [requestOpen, setRequestOpen] = useState(false);
   const [requestBrandName, setRequestBrandName] = useState("");
+  const [requestBrandKana, setRequestBrandKana] = useState("");
+  const [requestBreweryId, setRequestBreweryId] = useState<string | null>(null);
+  const [requestBreweryName, setRequestBreweryName] = useState("");
+  const [requestBreweryResults, setRequestBreweryResults] = useState<Brewery[]>(
+    [],
+  );
+  const [requestBreweryBusy, setRequestBreweryBusy] = useState(false);
+  const [requestBreweryError, setRequestBreweryError] = useState("");
   const [requestNote, setRequestNote] = useState("");
   const [requestBusy, setRequestBusy] = useState(false);
   const [copyOpen, setCopyOpen] = useState(false);
@@ -95,6 +109,39 @@ export function PostForm({
     })();
     return () => abort.abort();
   }, [showToast]);
+
+  useEffect(() => {
+    if (requestBreweryId || !requestOpen || !requestBreweryName.trim()) {
+      setRequestBreweryResults([]);
+      setRequestBreweryBusy(false);
+      setRequestBreweryError("");
+      return;
+    }
+    const abort = new AbortController();
+    setRequestBreweryBusy(true);
+    setRequestBreweryError("");
+    const timer = setTimeout(async () => {
+      try {
+        const data = await fetchJson<Brewery[]>(
+          "/api/breweries?q=" + encodeURIComponent(requestBreweryName),
+          { signal: abort.signal },
+          "酒蔵候補を取得できませんでした",
+        );
+        setRequestBreweryResults(data.slice(0, 5));
+      } catch (reason) {
+        if (!abort.signal.aborted)
+          setRequestBreweryError(
+            errorMessage(reason, "酒蔵候補を取得できませんでした"),
+          );
+      } finally {
+        if (!abort.signal.aborted) setRequestBreweryBusy(false);
+      }
+    }, 250);
+    return () => {
+      clearTimeout(timer);
+      abort.abort();
+    };
+  }, [requestBreweryId, requestBreweryName, requestOpen]);
 
   const isBrowsingCatalog =
     query.trim().length > 0 ||
@@ -239,25 +286,53 @@ export function PostForm({
   }
 
   async function submitMissingBrand() {
-    if (!requestBrandName.trim()) return;
+    const brandName = requestBrandName.trim();
+    const brandKana = requestBrandKana.trim();
+    const requestedBreweryName = requestBreweryName.trim();
+    if (!brandName || !requestedBreweryName) return;
     setRequestBusy(true);
     try {
-      await mutate({
-        kind: "brand_request",
-        name: requestBrandName.trim(),
-        brewery_name: null,
-        note: requestNote.trim() || null,
+      const result = await mutate<string>({
+        kind: "brand_application",
+        name: brandName,
+        name_kana: brandKana || null,
+        brewery_id: requestBreweryId,
+        brewery_name: requestedBreweryName,
+        reason: requestNote.trim() || null,
         shop_id: shop.id,
+      });
+      const pendingBrand: Brand = {
+        id: result.id,
+        name: brandName,
+        name_kana: brandKana || null,
+        brewery_id: requestBreweryId,
+        brewery_name: requestedBreweryName,
+        requested_brewery_name: requestBreweryId ? null : requestedBreweryName,
+        registration_status: "pending",
+        registered_at: null,
+        is_active: true,
+      };
+      setCatalog((current) =>
+        current.some((brand) => brand.id === result.id)
+          ? current
+          : [pendingBrand, ...current],
+      );
+      setRelationStatuses((current) => {
+        const next = new Map(current);
+        next.set(result.id, "available");
+        return next;
       });
       setRequestOpen(false);
       setRequestBrandName("");
+      setRequestBrandKana("");
+      setRequestBreweryId(null);
+      setRequestBreweryName("");
+      setRequestBreweryResults([]);
       setRequestNote("");
-      showToast(
-        `「${requestBrandName.trim()}」が見つからないことを送信しました`,
-      );
+      showToast(`「${brandName}」を申請中の銘柄として追加しました`);
     } catch (reason) {
       showToast(
-        reason instanceof Error ? reason.message : "報告を送信できませんでした",
+        reason instanceof Error ? reason.message : "登録を申請できませんでした",
         "error",
       );
     } finally {
@@ -429,6 +504,9 @@ export function PostForm({
                 </span>
                 <span className="brand-option-name">
                   <strong>{brand.name}</strong>
+                  {brand.registration_status === "pending" && (
+                    <span className="status-badge pending">申請中</span>
+                  )}
                   {brand.name_kana && (
                     <span className="brand-option-kana">{brand.name_kana}</span>
                   )}
@@ -478,10 +556,12 @@ export function PostForm({
         )}
       </div>
 
-      {!catalogBusy && visibleBrands.length === 0 && missingCriteriaLabel && (
+      {!catalogBusy && (
         <div className="missing-brand">
           <p>
-            銘柄名が見つからない場合や、「かな」に間違いがある場合はお知らせください。
+            {missingCriteriaLabel
+              ? "見つからない銘柄は登録を申請し、この酒屋の取扱銘柄へ追加できます。"
+              : "お探しの銘柄が見つからない場合は、登録を申請できます。"}
           </p>
           {!requestOpen ? (
             <button
@@ -489,11 +569,15 @@ export function PostForm({
               className="text-link"
               onClick={() => {
                 setRequestBrandName(query.trim().slice(0, 150));
-                setRequestNote(`${missingCriteriaLabel}が見つからない`);
+                setRequestBrandKana("");
+                setRequestBreweryId(null);
+                setRequestBreweryName("");
+                setRequestBreweryResults([]);
+                setRequestNote("");
                 setRequestOpen(true);
               }}
             >
-              {missingCriteriaLabel}が見つからないことを知らせる
+              新しい銘柄として登録を申請
             </button>
           ) : (
             <form
@@ -503,28 +587,96 @@ export function PostForm({
                 void submitMissingBrand();
               }}
             >
+              <div className="brand-application-fields">
+                <label>
+                  銘柄名
+                  <input
+                    value={requestBrandName}
+                    onChange={(event) =>
+                      setRequestBrandName(event.target.value)
+                    }
+                    maxLength={150}
+                    required
+                    placeholder="見つからない銘柄名"
+                  />
+                </label>
+                <label>
+                  銘柄かな <span className="muted">任意</span>
+                  <input
+                    value={requestBrandKana}
+                    onChange={(event) =>
+                      setRequestBrandKana(event.target.value)
+                    }
+                    maxLength={150}
+                    placeholder="例：だっと"
+                  />
+                </label>
+                <label className="brand-application-brewery">
+                  酒蔵名
+                  <input
+                    value={requestBreweryName}
+                    onChange={(event) => {
+                      setRequestBreweryId(null);
+                      setRequestBreweryName(event.target.value);
+                    }}
+                    maxLength={150}
+                    required
+                    placeholder="例：羽田酒造"
+                    aria-describedby="brand-application-brewery-hint"
+                  />
+                  {requestBreweryBusy && (
+                    <span className="brand-application-brewery-hint">
+                      候補を検索中…
+                    </span>
+                  )}
+                  {requestBreweryError && (
+                    <span className="brand-application-brewery-error">
+                      {requestBreweryError}
+                    </span>
+                  )}
+                  {requestBreweryResults.length > 0 && (
+                    <div className="brand-application-brewery-results">
+                      {requestBreweryResults.map((brewery) => (
+                        <button
+                          type="button"
+                          className="brand-application-brewery-option"
+                          key={brewery.id}
+                          onClick={() => {
+                            setRequestBreweryId(brewery.id);
+                            setRequestBreweryName(brewery.name);
+                            setRequestBreweryResults([]);
+                          }}
+                        >
+                          <strong>{brewery.name}</strong>
+                          {brewery.prefecture && (
+                            <span>{brewery.prefecture}</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <span
+                    id="brand-application-brewery-hint"
+                    className="brand-application-brewery-hint"
+                  >
+                    {requestBreweryId
+                      ? "既存の酒蔵を選択中"
+                      : "候補を選ぶか、名前をそのまま入力できます"}
+                  </span>
+                </label>
+              </div>
               <label>
-                銘柄名
-                <input
-                  value={requestBrandName}
-                  onChange={(event) => setRequestBrandName(event.target.value)}
-                  maxLength={150}
-                  required
-                  placeholder="見つからない銘柄名"
-                />
-              </label>
-              <label>
-                補足 <span className="muted">任意</span>
+                申請理由 <span className="muted">任意</span>
                 <textarea
                   value={requestNote}
                   onChange={(event) => setRequestNote(event.target.value)}
                   maxLength={500}
-                  placeholder="表記や読み方など"
+                  placeholder="例：店頭で商品を確認"
                 />
               </label>
               <div className="actions">
                 <button className="button small" disabled={requestBusy}>
-                  {requestBusy ? "送信しています…" : "送信"}
+                  {requestBusy ? "申請しています…" : "申請して取扱に追加"}
                 </button>
                 <button type="button" onClick={() => setRequestOpen(false)}>
                   キャンセル

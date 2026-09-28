@@ -75,8 +75,8 @@ export default async function AccountPage() {
             <span>酒屋登録</span>
           </div>
           <div>
-            <strong>{contribution.resolved_brand_request_count}</strong>
-            <span>解決した銘柄報告</span>
+            <strong>{contribution.approved_brand_application_count}</strong>
+            <span>承認された銘柄申請</span>
           </div>
         </div>
         <div className="achievement-progress">

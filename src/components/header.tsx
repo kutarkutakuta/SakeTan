@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { CircleQuestionMark } from "lucide-react";
-import { HeaderAuth } from "@/components/header-auth";
+import { HeaderNavigation } from "@/components/header-navigation";
 
 export function Header() {
   return (
@@ -14,16 +13,7 @@ export function Header() {
           <span className="logo-subtitle">次の一杯を探そう。</span>
         </span>
       </Link>
-      <nav>
-        <Link href="/help" className="nav-help" aria-label="ヘルプ">
-          <CircleQuestionMark size={19} aria-hidden="true" />
-          <span>ヘルプ</span>
-        </Link>
-        <Link href="/history" className="nav-map">
-          更新履歴
-        </Link>
-        <HeaderAuth />
-      </nav>
+      <HeaderNavigation />
     </header>
   );
 }

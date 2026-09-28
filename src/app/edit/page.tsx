@@ -22,9 +22,6 @@ export default async function EditIndex({
       </Link>
       <div className="page-head">
         <h1>登録情報を編集</h1>
-        <Link href="/history" className="inline-link">
-          更新履歴
-        </Link>
       </div>
       <EditSearch
         admin={admin}

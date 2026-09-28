@@ -138,6 +138,9 @@ export function ShopBrandList({
                     <span className="sr-only">現在は取扱なし：</span>
                   )}
                   <strong>{brand.name}</strong>
+                  {brand.registration_status === "pending" && (
+                    <span className="status-badge pending">申請中</span>
+                  )}
                   {brand.name_kana && (
                     <span className="brand-item-kana">{brand.name_kana}</span>
                   )}

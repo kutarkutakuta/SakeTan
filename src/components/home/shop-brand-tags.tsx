@@ -26,17 +26,29 @@ export function ShopBrandTags({
 
   return (
     <div className="shop-card-brands" id={contentId}>
-      {brands.map((brand) => (
-        <button
-          type="button"
-          className="shop-card-brand"
-          key={brand.id}
-          onClick={() => onBrandSelect(brand)}
-          aria-label={`${brand.name}で絞り込む`}
-        >
-          {brand.name}
-        </button>
-      ))}
+      {brands.map((brand) => {
+        const pending = brand.registration_status === "pending";
+        return (
+          <button
+            type="button"
+            className={`shop-card-brand${pending ? " has-pending" : ""}`}
+            key={brand.id}
+            onClick={() => onBrandSelect(brand)}
+            aria-label={`${brand.name}${pending ? "（申請中）" : ""}で絞り込む`}
+          >
+            {brand.name}
+            {pending && (
+              <span
+                className="pending-triangle"
+                title="申請中"
+                aria-hidden="true"
+              >
+                △
+              </span>
+            )}
+          </button>
+        );
+      })}
       {preview && preview.total > 10 && (
         <button
           type="button"

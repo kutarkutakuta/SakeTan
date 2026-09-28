@@ -24,6 +24,7 @@ export async function GET(request: Request) {
       count: 0,
       page,
       admin: false,
+      canRestoreKana: false,
       names: {},
     });
 
@@ -57,6 +58,7 @@ export async function GET(request: Request) {
     ["brewery_id", "breweries"],
     ["shop_id", "shops"],
     ["brand_id", "brands"],
+    ["merged_into_brand_id", "brands"],
   ] as const;
   const nameResults = await Promise.all(
     references.map(async ([field, table]) => {
@@ -85,6 +87,7 @@ export async function GET(request: Request) {
       count: historyResult.count ?? 0,
       page,
       admin: account.admin,
+      canRestoreKana: Boolean(account.user && !account.anonymous),
       names,
     },
     { headers: { "Cache-Control": "private, no-store" } },

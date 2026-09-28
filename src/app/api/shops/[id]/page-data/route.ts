@@ -24,7 +24,7 @@ export async function GET(
     db
       .from("shop_brands")
       .select(
-        "id,shop_id,brand_id,is_active,status,first_seen_at,last_seen_at,brands(id,name,name_kana,is_active,breweries(id,name,name_kana,prefecture))",
+        "id,shop_id,brand_id,is_active,status,first_seen_at,last_seen_at,brands(id,name,name_kana,is_active,registration_status,requested_brewery_name,registered_at,breweries(id,name,name_kana,prefecture))",
       )
       .eq("shop_id", id.data),
     db

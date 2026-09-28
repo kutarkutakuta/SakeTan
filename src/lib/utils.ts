@@ -78,6 +78,10 @@ export const labels: Record<string, string> = {
   brand_id: "銘柄",
   status: "取扱状況",
   external_url: "さけのわURL",
+  registration_status: "登録状態",
+  requested_brewery_name: "申請された酒蔵名",
+  registered_at: "登録日",
+  merged_into_brand_id: "統合先の銘柄",
 };
 export function changedFields(
   before: Record<string, unknown> | null,

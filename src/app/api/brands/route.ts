@@ -19,10 +19,10 @@ export async function GET(request: Request) {
     let query = db
       .from("brands")
       .select(
-        "id,name,name_kana,brewery_id,breweries!inner(id,name,name_kana,prefecture)",
+        "id,name,name_kana,brewery_id,registration_status,requested_brewery_name,registered_at,created_at,breweries(id,name,name_kana,prefecture)",
       )
       .eq("is_active", true)
-      .eq("breweries.is_active", true)
+      .in("registration_status", ["pending", "approved"])
       .order("id")
       .range(from, from + 999);
     if (prefecture) query = query.eq("breweries.prefecture", prefecture);

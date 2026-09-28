@@ -13,8 +13,7 @@ let shop: string,
   thirdBrand: string,
   invalidBrand: string,
   brewery: string,
-  sighting: string,
-  brandRequest: string;
+  sighting: string;
 async function scalar<T = string>(
   sql: string,
   params: unknown[] = [],
@@ -137,7 +136,7 @@ test("anonymous browsing allowed, posting and master changes denied", async () =
     db.query("select public.save_master('brand',null,'{\"name\":\"不正\"}')"),
   );
 });
-test("anonymous sessions can report availability and missing brands, but not edit masters or comment", async () => {
+test("anonymous sessions can report availability, but not edit masters or comment", async () => {
   await asUser(guest);
   await db.query(
     "select public.set_shop_brand_status($1,$2,'available','店頭で確認')",
@@ -160,16 +159,6 @@ test("anonymous sessions can report availability and missing brands, but not edi
       [shop, otherBrand],
     ),
     "unavailable",
-  );
-  brandRequest = await scalar(
-    "select public.submit_brand_request('未登録酒','未登録酒造','店頭で確認',$1)",
-    [shop],
-  );
-  assert.equal(
-    await scalar("select status from public.brand_requests where id=$1", [
-      brandRequest,
-    ]),
-    "pending",
   );
   await assert.rejects(
     db.query("select public.save_master('shop',null,'{\"name\":\"不正\"}')"),
@@ -225,6 +214,206 @@ test("signed-in users can only update brand and brewery kana through the public 
       shop,
     ]),
     /かなを編集できるのは銘柄と酒蔵のみです/,
+  );
+});
+test("brand applications are public, immediately attach to a shop, and can be approved", async () => {
+  await asUser(guest);
+  const pendingBrand = await scalar(
+    "select public.submit_brand_application('申請中の酒','申請酒造','店頭で確認',$1)",
+    [shop],
+  );
+  assert.equal(
+    await scalar("select registration_status from public.brands where id=$1", [
+      pendingBrand,
+    ]),
+    "pending",
+  );
+  assert.equal(
+    await scalar(
+      "select status from public.shop_brands where shop_id=$1 and brand_id=$2",
+      [shop, pendingBrand],
+    ),
+    "available",
+  );
+  assert.equal(
+    await scalar(
+      "select reason from public.brand_applications where brand_id=$1",
+      [pendingBrand],
+    ),
+    "店頭で確認",
+  );
+
+  await asUser(null);
+  assert.equal(
+    await scalar(
+      "select requested_brewery_name from public.brands where id=$1",
+      [pendingBrand],
+    ),
+    "申請酒造",
+  );
+  await assert.rejects(
+    db.query("select reason from public.brand_applications where brand_id=$1", [
+      pendingBrand,
+    ]),
+  );
+
+  await asUser(admin);
+  assert.equal(
+    await scalar("select public.review_brand_application($1,'approve',null)", [
+      pendingBrand,
+    ]),
+    pendingBrand,
+  );
+  assert.deepEqual(
+    (
+      await db.query(
+        "select b.registration_status,w.name as brewery_name,b.registered_at is not null as registered from public.brands b join public.breweries w on w.id=b.brewery_id where b.id=$1",
+        [pendingBrand],
+      )
+    ).rows,
+    [
+      {
+        registration_status: "approved",
+        brewery_name: "申請酒造",
+        registered: true,
+      },
+    ],
+  );
+  await db.query(
+    "select public.set_shop_brand_status($1,$2,'incorrect','テスト後に無効化')",
+    [shop, pendingBrand],
+  );
+  await db.query(
+    "select public.save_master('brand',$1,'{\"is_active\":false}','テスト後に無効化')",
+    [pendingBrand],
+  );
+});
+test("brand applications retain kana and an existing brewery selection", async () => {
+  await asUser(bob);
+  const pendingBrand = await scalar(
+    "select public.submit_brand_application_v2('かな申請の酒','かな しんせいのさけ',$1,'未使用の酒蔵名','候補を選択',$2)",
+    [brewery, shop],
+  );
+  assert.deepEqual(
+    (
+      await db.query(
+        "select name_kana,brewery_id,requested_brewery_name from public.brands where id=$1",
+        [pendingBrand],
+      )
+    ).rows,
+    [
+      {
+        name_kana: "かな しんせいのさけ",
+        brewery_id: brewery,
+        requested_brewery_name: null,
+      },
+    ],
+  );
+
+  await asUser(admin);
+  await db.query("select public.review_brand_application($1,'approve',null)", [
+    pendingBrand,
+  ]);
+  assert.deepEqual(
+    (
+      await db.query(
+        "select name_kana,brewery_id,requested_brewery_name from public.brands where id=$1",
+        [pendingBrand],
+      )
+    ).rows,
+    [
+      {
+        name_kana: "かな しんせいのさけ",
+        brewery_id: brewery,
+        requested_brewery_name: null,
+      },
+    ],
+  );
+  await db.query(
+    "select public.set_shop_brand_status($1,$2,'incorrect','テスト後に無効化')",
+    [shop, pendingBrand],
+  );
+  await db.query(
+    "select public.save_master('brand',$1,'{\"is_active\":false}','テスト後に無効化')",
+    [pendingBrand],
+  );
+});
+test("admin can merge a pending brand while retaining its shop relation", async () => {
+  await asUser(bob);
+  const pendingBrand = await scalar(
+    "select public.submit_brand_application('別表記の試験酒','試験酒造','既存銘柄かもしれない',$1)",
+    [shop],
+  );
+  await asUser(admin);
+  assert.equal(
+    await scalar("select public.review_brand_application($1,'merge',$2)", [
+      pendingBrand,
+      otherBrand,
+    ]),
+    otherBrand,
+  );
+  assert.deepEqual(
+    (
+      await db.query(
+        "select registration_status,is_active,merged_into_brand_id from public.brands where id=$1",
+        [pendingBrand],
+      )
+    ).rows,
+    [
+      {
+        registration_status: "merged",
+        is_active: false,
+        merged_into_brand_id: otherBrand,
+      },
+    ],
+  );
+  assert.equal(
+    await scalar<number>(
+      "select count(*)::integer from public.shop_brands where shop_id=$1 and brand_id=$2",
+      [shop, otherBrand],
+    ),
+    1,
+  );
+  assert.equal(
+    await scalar(
+      "select status from public.shop_brands where shop_id=$1 and brand_id=$2",
+      [shop, otherBrand],
+    ),
+    "available",
+  );
+  await db.query(
+    "select public.set_shop_brand_status($1,$2,'unavailable','テスト状態を復元')",
+    [shop, otherBrand],
+  );
+});
+test("signed-in users can restore only the kana from the latest matching history", async () => {
+  await db.exec("reset role");
+  const kanaBrand = await scalar(
+    "insert into public.brands(name,name_kana,source,source_id) values('かな復元酒','もとのかな','sakenowa','kana-restore') returning id",
+  );
+  await asUser(alice);
+  await db.query(
+    "select public.update_master_kana('brand',$1,'あとのかな','読みを修正')",
+    [kanaBrand],
+  );
+  const historyId = await scalar(
+    "select id from public.change_histories where entity_type='brand' and entity_id=$1 order by created_at desc limit 1",
+    [kanaBrand],
+  );
+  await asUser(bob);
+  assert.equal(
+    await scalar("select public.restore_master_kana($1)", [historyId]),
+    kanaBrand,
+  );
+  assert.equal(
+    await scalar("select name_kana from public.brands where id=$1", [
+      kanaBrand,
+    ]),
+    "もとのかな",
+  );
+  await assert.rejects(
+    db.query("select public.restore_master_kana($1)", [historyId]),
+    /この後にかなが変更されています/,
   );
 });
 test("latest shop comments are returned once per shop and omit deleted comments", async () => {
@@ -795,6 +984,7 @@ test("account contribution summary excludes incorrect data and finds favorite sh
     shop_brand_count: number;
     shop_count: number;
     resolved_brand_request_count: number;
+    approved_brand_application_count: number;
     favorite_shops: Array<{
       shop_id: string;
       shop_name: string;
@@ -804,6 +994,7 @@ test("account contribution summary excludes incorrect data and finds favorite sh
   assert.equal(summary.shop_brand_count, 2);
   assert.equal(summary.shop_count, 1);
   assert.equal(summary.resolved_brand_request_count, 0);
+  assert.equal(summary.approved_brand_application_count, 0);
   assert.deepEqual(summary.favorite_shops, [
     {
       shop_id: shop,
@@ -812,18 +1003,14 @@ test("account contribution summary excludes incorrect data and finds favorite sh
     },
   ]);
 
-  await asUser(admin);
-  await db.query("select public.review_brand_request($1,'resolved')", [
-    brandRequest,
-  ]);
   await asUser(guest);
   const guestSummary = await scalar<{
     shop_brand_count: number;
-    resolved_brand_request_count: number;
+    approved_brand_application_count: number;
     favorite_shops: unknown[];
   }>("select public.get_my_contribution_summary()");
   assert.equal(guestSummary.shop_brand_count, 1);
-  assert.equal(guestSummary.resolved_brand_request_count, 1);
+  assert.equal(guestSummary.approved_brand_application_count, 1);
   assert.deepEqual(guestSummary.favorite_shops, []);
   await asUser(null);
   await assert.rejects(db.query("select public.get_my_contribution_summary()"));

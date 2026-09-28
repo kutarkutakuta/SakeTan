@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   const guestAllowed =
     p.kind === "post" ||
     p.kind === "shop_brand_status" ||
-    p.kind === "brand_request";
+    p.kind === "brand_application";
   if (!user && guestAllowed) {
     const anonymous = await db.auth.signInAnonymously();
     if (anonymous.error || !anonymous.data.user)
@@ -72,12 +72,20 @@ export async function POST(request: Request) {
       p_source_shop_id: p.source_shop_id,
       p_target_shop_ids: p.target_shop_ids,
     });
-  else if (p.kind === "brand_request")
-    result = await db.rpc("submit_brand_request", {
+  else if (p.kind === "brand_application")
+    result = await db.rpc("submit_brand_application_v2", {
       p_name: p.name,
+      p_name_kana: p.name_kana,
+      p_brewery_id: p.brewery_id,
       p_brewery_name: p.brewery_name,
-      p_note: p.note,
+      p_reason: p.reason,
       p_shop_id: p.shop_id,
+    });
+  else if (p.kind === "brand_application_review")
+    result = await db.rpc("review_brand_application", {
+      p_brand_id: p.brand_id,
+      p_action: p.action,
+      p_target_brand_id: p.target_brand_id,
     });
   else if (p.kind === "shop_comment")
     result = await db.rpc("post_shop_comment", {
@@ -92,13 +100,10 @@ export async function POST(request: Request) {
     });
   else if (p.kind === "restore")
     result = await db.rpc("restore_history", { p_history_id: p.id });
+  else if (p.kind === "restore_master_kana")
+    result = await db.rpc("restore_master_kana", { p_history_id: p.id });
   else if (p.kind === "profile")
     result = await db.rpc("update_display_name", { p_name: p.name });
-  else if (p.kind === "brand_request_review")
-    result = await db.rpc("review_brand_request", {
-      p_id: p.id,
-      p_status: p.status,
-    });
   else if (p.kind === "master_kana")
     result = await db.rpc("update_master_kana", {
       p_type: p.type,

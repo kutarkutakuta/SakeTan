@@ -25,6 +25,10 @@ const statusNames: Record<string, string> = {
   available: "取扱あり",
   unavailable: "現在は取扱なし",
   incorrect: "誤った取扱情報",
+  pending: "申請中",
+  approved: "登録済み",
+  rejected: "却下",
+  merged: "既存銘柄へ統合",
 };
 
 type HistoryData = {
@@ -32,6 +36,7 @@ type HistoryData = {
   count: number;
   page: number;
   admin: boolean;
+  canRestoreKana: boolean;
   names: Record<string, string>;
   error?: string;
 };
@@ -121,14 +126,6 @@ export function HistoryLoader() {
           <p className="eyebrow">みんなで育てる、酒屋と日本酒の情報。</p>
           <h1>更新履歴</h1>
         </div>
-        <Link className="button ghost small" href="/edit">
-          登録情報を探して編集
-        </Link>
-        {data?.admin && (
-          <Link className="button ghost small" href="/admin/brand-requests">
-            見つからない銘柄
-          </Link>
-        )}
       </div>
       {loading && !data && <p className="muted">更新履歴を読み込んでいます…</p>}
       {error && !data && (
@@ -143,50 +140,63 @@ export function HistoryLoader() {
           </button>
         </div>
       )}
-      {data?.histories.map((history) => (
-        <article className="card history-entry" key={history.id}>
-          <div className="history-title">
-            <div>
-              <strong>{historyHeading(history, data.names)}</strong>{" "}
-              <span className="chip">{verbs[history.action]}</span>
+      {data?.histories.map((history) => {
+        const fields = changedFields(history.before_data, history.after_data);
+        const isKanaChange =
+          (history.entity_type === "brand" ||
+            history.entity_type === "brewery") &&
+          fields.includes("name_kana");
+        return (
+          <article className="card history-entry" key={history.id}>
+            <div className="history-title">
               <div>
-                <small>
-                  {new Intl.DateTimeFormat("ja-JP", {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                    timeZone: "Asia/Tokyo",
-                  }).format(new Date(history.created_at))}{" "}
-                  · {history.users?.name ?? "ユーザー"}
-                </small>
+                <strong>{historyHeading(history, data.names)}</strong>{" "}
+                <span className="chip">{verbs[history.action]}</span>
+                <div>
+                  <small>
+                    {new Intl.DateTimeFormat("ja-JP", {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                      timeZone: "Asia/Tokyo",
+                    }).format(new Date(history.created_at))}{" "}
+                    · {history.users?.name ?? "ユーザー"}
+                  </small>
+                </div>
               </div>
+              {history.entity_type !== "shop_brand" && (
+                <Link
+                  className="inline-link"
+                  href={`/edit/${history.entity_type}/${history.entity_id}`}
+                >
+                  編集
+                </Link>
+              )}
             </div>
-            {history.entity_type !== "shop_brand" && (
-              <Link
-                className="inline-link"
-                href={`/edit/${history.entity_type}/${history.entity_id}`}
-              >
-                編集
-              </Link>
+            {fields.map((key) => (
+              <div key={key} className="diff">
+                <strong>{labels[key]}</strong>
+                <div>
+                  <span className="before">
+                    {display(history.before_data?.[key])}
+                  </span>
+                  <span aria-hidden="true"> → </span>
+                  <span className="after">
+                    {display(history.after_data?.[key])}
+                  </span>
+                </div>
+              </div>
+            ))}
+            {history.reason && (
+              <p className="hint">変更理由：{history.reason}</p>
             )}
-          </div>
-          {changedFields(history.before_data, history.after_data).map((key) => (
-            <div key={key} className="diff">
-              <strong>{labels[key]}</strong>
-              <div>
-                <span className="before">
-                  {display(history.before_data?.[key])}
-                </span>
-                <span aria-hidden="true"> → </span>
-                <span className="after">
-                  {display(history.after_data?.[key])}
-                </span>
-              </div>
-            </div>
-          ))}
-          {history.reason && <p className="hint">変更理由：{history.reason}</p>}
-          {data.admin && <RestoreButton id={history.id} onChanged={load} />}
-        </article>
-      ))}
+            {isKanaChange && data.canRestoreKana ? (
+              <RestoreButton id={history.id} kanaOnly onChanged={load} />
+            ) : (
+              data.admin && <RestoreButton id={history.id} onChanged={load} />
+            )}
+          </article>
+        );
+      })}
       {data && !data.histories.length && (
         <div className="card empty">
           <h2>まだ更新履歴がありません</h2>
