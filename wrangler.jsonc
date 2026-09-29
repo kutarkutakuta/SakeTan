@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "saketan",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-09-26",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "keep_vars": true,
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS",
+    "run_worker_first": false,
+  },
+  "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "saketan" }],
+  "images": { "binding": "IMAGES" },
+  "observability": { "enabled": true },
+}

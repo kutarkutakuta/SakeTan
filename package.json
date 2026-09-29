@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev --hostname 127.0.0.1 --port 3000",
     "build": "next build",
+    "build:cloudflare": "opennextjs-cloudflare build && node scripts/copy-static-post.mjs",
     "start": "next start --hostname 127.0.0.1 --port 3000",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write src scripts tests package.json tsconfig.json next.config.ts README.md",
@@ -30,6 +31,7 @@
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.3.14",
+    "@opennextjs/cloudflare": "1.20.6",
     "@types/google.maps": "^3.66.2",
     "@types/node": "^24.0.0",
     "@types/react": "^19.2.0",
@@ -40,6 +42,7 @@
     "prettier": "^3.9.6",
     "robots-parser": "^3.0.1",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.0"
+    "typescript": "^5.9.0",
+    "wrangler": "4.143.0"
   }
 }

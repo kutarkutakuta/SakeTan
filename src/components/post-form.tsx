@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Copy, Plus, Search, Store, X } from "lucide-react";
 import { errorMessage, fetchJson, mutate } from "@/lib/client";
+import { loadBrandCatalog } from "@/lib/brand-catalog";
 import {
   brandFilterCriteriaLabel,
   brandPrefecture,
@@ -91,12 +92,8 @@ export function PostForm({
     const abort = new AbortController();
     void (async () => {
       try {
-        const data = await fetchJson<Brand[]>(
-          "/api/brands?all=1",
-          { signal: abort.signal },
-          "銘柄一覧を取得できませんでした",
-        );
-        setCatalog(data);
+        const data = await loadBrandCatalog(abort.signal);
+        if (!abort.signal.aborted) setCatalog(data);
       } catch (reason) {
         if (!abort.signal.aborted)
           showToast(

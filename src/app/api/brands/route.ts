@@ -1,48 +1,11 @@
-import { supabase } from "@/lib/supabase/server";
-import type { Brand } from "@/lib/types";
-
-export async function GET(request: Request) {
-  const db = await supabase();
-  if (!db) return Response.json([]);
-  const prefecture =
-    new URL(request.url).searchParams.get("prefecture")?.trim().slice(0, 50) ??
-    "";
-  const all = new URL(request.url).searchParams.get("all") === "1";
-  if (!prefecture && !all)
-    return Response.json(
-      { error: "都道府県を指定してください" },
-      { status: 400 },
-    );
-
-  const brands: Brand[] = [];
-  for (let from = 0; from < 10000; from += 1000) {
-    let query = db
-      .from("brands")
-      .select(
-        "id,name,name_kana,brewery_id,registration_status,requested_brewery_name,registered_at,created_at,breweries(id,name,name_kana,prefecture)",
-      )
-      .eq("is_active", true)
-      .in("registration_status", ["pending", "approved"])
-      .order("id")
-      .range(from, from + 999);
-    if (prefecture) query = query.eq("breweries.prefecture", prefecture);
-    const { data, error } = await query;
-    if (error)
-      return Response.json(
-        { error: "銘柄一覧を取得できませんでした" },
-        { status: 500 },
-      );
-    brands.push(...((data ?? []) as unknown as Brand[]));
-    if (!data || data.length < 1000) break;
-  }
-
+// The public catalog is read directly from Supabase in the browser. Keep this
+// endpoint inexpensive for clients that still have the old JavaScript cached.
+export function GET() {
   return Response.json(
-    brands.filter(
-      (brand) =>
-        brand.registration_status === "pending" || Boolean(brand.breweries?.id),
-    ),
     {
-      headers: { "Cache-Control": "private, no-store" },
+      error:
+        "銘柄一覧の取得方法が変わりました。ページを再読み込みしてください。",
     },
+    { status: 410, headers: { "Cache-Control": "no-store" } },
   );
 }
