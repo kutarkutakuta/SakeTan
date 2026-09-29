@@ -1,6 +1,5 @@
 "use client";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { ArrowRight, Store } from "lucide-react";
 import { useEffect, useState } from "react";
 import { errorMessage, fetchJson } from "@/lib/client";
@@ -233,7 +232,7 @@ function DuplicateShopLink({ shop }: { shop: DuplicateCandidate }) {
     : `/history?type=shop&id=${shop.id}`;
   const area = [shop.prefecture, shop.city].filter(Boolean).join(" ");
   return (
-    <Link className="duplicate-shop-link" href={destination} prefetch={false}>
+    <a className="duplicate-shop-link" href={destination}>
       <span>
         <strong>{shop.name}</strong>
         <small>
@@ -248,6 +247,6 @@ function DuplicateShopLink({ shop }: { shop: DuplicateCandidate }) {
         {shop.is_active ? "店舗ページを見る" : "更新履歴を見る"}
         <ArrowRight size={17} aria-hidden="true" />
       </span>
-    </Link>
+    </a>
   );
 }

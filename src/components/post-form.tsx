@@ -379,10 +379,10 @@ export function PostForm({
                 ログインしてコピー
               </Link>
             ))}
-          <Link className="post-shop" href={`/shops/${shop.id}`} prefetch={false}>
+          <a className="post-shop" href={`/shops/${shop.id}`}>
             <Store size={18} />
             <span>{shop.name}</span>
-          </Link>
+          </a>
         </div>
       </div>
       <label className="searchbox brand-search">

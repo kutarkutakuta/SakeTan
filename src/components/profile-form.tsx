@@ -1,12 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { mutate } from "@/lib/client";
 import { useToast } from "@/components/toast-provider";
 
 export function ProfileForm({ initialName }: { initialName: string }) {
-  const router = useRouter();
   const { showToast } = useToast();
   const [name, setName] = useState(initialName);
   const [busy, setBusy] = useState(false);
@@ -16,7 +14,7 @@ export function ProfileForm({ initialName }: { initialName: string }) {
     try {
       await mutate({ kind: "profile", name });
       showToast("表示名を変更しました");
-      router.refresh();
+      window.location.reload();
     } catch (reason) {
       showToast(
         reason instanceof Error

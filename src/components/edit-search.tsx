@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { ChevronRight, Plus, Search, X } from "lucide-react";
 import { KanaEditDialog } from "@/components/kana-edit-dialog";
 import { useToast } from "@/components/toast-provider";
@@ -174,10 +173,10 @@ export function EditSearch({
             </span>
           )}
           {target === "shop" && (
-            <Link className="button small" href="/edit/shop/new" prefetch={false}>
+            <a className="button small" href="/edit/shop/new">
               <Plus size={17} />
               新規登録
-            </Link>
+            </a>
           )}
         </div>
       </div>
@@ -229,16 +228,15 @@ export function EditSearch({
                 {content}
               </button>
             ) : target === "shop" ? (
-              <Link
+              <a
                 className="edit-result"
                 key={item.id}
                 href={`/edit/${target}/${item.id}?return_to=${encodeURIComponent(
                   `/edit?type=shop&q=${encodeURIComponent(normalizedQuery)}`,
                 )}`}
-                prefetch={false}
               >
                 {content}
-              </Link>
+              </a>
             ) : (
               <div className="edit-result" key={item.id}>
                 {content}

@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { mutate } from "@/lib/client";
 import { useToast } from "@/components/toast-provider";
 export function RestoreButton({
@@ -13,7 +12,6 @@ export function RestoreButton({
   onChanged?: () => void | Promise<void>;
 }) {
   const [busy, setBusy] = useState(false);
-  const router = useRouter();
   const { showToast } = useToast();
   return (
     <div style={{ marginTop: 16 }}>
@@ -41,7 +39,7 @@ export function RestoreButton({
                 : "この時点の状態に戻しました",
             );
             if (onChanged) await onChanged();
-            else router.refresh();
+            else window.location.reload();
           } catch (e) {
             showToast(
               e instanceof Error ? e.message : "復元できませんでした",

@@ -27,10 +27,16 @@ type ShopPageData = {
   error?: string;
 };
 
-export function ShopPageLoader() {
+export function ShopPageLoader({
+  shopId,
+  query,
+}: {
+  shopId?: string;
+  query?: string;
+} = {}) {
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();
-  const id = params.id;
+  const id = shopId ?? params.id;
   const [data, setData] = useState<ShopPageData | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -62,7 +68,10 @@ export function ShopPageLoader() {
     return () => controller.abort();
   }, [load]);
 
-  const returnTo = searchParams.get("return_to") ?? undefined;
+  const returnTo =
+    (query === undefined
+      ? searchParams.get("return_to")
+      : new URLSearchParams(query).get("return_to")) ?? undefined;
   if (!data)
     return (
       <main id="main" className="page shop-page">
@@ -129,10 +138,10 @@ export function ShopPageLoader() {
               取扱銘柄の編集
             </Link>
           )}
-          <Link className="button ghost small" href={`/edit/shop/${id}`} prefetch={false}>
+          <a className="button ghost small" href={`/edit/shop/${id}`}>
             <Pencil size={16} />
             店舗の編集
-          </Link>
+          </a>
           <Link className="button ghost small" href={`/history?shop_id=${id}`}>
             <History size={16} />
             更新履歴

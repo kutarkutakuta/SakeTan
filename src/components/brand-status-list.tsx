@@ -135,9 +135,7 @@ export function BrandStatusList() {
                   <p>{brewery}</p>
                 </div>
                 <div className="brand-status-card-links">
-                  <Link href={`/edit/brand/${brand.id}`} prefetch={false}>
-                    かなを編集
-                  </Link>
+                  <a href={`/edit/brand/${brand.id}`}>かなを編集</a>
                   <Link href={`/history?type=brand&id=${brand.id}`}>
                     更新履歴
                   </Link>
@@ -163,10 +161,10 @@ export function BrandStatusList() {
               {brand.shops.length > 0 ? (
                 <div className="brand-status-shops">
                   {brand.shops.map((shop) => (
-                    <Link href={`/shops/${shop.id}`} key={shop.id} prefetch={false}>
+                    <a href={`/shops/${shop.id}`} key={shop.id}>
                       {shop.name}
                       {shop.status === "unavailable" && "（現在は取扱なし）"}
-                    </Link>
+                    </a>
                   ))}
                 </div>
               ) : (

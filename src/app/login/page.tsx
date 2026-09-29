@@ -1,48 +1,10 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
-import { LoginOptions } from "@/components/login-options";
-import { ToastOnMount } from "@/components/toast-provider";
-import { configured, viewerIdentity } from "@/lib/supabase/server";
-import { safeNext } from "@/lib/utils";
+import { Suspense } from "react";
+import { LoginPageClient } from "@/components/login-page-client";
 
-export default async function LoginPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ next?: string; error?: string }>;
-}) {
-  const query = await searchParams;
-  const next = safeNext(query.next);
-  const account = await viewerIdentity();
+export default function LoginPage() {
   return (
-    <main id="main" className="page narrow">
-      <Link className="back" href={next}>
-        <ArrowLeft size={17} />
-        戻る
-      </Link>
-      <section className="card login-page-card">
-        <p className="eyebrow">さけたんを、続けて使う。</p>
-        <h1>
-          {account.anonymous
-            ? "匿名の操作履歴をアカウントに引き継ぐ"
-            : account.user
-              ? "ログイン方法を追加"
-              : "ログイン"}
-        </h1>
-        <p className="login-description">
-          {account.anonymous
-            ? "このブラウザで行った取扱情報の変更を保ったまま、別の端末でも利用できるようになります。"
-            : "Google、X、Facebookのいずれかを利用できます。表示名はあとから変更できます。"}
-        </p>
-        {query.error && <ToastOnMount message={query.error} tone="error" />}
-        {configured() ? (
-          <LoginOptions next={next} />
-        ) : (
-          <p className="notice">ログインにはSupabaseの接続設定が必要です。</p>
-        )}
-        <p className="login-note">
-          個別の取扱銘柄編集はログインなしでも利用できます。
-        </p>
-      </section>
-    </main>
+    <Suspense fallback={<main id="main" className="page narrow" />}>
+      <LoginPageClient />
+    </Suspense>
   );
 }

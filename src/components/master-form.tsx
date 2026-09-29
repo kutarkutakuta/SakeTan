@@ -1,7 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Search } from "lucide-react";
 import { errorMessage, fetchJson, mutate } from "@/lib/client";
 import { mapReturnPath } from "@/lib/map-view";
@@ -26,7 +24,6 @@ export function MasterForm({
   afterSaveHref?: string;
   kanaOnly?: boolean;
 }) {
-  const router = useRouter();
   const { showToast } = useToast();
   const [searchError, setSearchError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -92,7 +89,7 @@ export function MasterForm({
         reason: text("reason") || null,
       });
       showToast(`${entityLabels[type]}のかなを保存しました`);
-      router.push("/history?type=" + type + "&id=" + result.id);
+      window.location.assign("/history?type=" + type + "&id=" + result.id);
     } catch (e) {
       showToast(
         e instanceof Error ? e.message : "保存できませんでした",
@@ -153,7 +150,7 @@ export function MasterForm({
           ? `${entityLabels[type]}の変更を保存しました`
           : `${entityLabels[type]}を登録しました`,
       );
-      router.push(destinationAfterSave(result.id));
+      window.location.assign(destinationAfterSave(result.id));
     } catch (e) {
       showToast(
         e instanceof Error ? e.message : "保存できませんでした",
@@ -294,13 +291,9 @@ export function MasterForm({
                 選び直す
               </button>
               {id && (
-                <Link
-                  className="inline-link"
-                  href={"/edit/brewery/" + brewery.id}
-                  prefetch={false}
-                >
+                <a className="inline-link" href={"/edit/brewery/" + brewery.id}>
                   酒蔵を編集
-                </Link>
+                </a>
               )}
             </div>
           )}

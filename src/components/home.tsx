@@ -7,7 +7,6 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import Link from "next/link";
 import {
   ArrowRight,
   ChevronDown,
@@ -554,15 +553,14 @@ export function Home({
                   </button>
                 )}
               </label>
-              <Link
+              <a
                 href="/edit/shop/new"
-                prefetch={false}
                 className="mobile-add-shop"
                 aria-label="新しい酒屋を登録"
                 title="新しい酒屋を登録"
               >
                 <Plus size={22} />
-              </Link>
+              </a>
             </div>
             {brand && (
               <div className="active-search-filter">
@@ -692,12 +690,11 @@ export function Home({
                             </span>
                           )}
                         </button>
-                        <Link
+                        <a
                           className="shop-page-link search-shop-page-link"
                           href={shopPagePath(s.id)}
-                          prefetch={false}
                           aria-label={`${s.name}の詳細を見る`}
-                          onNavigate={() => prepareShopNavigation(s.id)}
+                          onClick={() => prepareShopNavigation(s.id)}
                         >
                           詳細へ
                           <ChevronRight
@@ -705,7 +702,7 @@ export function Home({
                             strokeWidth={2}
                             aria-hidden="true"
                           />
-                        </Link>
+                        </a>
                       </div>
                     </div>
                   );
@@ -887,9 +884,9 @@ export function Home({
                   shopName={openCommentShop.name}
                 />
               )}
-            <Link href="/edit/shop/new" className="add-shop" prefetch={false}>
+            <a href="/edit/shop/new" className="add-shop">
               <Plus size={18} /> 新しい酒屋を登録
-            </Link>
+            </a>
           </section>
         </aside>
         <section className="map-panel" aria-label="酒屋マップ">

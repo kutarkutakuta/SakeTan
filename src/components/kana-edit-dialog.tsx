@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { X } from "lucide-react";
 import { mutate } from "@/lib/client";
 import type { Brand, Brewery } from "@/lib/types";
@@ -124,9 +123,9 @@ export function KanaEditDialog({
           </label>
           <div className="quick-kana-actions">
             {admin && (
-              <Link className="button ghost" href={`/edit/${type}/${item.id}`} prefetch={false}>
+              <a className="button ghost" href={`/edit/${type}/${item.id}`}>
                 詳細編集
-              </Link>
+              </a>
             )}
             <button disabled={busy} type="submit" className="button">
               {busy ? "保存しています…" : "かなを保存"}

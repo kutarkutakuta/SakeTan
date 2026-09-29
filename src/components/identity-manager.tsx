@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Link2Off } from "lucide-react";
 import { useToast } from "@/components/toast-provider";
 import { errorMessage, fetchJson } from "@/lib/client";
@@ -22,7 +21,6 @@ export function IdentityManager({
   identities: LinkedIdentity[];
   totalIdentityCount: number;
 }) {
-  const router = useRouter();
   const { showToast } = useToast();
   const [busyIdentityId, setBusyIdentityId] = useState<string | null>(null);
   const [removedIdentityIds, setRemovedIdentityIds] = useState<Set<string>>(
@@ -72,7 +70,7 @@ export function IdentityManager({
         return next;
       });
       showToast(`${providerName}との連携を解除しました`);
-      router.refresh();
+      window.location.reload();
     } catch (reason) {
       showToast(
         errorMessage(reason, "ログイン方法の連携を解除できませんでした"),

@@ -1,5 +1,6 @@
-import Link from "next/link";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useEffect, useState } from "react";
 import { ArrowLeft, BadgeCheck, Heart, Store, Trophy } from "lucide-react";
 import { LoginOptions } from "@/components/login-options";
 import {
@@ -11,47 +12,89 @@ import {
   contributionAchievement,
   type ContributionSummary,
 } from "@/lib/contribution";
-import { supabase, viewerIdentity } from "@/lib/supabase/server";
+import { supabase, viewerIdentity } from "@/lib/supabase/browser";
 import {
   isIdentityProvider,
   loginProviderForIdentity,
 } from "@/lib/auth-identities";
 
-export default async function AccountPage() {
-  const db = await supabase();
-  if (!db) redirect("/login?next=/account");
-  const account = await viewerIdentity();
-  if (!account.user || account.anonymous) redirect("/login?next=/account");
-  const identities = account.user.identities ?? [];
-  const linkedIdentities = identities.flatMap((identity): LinkedIdentity[] =>
-    isIdentityProvider(identity.provider)
-      ? [
-          {
-            identityId: identity.identity_id,
-            provider: identity.provider,
-          },
-        ]
-      : [],
-  );
-  const linked = new Set(
-    linkedIdentities.map((identity) =>
-      loginProviderForIdentity(identity.provider),
-    ),
-  );
-  const { data, error } = await db.rpc("get_my_contribution_summary");
-  if (error) throw new Error("貢献記録を取得できませんでした");
-  const contribution = data as unknown as ContributionSummary;
+type AccountState = {
+  name: string | null;
+  linkedIdentities: LinkedIdentity[];
+  totalIdentityCount: number;
+  linked: string[];
+  contribution: ContributionSummary;
+};
+
+export default function AccountPage() {
+  const [state, setState] = useState<AccountState | null>(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      const [db, account] = await Promise.all([supabase(), viewerIdentity()]);
+      if (!db || !account.user || account.anonymous) {
+        window.location.replace("/login?next=/account");
+        return;
+      }
+      const identities: Array<{ identity_id: string; provider: string }> =
+        account.user.identities ?? [];
+      const linkedIdentities: LinkedIdentity[] = identities.flatMap(
+        (identity) =>
+          isIdentityProvider(identity.provider)
+            ? [
+                {
+                  identityId: identity.identity_id,
+                  provider: identity.provider,
+                },
+              ]
+            : [],
+      );
+      const { data, error: queryError } = await db.rpc(
+        "get_my_contribution_summary",
+      );
+      if (queryError) {
+        if (active) setError("貢献記録を取得できませんでした");
+        return;
+      }
+      if (active)
+        setState({
+          name: account.name,
+          linkedIdentities,
+          totalIdentityCount: identities.length,
+          linked: linkedIdentities.map((identity) =>
+            loginProviderForIdentity(identity.provider),
+          ),
+          contribution: data as unknown as ContributionSummary,
+        });
+    })().catch(() => {
+      if (active) setError("アカウント情報を取得できませんでした");
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (!state)
+    return (
+      <main id="main" className="page narrow">
+        <p className="muted">{error || "アカウント情報を読み込んでいます…"}</p>
+      </main>
+    );
+
+  const { contribution, linkedIdentities, linked } = state;
   const achievement = contributionAchievement(contribution.shop_brand_count);
   return (
     <main id="main" className="page narrow">
-      <Link className="back" href="/">
+      <a className="back" href="/">
         <ArrowLeft size={17} />
         地図に戻る
-      </Link>
+      </a>
       <div className="page-head">
         <h1>アカウント</h1>
       </div>
-      <ProfileForm initialName={account.name ?? "日本酒さん"} />
+      <ProfileForm initialName={state.name ?? "日本酒さん"} />
       <section className="card contribution-card">
         <div className="contribution-heading">
           <div>
@@ -113,13 +156,13 @@ export default async function AccountPage() {
         {contribution.favorite_shops.length ? (
           <div className="favorite-shop-list">
             {contribution.favorite_shops.map((shop) => (
-              <Link href={`/shops/${shop.shop_id}`} key={shop.shop_id} prefetch={false}>
+              <a href={`/shops/${shop.shop_id}`} key={shop.shop_id}>
                 <Store size={19} />
                 <span>
                   <strong>{shop.shop_name}</strong>
                   <small>取扱銘柄を{shop.contribution_count}件登録</small>
                 </span>
-              </Link>
+              </a>
             ))}
           </div>
         ) : (
@@ -137,9 +180,9 @@ export default async function AccountPage() {
         </div>
         <IdentityManager
           identities={linkedIdentities}
-          totalIdentityCount={identities.length}
+          totalIdentityCount={state.totalIdentityCount}
         />
-        <LoginOptions next="/account" exclude={[...linked]} linking />
+        <LoginOptions next="/account" exclude={linked} linking />
       </section>
       <form action="/auth/signout" method="post">
         <button className="button ghost full" type="submit">

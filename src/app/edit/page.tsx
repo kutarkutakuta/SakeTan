@@ -1,34 +1,10 @@
-import Link from "next/link";
-import { EditSearch } from "@/components/edit-search";
-import { authorization } from "@/lib/supabase/server";
-import type { EntityType } from "@/lib/types";
+import { Suspense } from "react";
+import { EditIndexClient } from "@/components/edit-index-client";
 
-const entityTypes: EntityType[] = ["brand", "brewery", "shop"];
-
-export default async function EditIndex({
-  searchParams,
-}: {
-  searchParams: Promise<{ type?: string; q?: string }>;
-}) {
-  const params = await searchParams;
-  const initialTarget = entityTypes.includes(params.type as EntityType)
-    ? (params.type as EntityType)
-    : "brand";
-  const { user, admin, anonymous } = await authorization();
+export default function EditIndex() {
   return (
-    <main id="main" className="page narrow">
-      <Link href="/" className="back">
-        ← 地図に戻る
-      </Link>
-      <div className="page-head">
-        <h1>登録情報を編集</h1>
-      </div>
-      <EditSearch
-        admin={admin}
-        signedIn={Boolean(user && !anonymous)}
-        initialTarget={initialTarget}
-        initialQuery={params.q?.slice(0, 150) ?? ""}
-      />
-    </main>
+    <Suspense fallback={<main id="main" className="page narrow" />}>
+      <EditIndexClient />
+    </Suspense>
   );
 }

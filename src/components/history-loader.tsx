@@ -108,7 +108,7 @@ export function HistoryLoader() {
 
   return (
     <main id="main" className="page">
-      <Link
+      <a
         className="back"
         href={
           shopId
@@ -117,11 +117,10 @@ export function HistoryLoader() {
               ? `/shops/${id}`
               : "/"
         }
-        prefetch={false}
       >
         <ArrowLeft size={17} />
         戻る
-      </Link>
+      </a>
       <div className="page-head">
         <div>
           <p className="eyebrow">みんなで育てる、酒屋と日本酒の情報。</p>
@@ -165,13 +164,12 @@ export function HistoryLoader() {
                 </div>
               </div>
               {history.entity_type !== "shop_brand" && (
-                <Link
+                <a
                   className="inline-link"
                   href={`/edit/${history.entity_type}/${history.entity_id}`}
-                  prefetch={false}
                 >
                   編集
-                </Link>
+                </a>
               )}
             </div>
             {fields.map((key) => (

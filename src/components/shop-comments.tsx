@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MessageCircle, Pencil, Trash2 } from "lucide-react";
 import { mutate } from "@/lib/client";
@@ -25,7 +24,6 @@ export function ShopComments({
   ready: boolean;
   onChanged?: () => Promise<void>;
 }) {
-  const router = useRouter();
   const { showToast } = useToast();
   const [comment, setComment] = useState("");
   const [editing, setEditing] = useState<string | null>(null);
@@ -44,7 +42,7 @@ export function ShopComments({
       setComment("");
       showToast("コメントを投稿しました");
       if (onChanged) await onChanged();
-      else router.refresh();
+      else window.location.reload();
     } catch (reason) {
       showToast(
         reason instanceof Error ? reason.message : "コメントできませんでした",
@@ -68,7 +66,7 @@ export function ShopComments({
       setEditing(null);
       showToast(remove ? "コメントを削除しました" : "コメントを変更しました");
       if (onChanged) await onChanged();
-      else router.refresh();
+      else window.location.reload();
     } catch (reason) {
       showToast(
         reason instanceof Error ? reason.message : "変更できませんでした",

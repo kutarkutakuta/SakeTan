@@ -13,9 +13,9 @@
 - Noto Sans JP（ローカル配信）、生成り・白・墨色・朱のモバイルUI
 - Node.js 22以上推奨（検証: Node.js 24）、npm
 
-公開ページのうち `/`、`/brands`、`/history`、`/post`、`/help`、`/privacy` は静的アセットとして配信します。画面の閲覧・検索・投稿はブラウザーからSupabaseへ直接接続し、DB側のRLSとRPCの権限チェックを適用します。`/api/*` のWorkerルートは使いません。OAuthとログアウト等の `/auth/*`、アカウント・編集・店舗詳細などの動的ページは引き続きWorkerで処理します。
+`/`、`/account`、`/brands`、`/edit`、`/help`、`/history`、`/login`、`/post`、`/privacy` は静的アセットとして配信します。店舗詳細と個別編集のURLは軽量ルーターが共通の静的画面を返し、ブラウザーでURLを解釈します。画面の閲覧・検索・投稿はブラウザーからSupabaseへ直接接続し、DB側のRLSとRPCの権限チェックを適用します。Cloudflare WorkerはID付きURLの静的画面への振り分けと、OAuth・ログアウト・連携解除等の `/auth/*` で使用します。Next.jsのサーバー処理を実行するのは `/auth/*` のみです。
 
-Cloudflare用のビルドは `npm run build:cloudflare` です。静的ページのHTMLとRSCを `.open-next/assets` へコピーし、`wrangler.jsonc` の `run_worker_first: false` でアセットを優先します。新しいDB操作を追加するときは、ブラウザーにサーバー用Secret keyを含めず、RLSとRPCで権限・入力・回数制限を確認してください。
+Cloudflare用のビルドは `npm run build:cloudflare` です。静的ページのHTMLとRSCを `.open-next/assets` へコピーし、`wrangler.jsonc` のアセット優先設定を使います。IDを含むURLへのリンクは通常のHTMLナビゲーションにし、Next.jsのRSC要求がWorkerを呼ばないようにします。軽量ルーターは `src/cloudflare-router.ts` にあり、`/auth/*` のときだけOpenNextを読み込みます。新しいDB操作を追加するときは、ブラウザーにサーバー用Secret keyを含めず、RLSとRPCで権限・入力・回数制限を確認してください。
 
 ## セットアップ
 

@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties, RefObject } from "react";
 import { createPortal } from "react-dom";
-import Link from "next/link";
 import { ChevronRight, X } from "lucide-react";
 import { errorMessage, fetchJson } from "@/lib/client";
 import type { LatestShopComment, ShopCommentPage } from "@/lib/types";
@@ -195,10 +194,10 @@ export function ShopCommentPopover({
             <span aria-hidden="true">→</span>
           </button>
         </div>
-        <Link href={shopHref} onNavigate={onShopNavigate} prefetch={false}>
+        <a href={shopHref} onClick={onShopNavigate}>
           コメントする
           <ChevronRight size={16} strokeWidth={2} aria-hidden="true" />
-        </Link>
+        </a>
       </nav>
     </div>,
     document.body,

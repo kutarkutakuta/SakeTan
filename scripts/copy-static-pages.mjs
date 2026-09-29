@@ -10,7 +10,17 @@ if (!existsSync(assets)) {
 
 // These pages read live data in the browser. Serve both their HTML and RSC
 // payloads as assets so navigation does not invoke the Worker.
-for (const route of ["index", "brands", "help", "history", "post", "privacy"]) {
+for (const route of [
+  "index",
+  "account",
+  "brands",
+  "edit",
+  "help",
+  "history",
+  "login",
+  "post",
+  "privacy",
+]) {
   for (const extension of ["html", "rsc"]) {
     const name = `${route}.${extension}`;
     const file = join(source, name);
