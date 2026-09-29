@@ -31,6 +31,7 @@ export function HeaderAuth() {
       <Link
         className="button small ghost header-auth-link"
         href="/account"
+        prefetch={false}
         aria-label={viewer.name ?? "アカウント"}
       >
         <UserRound size={17} />
@@ -45,6 +46,7 @@ export function HeaderAuth() {
     <Link
       className="button small ghost header-auth-link"
       href="/login"
+      prefetch={false}
       aria-label={label}
     >
       <LogIn size={17} />

@@ -18,6 +18,7 @@ function RegistrationLinks() {
     <Link
       key={link.href}
       href={link.href}
+      prefetch={link.href !== "/edit"}
       aria-current={
         pathname === link.href || pathname.startsWith(`${link.href}/`)
           ? "page"

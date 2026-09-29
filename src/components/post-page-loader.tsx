@@ -67,7 +67,7 @@ export function PostPageLoader() {
 
   return (
     <main id="main" className="page post-page">
-      <Link className="back" href={`/shops/${shopId}`}>
+      <Link className="back" href={`/shops/${shopId}`} prefetch={false}>
         <ArrowLeft size={17} />
         酒屋に戻る
       </Link>
@@ -92,7 +92,7 @@ export function PostPageLoader() {
                 <h1>取扱銘柄の編集</h1>
                 <AvailabilityInfo />
               </div>
-              <Link className="post-shop" href={`/shops/${data.shop.id}`}>
+              <Link className="post-shop" href={`/shops/${data.shop.id}`} prefetch={false}>
                 <Store size={18} />
                 <span>{data.shop.name}</span>
               </Link>

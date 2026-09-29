@@ -373,12 +373,13 @@ export function PostForm({
                   "/login?next=" +
                   encodeURIComponent(`/post?shop_id=${shop.id}`)
                 }
+                prefetch={false}
               >
                 <Copy size={17} />
                 ログインしてコピー
               </Link>
             ))}
-          <Link className="post-shop" href={`/shops/${shop.id}`}>
+          <Link className="post-shop" href={`/shops/${shop.id}`} prefetch={false}>
             <Store size={18} />
             <span>{shop.name}</span>
           </Link>

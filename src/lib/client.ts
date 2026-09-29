@@ -1,3 +1,5 @@
+import { browserApi } from "@/lib/browser-api";
+
 type ApiError = { error?: unknown };
 
 function apiErrorMessage(data: unknown, fallback: string) {
@@ -14,7 +16,23 @@ export async function fetchJson<T>(
   init: RequestInit | undefined,
   fallback: string,
 ) {
-  const response = await fetch(input, init);
+  const signal = init?.signal ?? (input instanceof Request ? input.signal : undefined);
+  if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+  const request = browserApi(input, init).then(
+    (response) => response ?? fetch(input, init),
+  );
+  let onAbort: (() => void) | undefined;
+  const response = signal
+    ? await Promise.race([
+        request,
+        new Promise<never>((_, reject) => {
+          onAbort = () => reject(new DOMException("Aborted", "AbortError"));
+          signal.addEventListener("abort", onAbort, { once: true });
+        }),
+      ]).finally(() => {
+        if (onAbort) signal.removeEventListener("abort", onAbort);
+      })
+    : await request;
   const data: unknown = await response.json().catch(() => null);
   if (!response.ok) throw new Error(apiErrorMessage(data, fallback));
   if (data === null) throw new Error(fallback);

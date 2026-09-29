@@ -174,7 +174,7 @@ export function EditSearch({
             </span>
           )}
           {target === "shop" && (
-            <Link className="button small" href="/edit/shop/new">
+            <Link className="button small" href="/edit/shop/new" prefetch={false}>
               <Plus size={17} />
               新規登録
             </Link>
@@ -235,6 +235,7 @@ export function EditSearch({
                 href={`/edit/${target}/${item.id}?return_to=${encodeURIComponent(
                   `/edit?type=shop&q=${encodeURIComponent(normalizedQuery)}`,
                 )}`}
+                prefetch={false}
               >
                 {content}
               </Link>

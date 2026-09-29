@@ -195,7 +195,7 @@ export function ShopCommentPopover({
             <span aria-hidden="true">→</span>
           </button>
         </div>
-        <Link href={shopHref} onNavigate={onShopNavigate}>
+        <Link href={shopHref} onNavigate={onShopNavigate} prefetch={false}>
           コメントする
           <ChevronRight size={16} strokeWidth={2} aria-hidden="true" />
         </Link>

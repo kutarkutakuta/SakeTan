@@ -556,6 +556,7 @@ export function Home({
               </label>
               <Link
                 href="/edit/shop/new"
+                prefetch={false}
                 className="mobile-add-shop"
                 aria-label="新しい酒屋を登録"
                 title="新しい酒屋を登録"
@@ -694,6 +695,7 @@ export function Home({
                         <Link
                           className="shop-page-link search-shop-page-link"
                           href={shopPagePath(s.id)}
+                          prefetch={false}
                           aria-label={`${s.name}の詳細を見る`}
                           onNavigate={() => prepareShopNavigation(s.id)}
                         >
@@ -885,7 +887,7 @@ export function Home({
                   shopName={openCommentShop.name}
                 />
               )}
-            <Link href="/edit/shop/new" className="add-shop">
+            <Link href="/edit/shop/new" className="add-shop" prefetch={false}>
               <Plus size={18} /> 新しい酒屋を登録
             </Link>
           </section>

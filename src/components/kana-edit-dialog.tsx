@@ -124,7 +124,7 @@ export function KanaEditDialog({
           </label>
           <div className="quick-kana-actions">
             {admin && (
-              <Link className="button ghost" href={`/edit/${type}/${item.id}`}>
+              <Link className="button ghost" href={`/edit/${type}/${item.id}`} prefetch={false}>
                 詳細編集
               </Link>
             )}

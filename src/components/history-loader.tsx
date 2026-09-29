@@ -117,6 +117,7 @@ export function HistoryLoader() {
               ? `/shops/${id}`
               : "/"
         }
+        prefetch={false}
       >
         <ArrowLeft size={17} />
         戻る
@@ -167,6 +168,7 @@ export function HistoryLoader() {
                 <Link
                   className="inline-link"
                   href={`/edit/${history.entity_type}/${history.entity_id}`}
+                  prefetch={false}
                 >
                   編集
                 </Link>

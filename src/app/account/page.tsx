@@ -113,7 +113,7 @@ export default async function AccountPage() {
         {contribution.favorite_shops.length ? (
           <div className="favorite-shop-list">
             {contribution.favorite_shops.map((shop) => (
-              <Link href={`/shops/${shop.shop_id}`} key={shop.shop_id}>
+              <Link href={`/shops/${shop.shop_id}`} key={shop.shop_id} prefetch={false}>
                 <Store size={19} />
                 <span>
                   <strong>{shop.shop_name}</strong>

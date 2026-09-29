@@ -297,6 +297,7 @@ export function MasterForm({
                 <Link
                   className="inline-link"
                   href={"/edit/brewery/" + brewery.id}
+                  prefetch={false}
                 >
                   酒蔵を編集
                 </Link>

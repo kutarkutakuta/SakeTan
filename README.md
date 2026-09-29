@@ -13,6 +13,10 @@
 - Noto Sans JP（ローカル配信）、生成り・白・墨色・朱のモバイルUI
 - Node.js 22以上推奨（検証: Node.js 24）、npm
 
+公開ページのうち `/`、`/brands`、`/history`、`/post`、`/help`、`/privacy` は静的アセットとして配信します。画面の閲覧・検索・投稿はブラウザーからSupabaseへ直接接続し、DB側のRLSとRPCの権限チェックを適用します。`/api/*` のWorkerルートは使いません。OAuthとログアウト等の `/auth/*`、アカウント・編集・店舗詳細などの動的ページは引き続きWorkerで処理します。
+
+Cloudflare用のビルドは `npm run build:cloudflare` です。静的ページのHTMLとRSCを `.open-next/assets` へコピーし、`wrangler.jsonc` の `run_worker_first: false` でアセットを優先します。新しいDB操作を追加するときは、ブラウザーにサーバー用Secret keyを含めず、RLSとRPCで権限・入力・回数制限を確認してください。
+
 ## セットアップ
 
 ### 1. インストール

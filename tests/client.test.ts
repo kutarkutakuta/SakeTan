@@ -31,3 +31,25 @@ test("fetchJson returns JSON and uses API or fallback error messages", async () 
     globalThis.fetch = originalFetch;
   }
 });
+
+test("fetchJson rejects an aborted request before returning stale data", async () => {
+  const originalFetch = globalThis.fetch;
+  const controller = new AbortController();
+  try {
+    globalThis.fetch = async () =>
+      new Promise<Response>((resolve) => {
+        setTimeout(() => resolve(Response.json({ value: 3 })), 20);
+      });
+    const result = fetchJson(
+      "https://example.com",
+      { signal: controller.signal },
+      "失敗",
+    );
+    controller.abort();
+    await assert.rejects(result, (reason) =>
+      reason instanceof DOMException && reason.name === "AbortError",
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});

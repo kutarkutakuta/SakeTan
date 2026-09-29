@@ -233,7 +233,7 @@ function DuplicateShopLink({ shop }: { shop: DuplicateCandidate }) {
     : `/history?type=shop&id=${shop.id}`;
   const area = [shop.prefecture, shop.city].filter(Boolean).join(" ");
   return (
-    <Link className="duplicate-shop-link" href={destination}>
+    <Link className="duplicate-shop-link" href={destination} prefetch={false}>
       <span>
         <strong>{shop.name}</strong>
         <small>

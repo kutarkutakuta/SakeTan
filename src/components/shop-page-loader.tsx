@@ -129,7 +129,7 @@ export function ShopPageLoader() {
               取扱銘柄の編集
             </Link>
           )}
-          <Link className="button ghost small" href={`/edit/shop/${id}`}>
+          <Link className="button ghost small" href={`/edit/shop/${id}`} prefetch={false}>
             <Pencil size={16} />
             店舗の編集
           </Link>

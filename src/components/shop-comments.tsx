@@ -113,6 +113,7 @@ export function ShopComments({
         <Link
           className="button"
           href={"/login?next=" + encodeURIComponent(`/shops/${shopId}`)}
+          prefetch={false}
         >
           ログインしてコメント
         </Link>
