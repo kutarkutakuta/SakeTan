@@ -1,8 +1,13 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { EditDetailClient } from "@/components/edit-detail-client";
 import type { EntityType } from "@/lib/types";
 
 const types: EntityType[] = ["shop", "brand", "brewery"];
+
+export const metadata: Metadata = {
+  title: "登録情報を編集",
+};
 
 export default async function EditPage({
   params,

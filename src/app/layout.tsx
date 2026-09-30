@@ -15,7 +15,7 @@ const socialImage = {
   height: 909,
   alt: "さけのありか — 飲みたい酒から酒屋を探せる、みんなで作る酒屋マップ",
 };
-const title = "さけのありか｜みんなで作る酒屋マップ";
+const title = "みんなで作る酒屋マップ - さけのありか";
 const description =
   "飲みたい酒から酒屋を探せる。近くの酒屋から酒を探せる。みんなで作る日本酒銘柄と酒販店の取扱情報。";
 
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   applicationName: siteName,
   title: {
     default: title,
-    template: "%s | さけのありか",
+    template: "%s - さけのありか",
   },
   description,
   alternates: {

@@ -123,7 +123,6 @@ export function HistoryLoader() {
       </a>
       <div className="page-head">
         <div>
-          <p className="eyebrow">みんなで育てる、酒屋と日本酒の情報。</p>
           <h1>更新履歴</h1>
         </div>
       </div>
