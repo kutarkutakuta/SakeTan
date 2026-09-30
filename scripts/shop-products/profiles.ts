@@ -13,6 +13,7 @@ export type SourceProfile = {
   itemContainerSelector?: string;
   itemHrefPattern?: string;
   brandSelector?: string;
+  useText?: boolean;
   brandPattern?: string;
   brandSplitPattern?: string;
   brewerySelector?: string;

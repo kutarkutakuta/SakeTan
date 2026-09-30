@@ -275,7 +275,9 @@ function extractProfileGroups(
       : null;
     container.find(profile.brandSelector).each((__, brandNode) => {
       const brand = $(brandNode);
-      const name = elementValue($, brand);
+      const name = profile.useText
+        ? readableElementText($, brand)
+        : elementValue($, brand);
       if (!name) return;
       for (const splitName of brandSplitPattern
         ? name.split(brandSplitPattern)

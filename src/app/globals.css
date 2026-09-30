@@ -8,11 +8,11 @@
   --tint: #f7ece8;
   --radius: 18px;
   --shop-marker-unregistered: #68727d;
-  --shop-marker-level-1: #c59a94;
-  --shop-marker-level-2: #a85f59;
-  --shop-marker-level-3: #9c4d4c;
-  --shop-marker-level-4: #783841;
-  --shop-marker-level-5: #481b29;
+  --shop-marker-level-1: #e4c2b9;
+  --shop-marker-level-2: #d09287;
+  --shop-marker-level-3: #b85e59;
+  --shop-marker-level-4: #873b42;
+  --shop-marker-level-5: #481726;
 }
 * {
   box-sizing: border-box;
@@ -1075,6 +1075,7 @@ nav {
   height: 56px;
   place-items: center;
   --marker-fill: #89837e;
+  --marker-stroke: white;
 }
 .shop-map-marker svg {
   display: block;
@@ -1086,7 +1087,7 @@ nav {
 }
 .shop-map-marker-pin {
   fill: var(--marker-fill);
-  stroke: white;
+  stroke: var(--marker-stroke);
   stroke-width: 1.1;
   stroke-linejoin: round;
 }
@@ -1135,6 +1136,7 @@ nav {
 }
 .shop-map-marker-registered.shop-map-marker-level-1 {
   --marker-fill: var(--shop-marker-level-1);
+  --marker-stroke: #a97970;
 }
 .shop-map-marker-registered.shop-map-marker-level-2 {
   --marker-fill: var(--shop-marker-level-2);

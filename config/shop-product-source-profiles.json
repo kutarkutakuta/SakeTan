@@ -1,5 +1,27 @@
 [
   {
+    "name": "niigata-hasegawaya-regional-sake-brewery-links",
+    "host": "niigata-hasegawaya.com",
+    "pathPrefix": "/pages/%E6%97%A5%E6%9C%AC%E9%85%92%E8%94%B5%E5%88%A5",
+    "dedicatedProfile": true,
+    "itemContainerSelector": "div.multicolumn-card__info",
+    "brandSelector": "div.rte a",
+    "useText": true,
+    "brandPattern": "^\\s*([^/／]+?)(?:\\s*[/／]\\s*(.+?))?\\s*$",
+    "brandSplitPattern": "[・･]",
+    "maxPages": 1
+  },
+  {
+    "name": "kanese-sake-brewery-links",
+    "host": "www.kanese.com",
+    "pathPrefix": "/",
+    "dedicatedProfile": true,
+    "itemContainerSelector": "section:has(> h3:contains(日本酒 -蔵元で選ぶ)) nav li",
+    "brandSelector": "a",
+    "brandPattern": "^([^（(]+)",
+    "maxPages": 1
+  },
+  {
     "name": "yamazaki-seiichi-sake-brand-brewery-list",
     "host": "www.yamazakiseiichishouten.com",
     "pathPrefix": "/item",
