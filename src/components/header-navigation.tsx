@@ -1,9 +1,9 @@
 "use client";
 
-import type { MouseEvent } from "react";
+import type { FocusEvent, MouseEvent } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown, CircleQuestionMark, Menu, X } from "lucide-react";
+import { ChevronDown, CircleQuestionMark, Menu, Search, X } from "lucide-react";
 import { HeaderAuth } from "@/components/header-auth";
 
 const registrationLinks = [
@@ -35,7 +35,18 @@ function closeAfterNavigation(event: MouseEvent<HTMLDetailsElement>) {
     event.currentTarget.removeAttribute("open");
 }
 
+function closeOnFocusOut(event: FocusEvent<HTMLDetailsElement>) {
+  const nextTarget = event.relatedTarget;
+  if (
+    !(nextTarget instanceof Node) ||
+    !event.currentTarget.contains(nextTarget)
+  )
+    event.currentTarget.removeAttribute("open");
+}
+
 export function HeaderNavigation() {
+  const pathname = usePathname();
+
   return (
     <nav className="header-navigation" aria-label="メインメニュー">
       <div className="header-desktop-links">
@@ -58,7 +69,24 @@ export function HeaderNavigation() {
         <HeaderAuth />
       </div>
 
-      <details className="mobile-header-details" onClick={closeAfterNavigation}>
+      {pathname === "/" && (
+        <button
+          type="button"
+          className="mobile-search-trigger"
+          aria-controls="mobile-search-area"
+          aria-label="検索を開閉"
+          title="検索"
+          onClick={() => window.dispatchEvent(new Event("sake:toggle-search"))}
+        >
+          <Search size={21} aria-hidden="true" />
+        </button>
+      )}
+
+      <details
+        className="mobile-header-details"
+        onClick={closeAfterNavigation}
+        onBlur={closeOnFocusOut}
+      >
         <summary className="mobile-menu-trigger">
           <Menu
             className="mobile-menu-open-icon"
@@ -66,7 +94,7 @@ export function HeaderNavigation() {
             aria-hidden="true"
           />
           <X className="mobile-menu-close-icon" size={21} aria-hidden="true" />
-          <span>メニュー</span>
+          <span className="sr-only">メニュー</span>
         </summary>
         <span className="mobile-menu-backdrop" aria-hidden="true" />
         <div className="mobile-header-menu">

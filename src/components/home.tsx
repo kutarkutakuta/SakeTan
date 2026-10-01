@@ -5,6 +5,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type FocusEvent as ReactFocusEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import {
@@ -115,6 +116,9 @@ export function Home({
   const [shops, setShops] = useState<Shop[]>(initialShop ? [initialShop] : []);
   const [query, setQuery] = useState("");
   const [hideSearchResults, setHideSearchResults] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(
+    Boolean(initialBrand),
+  );
   const [results, setResults] = useState<SearchResults>(emptySearchResults);
   const [brand, setBrand] = useState<Brand | null>(initialBrand);
   const [selected, setSelected] = useState<string | null>(
@@ -159,6 +163,19 @@ export function Home({
   const shopSheetRef = useRef<HTMLElement>(null);
   const sheetDragStart = useRef<number | null>(null);
   const sheetDragMoved = useRef(false);
+  useEffect(() => {
+    const toggleMobileSearch = () => {
+      setMobileSearchOpen((current) => {
+        const next = !current;
+        if (next)
+          window.requestAnimationFrame(() => searchInputRef.current?.focus());
+        return next;
+      });
+    };
+    window.addEventListener("sake:toggle-search", toggleMobileSearch);
+    return () =>
+      window.removeEventListener("sake:toggle-search", toggleMobileSearch);
+  }, []);
   const visibleShops = useMemo(
     () => visibleShopList(shops, shopListCenter, selected, visibleShopLimit),
     [selected, shopListCenter, shops, visibleShopLimit],
@@ -363,6 +380,7 @@ export function Home({
     }
   }
   function chooseBrand(value: Brand | null) {
+    if (value) setMobileSearchOpen(true);
     setBrand(value);
     setSelected(null);
     setQuery("");
@@ -391,6 +409,7 @@ export function Home({
   }
 
   function chooseShop(shop: Shop) {
+    setMobileSearchOpen(false);
     manualMapFocus.current = true;
     searchAtLocation.current = false;
     areaSequence.current += 1;
@@ -523,11 +542,29 @@ export function Home({
     if (openComment && !openCommentShop) closeComment();
   }, [closeComment, openComment, openCommentShop]);
 
+  function closeMobileSearchOnFocusOut(event: ReactFocusEvent<HTMLDivElement>) {
+    const nextTarget = event.relatedTarget;
+    if (
+      nextTarget instanceof HTMLElement &&
+      nextTarget.closest(".mobile-search-trigger")
+    )
+      return;
+    if (
+      !(nextTarget instanceof Node) ||
+      !event.currentTarget.contains(nextTarget)
+    )
+      setMobileSearchOpen(false);
+  }
+
   return (
     <main id="main" className={`explore mobile-sheet-${mobileSheetSnap}`}>
       <div className="explore-grid">
         <aside className="explore-panel">
-          <div className="search-area">
+          <div
+            id="mobile-search-area"
+            className={`search-area${mobileSearchOpen ? " mobile-search-open" : ""}`}
+            onBlur={closeMobileSearchOnFocusOut}
+          >
             <div className="search-row">
               <label className="searchbox">
                 <Search size={21} />
