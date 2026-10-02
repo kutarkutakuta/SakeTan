@@ -80,6 +80,11 @@ export async function POST(request: Request) {
       p_brand_id: p.brand_id,
       p_action: p.action,
       p_target_brand_id: p.target_brand_id,
+      p_brewery_id: p.brewery_id,
+      p_brewery_name: p.brewery_name,
+      p_brewery_name_kana: p.brewery_name_kana,
+      p_brewery_prefecture: p.brewery_prefecture,
+      p_brewery_website_url: p.brewery_website_url,
     });
   else if (p.kind === "shop_comment")
     result = await db.rpc("post_shop_comment", {

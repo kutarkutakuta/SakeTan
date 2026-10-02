@@ -106,20 +106,20 @@ https://muro.sakenowa.com/sakenowa-data/
 ```text
 さけのわAPI
     ↓
-importスクリプト
+確認レポート
     ↓
-PostgreSQL
+管理者が内容を確認
     ↓
-さけたん
+管理画面から手動更新
 ```
 
 例：
 
 ```bash
-npm run import:sakenowa
+npm run report:sakenowa
 ```
 
-インポート順：
+比較対象：
 
 ```text
 areas
@@ -129,7 +129,7 @@ breweries
 brands
 ```
 
-`areaId` から都道府県名を解決して `breweries.prefecture` に保存します。
+`areaId` から都道府県名を解決し、新規・変更・API掲載なしの候補をレポートへ出力します。DBへは書き込みません。
 
 インポートは何度実行しても重複しないupsert方式にしてください。
 

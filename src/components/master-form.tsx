@@ -5,6 +5,7 @@ import { errorMessage, fetchJson, mutate } from "@/lib/client";
 import { mapReturnPath } from "@/lib/map-view";
 import type { Brewery, EntityType } from "@/lib/types";
 import { LocationPicker } from "@/components/location-picker";
+import { PrefectureRadioGroup } from "@/components/prefecture-radio-group";
 import { useToast } from "@/components/toast-provider";
 const entityLabels = { shop: "酒屋", brand: "銘柄", brewery: "酒蔵" };
 export function MasterForm({
@@ -32,6 +33,9 @@ export function MasterForm({
   const [results, setResults] = useState<Brewery[]>([]);
   const [shopName, setShopName] = useState(String(initial.name ?? ""));
   const [shopPrefecture, setShopPrefecture] = useState(
+    String(initial.prefecture ?? ""),
+  );
+  const [breweryPrefecture, setBreweryPrefecture] = useState(
     String(initial.prefecture ?? ""),
   );
   const [shopCity, setShopCity] = useState(String(initial.city ?? ""));
@@ -73,7 +77,7 @@ export function MasterForm({
     }
     if (type === "brand" && shopId)
       return "/post?shop_id=" + shopId + "&brand_id=" + resultId;
-    return "/history?type=" + type + "&id=" + resultId;
+    return afterSaveHref ?? "/edit?type=" + type;
   };
   async function saveKana(form: HTMLFormElement) {
     if (!id || type === "shop") return;
@@ -89,7 +93,7 @@ export function MasterForm({
         reason: text("reason") || null,
       });
       showToast(`${entityLabels[type]}のかなを保存しました`);
-      window.location.assign("/history?type=" + type + "&id=" + result.id);
+      window.location.assign(destinationAfterSave(result.id));
     } catch (e) {
       showToast(
         e instanceof Error ? e.message : "保存できませんでした",
@@ -117,7 +121,10 @@ export function MasterForm({
       if (id) data.is_active = f.get("is_active") === "on";
       if (type === "brand") data.brewery_id = selectedBrewery;
       else {
-        data.prefecture = nullable("prefecture");
+        data.prefecture =
+          type === "brewery"
+            ? breweryPrefecture || null
+            : nullable("prefecture");
         if (type === "brewery") data.website_url = nullable("website_url");
       }
       if (type === "shop") {
@@ -333,21 +340,24 @@ export function MasterForm({
         </div>
       ) : (
         <>
-          <label>
-            都道府県 <span className="muted">任意</span>
-            <input
+          {type === "brewery" ? (
+            <PrefectureRadioGroup
               name="prefecture"
-              defaultValue={type === "shop" ? undefined : value("prefecture")}
-              value={type === "shop" ? shopPrefecture : undefined}
-              onChange={
-                type === "shop"
-                  ? (event) => setShopPrefecture(event.target.value)
-                  : undefined
-              }
-              maxLength={50}
-              placeholder="例：長野県"
+              value={breweryPrefecture}
+              onChange={setBreweryPrefecture}
             />
-          </label>
+          ) : (
+            <label>
+              都道府県 <span className="muted">任意</span>
+              <input
+                name="prefecture"
+                value={shopPrefecture}
+                onChange={(event) => setShopPrefecture(event.target.value)}
+                maxLength={50}
+                placeholder="例：長野県"
+              />
+            </label>
+          )}
           {type === "shop" && (
             <>
               <label>

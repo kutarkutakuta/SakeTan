@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { RestoreButton } from "@/components/restore-button";
 import { errorMessage, fetchJson, isAbortError } from "@/lib/client";
@@ -51,6 +51,7 @@ function historyHeading(history: History, names: Record<string, string>) {
 }
 
 export function HistoryLoader() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const query = searchParams.toString();
   const [data, setData] = useState<HistoryData | null>(null);
@@ -90,6 +91,15 @@ export function HistoryLoader() {
   const type = searchParams.get("type") ?? "";
   const id = searchParams.get("id") ?? "";
   const shopId = searchParams.get("shop_id") ?? "";
+  const actor = searchParams.get("actor") === "all" ? "all" : "non_admin";
+  const changeActor = (value: "non_admin" | "all") => {
+    const next = new URLSearchParams(query);
+    if (value === "all") next.set("actor", value);
+    else next.delete("actor");
+    next.delete("page");
+    const nextQuery = next.toString();
+    router.push(nextQuery ? `/history?${nextQuery}` : "/history");
+  };
   const paging = (page: number) => {
     const next = new URLSearchParams(query);
     next.set("page", String(page));
@@ -125,6 +135,22 @@ export function HistoryLoader() {
         <div>
           <h1>更新履歴</h1>
         </div>
+      </div>
+      <div className="card history-controls">
+        <label htmlFor="history-actor-filter">
+          表示するユーザー
+          <select
+            id="history-actor-filter"
+            value={actor}
+            onChange={(event) =>
+              changeActor(event.target.value as "non_admin" | "all")
+            }
+          >
+            <option value="non_admin">管理者を除く</option>
+            <option value="all">全ユーザー</option>
+          </select>
+        </label>
+        {data && <span>{data.count.toLocaleString("ja-JP")}件</span>}
       </div>
       {loading && !data && <p className="muted">更新履歴を読み込んでいます…</p>}
       {error && !data && (
@@ -198,8 +224,12 @@ export function HistoryLoader() {
       })}
       {data && !data.histories.length && (
         <div className="card empty">
-          <h2>まだ更新履歴がありません</h2>
-          <p>酒屋・銘柄・酒蔵の登録や編集が記録されます。</p>
+          <h2>条件に合う更新履歴がありません</h2>
+          <p>
+            {actor === "non_admin"
+              ? "全ユーザーへ切り替えると、管理者による更新も表示できます。"
+              : "酒屋・銘柄・酒蔵の登録や編集が記録されます。"}
+          </p>
         </div>
       )}
       {data && (

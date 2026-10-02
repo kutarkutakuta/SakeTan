@@ -35,7 +35,9 @@ export function EditDetailClient({
   const requestedName = params.get("name")?.slice(0, 150) ?? "";
   const requestedReturnTo = params.get("return_to") ?? undefined;
   const returnTo =
-    requestedReturnTo === "/edit" || requestedReturnTo?.startsWith("/edit?")
+    requestedReturnTo === "/brands" ||
+    requestedReturnTo === "/edit" ||
+    requestedReturnTo?.startsWith("/edit?")
       ? requestedReturnTo
       : undefined;
   const id = recordId === "new" ? null : recordId;
@@ -110,7 +112,7 @@ export function EditDetailClient({
       ? returnTo
       : type === "shop" && id
         ? `/shops/${id}`
-        : "/";
+        : `/edit?type=${type}`;
 
   return (
     <main id="main" className="page narrow">

@@ -772,7 +772,7 @@ nav {
   width: 11px;
   height: 11px;
   color: #a86a09;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1;
 }
@@ -2650,6 +2650,29 @@ nav {
   gap: 9px;
   margin-top: 8px;
 }
+.history-controls {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  margin-bottom: 18px;
+}
+.history-controls label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+.history-controls select {
+  min-width: 190px;
+  font-size: 16px;
+}
+.history-controls > span {
+  color: var(--muted);
+  font-size: 14px;
+}
 .history-entry {
   padding: 24px;
   border-left: 3px solid #dbbbae;
@@ -2855,6 +2878,61 @@ nav {
   margin-top: 8px;
   font-size: 14px;
   line-height: 1.6;
+}
+.prefecture-radio-field {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.prefecture-radio-field legend {
+  margin-bottom: 10px;
+}
+.prefecture-radio-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.prefecture-radio-tags label,
+.brand-review-brewery-modes label {
+  position: relative;
+  cursor: pointer;
+}
+.prefecture-radio-tags input,
+.brand-review-brewery-modes input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.prefecture-radio-tags span,
+.brand-review-brewery-modes span {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: white;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.prefecture-radio-tags input:checked + span,
+.brand-review-brewery-modes input:checked + span {
+  border-color: var(--primary);
+  background: var(--tint);
+  color: var(--primary);
+  font-weight: 600;
+}
+.prefecture-radio-tags input:focus-visible + span,
+.brand-review-brewery-modes input:focus-visible + span {
+  outline: 3px solid color-mix(in srgb, var(--primary) 28%, transparent);
+  outline-offset: 2px;
+}
+.prefecture-radio-clear {
+  margin-top: 10px;
+  font-size: 14px;
 }
 .master-readonly-summary {
   display: grid;
@@ -3070,6 +3148,36 @@ nav {
   display: grid;
   gap: 14px;
 }
+.brand-review-brewery {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg);
+}
+.brand-review-brewery h3 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.5;
+}
+.brand-review-brewery .hint {
+  margin-top: 4px;
+  line-height: 1.6;
+}
+.brand-review-brewery-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.brand-review-brewery-existing,
+.brand-review-brewery-form {
+  display: grid;
+  gap: 12px;
+}
+.brand-review-brewery-form {
+  padding-top: 2px;
+}
 .button.ghost.danger {
   border-color: #dfb4ad;
   color: #8e3024;
@@ -3099,6 +3207,11 @@ nav {
 }
 .brand-merge-results button:hover {
   border-color: var(--primary);
+}
+.brand-merge-results button[aria-pressed="true"] {
+  border-color: var(--primary);
+  background: var(--tint);
+  color: var(--primary);
 }
 .brand-merge-results span {
   color: var(--muted);
@@ -3789,6 +3902,13 @@ nav {
   }
   .page-head h1 {
     font-size: 26px;
+  }
+  .history-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .history-controls select {
+    width: 100%;
   }
   .info-page {
     padding-bottom: 44px;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { ChevronRight, Plus, Search, X } from "lucide-react";
 import { KanaEditDialog } from "@/components/kana-edit-dialog";
 import { useToast } from "@/components/toast-provider";
@@ -212,13 +213,30 @@ export function EditSearch({
                 </span>
                 {(target === "shop" || signedIn) && (
                   <span className="edit-result-action">
-                    {target === "shop" ? "編集" : "かなを編集"}
+                    {target === "shop"
+                      ? "編集"
+                      : admin
+                        ? "詳細編集"
+                        : "かなを編集"}
                     <ChevronRight size={18} />
                   </span>
                 )}
               </>
             );
-            return target !== "shop" && signedIn ? (
+            const returnTo = `/edit?type=${target}&q=${encodeURIComponent(
+              normalizedQuery,
+            )}`;
+            return target !== "shop" && admin ? (
+              <Link
+                className="edit-result"
+                key={item.id}
+                href={`/edit/${target}/${item.id}?return_to=${encodeURIComponent(
+                  returnTo,
+                )}`}
+              >
+                {content}
+              </Link>
+            ) : target !== "shop" && signedIn ? (
               <button
                 className="edit-result"
                 key={item.id}

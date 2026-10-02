@@ -258,16 +258,23 @@ test("brand applications are public, immediately attach to a shop, and can be ap
   );
 
   await asUser(admin);
-  assert.equal(
-    await scalar("select public.review_brand_application($1,'approve',null)", [
+  await assert.rejects(
+    db.query("select public.review_brand_application($1,'approve',null)", [
       pendingBrand,
     ]),
+    /登録する酒蔵名を入力してください/,
+  );
+  assert.equal(
+    await scalar(
+      "select public.review_brand_application($1,'approve',null,null,'申請酒造','しんせいしゅぞう','山形県','https://example.com/brewery')",
+      [pendingBrand],
+    ),
     pendingBrand,
   );
   assert.deepEqual(
     (
       await db.query(
-        "select b.registration_status,w.name as brewery_name,b.registered_at is not null as registered from public.brands b join public.breweries w on w.id=b.brewery_id where b.id=$1",
+        "select b.registration_status,w.name as brewery_name,w.name_kana as brewery_name_kana,w.prefecture,w.website_url,b.registered_at is not null as registered from public.brands b join public.breweries w on w.id=b.brewery_id where b.id=$1",
         [pendingBrand],
       )
     ).rows,
@@ -275,6 +282,9 @@ test("brand applications are public, immediately attach to a shop, and can be ap
       {
         registration_status: "approved",
         brewery_name: "申請酒造",
+        brewery_name_kana: "しんせいしゅぞう",
+        prefecture: "山形県",
+        website_url: "https://example.com/brewery",
         registered: true,
       },
     ],
@@ -326,6 +336,44 @@ test("brand applications retain kana and an existing brewery selection", async (
         name_kana: "かな しんせいのさけ",
         brewery_id: brewery,
         requested_brewery_name: null,
+      },
+    ],
+  );
+  await db.query(
+    "select public.set_shop_brand_status($1,$2,'incorrect','テスト後に無効化')",
+    [shop, pendingBrand],
+  );
+  await db.query(
+    "select public.save_master('brand',$1,'{\"is_active\":false}','テスト後に無効化')",
+    [pendingBrand],
+  );
+});
+test("admin can resolve a typed brewery name to an existing brewery", async () => {
+  await asUser(bob);
+  const pendingBrand = await scalar(
+    "select public.submit_brand_application('既存酒蔵選択酒','入力された別の酒蔵名','既存酒蔵へ紐付け',$1)",
+    [shop],
+  );
+  await asUser(admin);
+  assert.equal(
+    await scalar(
+      "select public.review_brand_application($1,'approve',null,$2)",
+      [pendingBrand, brewery],
+    ),
+    pendingBrand,
+  );
+  assert.deepEqual(
+    (
+      await db.query(
+        "select brewery_id,requested_brewery_name,registration_status from public.brands where id=$1",
+        [pendingBrand],
+      )
+    ).rows,
+    [
+      {
+        brewery_id: brewery,
+        requested_brewery_name: null,
+        registration_status: "approved",
       },
     ],
   );
@@ -740,6 +788,51 @@ test("master edits append history; source metadata and unsupported entity fields
       [shop],
     ),
   );
+});
+test("history pages exclude administrator edits by default and can include all users", async () => {
+  await asUser(admin);
+  const historyShop = await scalar(
+    "select public.save_master('shop',null,$1,'管理者が登録')",
+    [
+      JSON.stringify({
+        name: "履歴フィルター酒店",
+        name_kana: "りれきふぃるたーさけてん",
+        prefecture: "東京都",
+        city: "台東区",
+        latitude: 35.71,
+        longitude: 139.78,
+      }),
+    ],
+  );
+  await asUser(bob);
+  await db.query(
+    "select public.save_master('shop',$1,'{\"name\":\"履歴フィルター酒店・利用者更新\"}','利用者が更新')",
+    [historyShop],
+  );
+  await asUser(admin);
+  await db.query(
+    "select public.save_master('shop',$1,'{\"name\":\"履歴フィルター酒店・管理者更新\"}','管理者が更新')",
+    [historyShop],
+  );
+
+  await asUser(null);
+  const nonAdmin = await db.query<{
+    user_name: string;
+    total_count: number;
+  }>(
+    "select user_name,total_count::integer from public.history_page('shop',$1,null,false,0,30)",
+    [historyShop],
+  );
+  assert.equal(nonAdmin.rows.length, 1);
+  assert.equal(nonAdmin.rows[0].user_name, "Bob");
+  assert.equal(nonAdmin.rows[0].total_count, 1);
+
+  const allUsers = await db.query<{ total_count: number }>(
+    "select total_count::integer from public.history_page('shop',$1,null,true,0,30)",
+    [historyShop],
+  );
+  assert.equal(allUsers.rows.length, 3);
+  assert.ok(allUsers.rows.every((row) => row.total_count === 3));
 });
 test("admin restore adds immutable history, ordinary users denied", async () => {
   const history = await scalar(

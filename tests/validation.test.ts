@@ -357,6 +357,32 @@ test("shop brand status action accepts only the three public statuses", () => {
   );
 });
 
+test("brand review validates new brewery prefectures and URLs", () => {
+  const input = {
+    kind: "brand_application_review" as const,
+    brand_id: "10000000-0000-4000-8000-000000000001",
+    action: "approve" as const,
+    target_brand_id: null,
+    brewery_id: null,
+    brewery_name: "申請酒造",
+    brewery_name_kana: "しんせいしゅぞう",
+    brewery_prefecture: "山形県",
+    brewery_website_url: "https://example.com/",
+  };
+  assert.equal(actionSchema.safeParse(input).success, true);
+  assert.equal(
+    actionSchema.safeParse({ ...input, brewery_prefecture: "山形" }).success,
+    false,
+  );
+  assert.equal(
+    actionSchema.safeParse({
+      ...input,
+      brewery_website_url: "javascript:alert(1)",
+    }).success,
+    false,
+  );
+});
+
 test("shop brand copy accepts one to ten destination shops", () => {
   const input = {
     kind: "shop_brand_copy",

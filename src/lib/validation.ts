@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { todayJapan } from "./utils";
+import { prefectures } from "./brand-index";
 const optionalText = z.string().trim().max(150).nullable();
+const prefecture = z.enum(prefectures);
 const website = z.union([
   z
     .url()
@@ -99,6 +101,11 @@ export const actionSchema = z.discriminatedUnion("kind", [
     brand_id: z.uuid(),
     action: z.enum(["approve", "merge", "reject"]),
     target_brand_id: z.uuid().nullable(),
+    brewery_id: z.uuid().nullable(),
+    brewery_name: z.string().trim().min(1).max(150).nullable(),
+    brewery_name_kana: optionalText,
+    brewery_prefecture: prefecture.nullable(),
+    brewery_website_url: website,
   }),
   z.object({
     kind: z.literal("shop_comment"),

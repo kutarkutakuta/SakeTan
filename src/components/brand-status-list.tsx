@@ -135,7 +135,13 @@ export function BrandStatusList() {
                   <p>{brewery}</p>
                 </div>
                 <div className="brand-status-card-links">
-                  <a href={`/edit/brand/${brand.id}`}>かなを編集</a>
+                  <Link
+                    href={`/edit/brand/${brand.id}?return_to=${encodeURIComponent(
+                      "/brands",
+                    )}`}
+                  >
+                    {data.admin ? "詳細編集" : "かなを編集"}
+                  </Link>
                   <Link href={`/history?type=brand&id=${brand.id}`}>
                     更新履歴
                   </Link>
@@ -176,10 +182,7 @@ export function BrandStatusList() {
                     <strong>申請理由：</strong>
                     {brand.application_reason ?? "記載なし"}
                   </p>
-                  <BrandReviewActions
-                    brandId={brand.id}
-                    onReviewed={() => load()}
-                  />
+                  <BrandReviewActions brand={brand} onReviewed={() => load()} />
                 </div>
               )}
             </article>

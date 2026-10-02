@@ -3,16 +3,28 @@ import type { History } from "@/lib/types";
 import { z } from "zod";
 
 const entityTypes = new Set(["shop", "brand", "brewery", "shop_brand"]);
+const actorFilters = new Set(["non_admin", "all"]);
+
+type HistoryPageRow = Omit<History, "users"> & {
+  user_name: string;
+  total_count: number | string;
+};
 
 export async function GET(request: Request) {
   const searchParams = new URL(request.url).searchParams;
   const requestedType = searchParams.get("type") ?? "";
   const type = entityTypes.has(requestedType) ? requestedType : "";
-  const id = searchParams.get("id")?.slice(0, 100) ?? "";
+  const requestedId = searchParams.get("id");
+  const id = requestedId ? z.uuid().safeParse(requestedId) : null;
+  if (id && !id.success)
+    return Response.json({ error: "対象IDが不正です" }, { status: 400 });
   const requestedShopId = searchParams.get("shop_id");
   const shopId = requestedShopId ? z.uuid().safeParse(requestedShopId) : null;
   if (shopId && !shopId.success)
     return Response.json({ error: "酒屋IDが不正です" }, { status: 400 });
+  const requestedActor = searchParams.get("actor") ?? "non_admin";
+  if (!actorFilters.has(requestedActor))
+    return Response.json({ error: "ユーザー条件が不正です" }, { status: 400 });
   const page = Math.max(
     1,
     Math.min(10000, Math.floor(Number(searchParams.get("page"))) || 1),
@@ -28,32 +40,30 @@ export async function GET(request: Request) {
       names: {},
     });
 
-  let query = db
-    .from("change_histories")
-    .select(
-      "id,entity_type,entity_id,action,before_data,after_data,created_at,reason,users(name)",
-      { count: "exact" },
-    )
-    .order("created_at", { ascending: false })
-    .order("id")
-    .range((page - 1) * 30, page * 30 - 1);
-  if (shopId?.success) {
-    query = query.or(
-      `and(entity_type.eq.shop,entity_id.eq.${shopId.data}),and(entity_type.eq.shop_brand,after_data->>shop_id.eq.${shopId.data})`,
-    );
-  } else {
-    if (type) query = query.eq("entity_type", type);
-    if (id) query = query.eq("entity_id", id);
-  }
-
-  const [historyResult, account] = await Promise.all([query, authorization()]);
+  const [historyResult, account] = await Promise.all([
+    db.rpc("history_page", {
+      p_entity_type: type || null,
+      p_entity_id: id?.success ? id.data : null,
+      p_shop_id: shopId?.success ? shopId.data : null,
+      p_include_admin: requestedActor === "all",
+      p_offset: (page - 1) * 30,
+      p_limit: 30,
+    }),
+    authorization(),
+  ]);
   if (historyResult.error)
     return Response.json(
       { error: "履歴を取得できませんでした" },
       { status: 500 },
     );
 
-  const histories = (historyResult.data ?? []) as unknown as History[];
+  const rows = (historyResult.data ?? []) as unknown as HistoryPageRow[];
+  const histories: History[] = rows.map(
+    ({ user_name, total_count: _totalCount, ...history }) => ({
+      ...history,
+      users: { name: user_name },
+    }),
+  );
   const references = [
     ["brewery_id", "breweries"],
     ["shop_id", "shops"],
@@ -84,7 +94,7 @@ export async function GET(request: Request) {
   return Response.json(
     {
       histories,
-      count: historyResult.count ?? 0,
+      count: Number(rows[0]?.total_count ?? 0),
       page,
       admin: account.admin,
       canRestoreKana: Boolean(account.user && !account.anonymous),
