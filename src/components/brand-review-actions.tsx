@@ -106,17 +106,21 @@ export function BrandReviewActions({
     };
   }, [brand.id, mergeOpen, mergeQuery, showToast]);
 
+  const newBreweryReady =
+    Boolean(newBreweryName.trim()) && Boolean(newBreweryPrefecture);
   const approvalReady =
-    !needsBrewery ||
-    (breweryMode === "existing" && Boolean(selectedBrewery)) ||
-    (breweryMode === "new" &&
-      Boolean(newBreweryName.trim()) &&
-      Boolean(newBreweryPrefecture));
+    !needsBrewery || (breweryMode === "existing" && Boolean(selectedBrewery));
+  const registrationReady =
+    needsBrewery && breweryMode === "new" && newBreweryReady;
 
   async function review(
-    action: "approve" | "merge" | "reject",
+    action: "approve" | "register_brewery" | "merge" | "reject",
     targetBrandId: string | null = null,
   ) {
+    if (action === "register_brewery" && !registrationReady) {
+      showToast("酒蔵名と都道府県を入力してください", "error");
+      return;
+    }
     if (action === "approve" && !approvalReady) {
       showToast(
         breweryMode === "existing"
@@ -127,8 +131,7 @@ export function BrandReviewActions({
       return;
     }
     if (
-      action === "approve" &&
-      breweryMode === "new" &&
+      action === "register_brewery" &&
       newBreweryWebsite.trim() &&
       !/^https?:\/\//u.test(newBreweryWebsite.trim())
     ) {
@@ -140,8 +143,7 @@ export function BrandReviewActions({
     }
     setBusy(true);
     try {
-      const createBrewery =
-        action === "approve" && needsBrewery && breweryMode === "new";
+      const createBrewery = action === "register_brewery";
       await mutate({
         kind: "brand_application_review",
         brand_id: brand.id,
@@ -160,12 +162,12 @@ export function BrandReviewActions({
       });
       showToast(
         action === "approve"
-          ? createBrewery
-            ? "酒蔵を登録し、銘柄申請を承認しました"
-            : "銘柄登録を承認しました"
-          : action === "merge"
-            ? "既存銘柄へ統合しました"
-            : "申請を却下しました",
+          ? "銘柄登録を承認しました"
+          : action === "register_brewery"
+            ? "酒蔵を登録しました。銘柄は承認待ちです"
+            : action === "merge"
+              ? "既存銘柄へ統合しました"
+              : "申請を却下しました",
       );
       await onReviewed();
     } catch (reason) {
@@ -292,19 +294,31 @@ export function BrandReviewActions({
                   placeholder="https://"
                 />
               </label>
+              <p className="hint">酒蔵を登録した後、銘柄申請を承認します。</p>
             </div>
           )}
         </section>
       )}
       <div className="actions">
-        <button
-          className="button small"
-          disabled={busy || !approvalReady}
-          type="button"
-          onClick={() => void review("approve")}
-        >
-          登録を承認
-        </button>
+        {needsBrewery && breweryMode === "new" ? (
+          <button
+            className="button small"
+            disabled={busy || !registrationReady}
+            type="button"
+            onClick={() => void review("register_brewery")}
+          >
+            酒蔵を登録
+          </button>
+        ) : (
+          <button
+            className="button small"
+            disabled={busy || !approvalReady}
+            type="button"
+            onClick={() => void review("approve")}
+          >
+            登録を承認
+          </button>
+        )}
         <button
           className="button small ghost"
           disabled={busy}

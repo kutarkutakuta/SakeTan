@@ -371,6 +371,10 @@ test("brand review validates new brewery prefectures and URLs", () => {
   };
   assert.equal(actionSchema.safeParse(input).success, true);
   assert.equal(
+    actionSchema.safeParse({ ...input, action: "register_brewery" }).success,
+    true,
+  );
+  assert.equal(
     actionSchema.safeParse({ ...input, brewery_prefecture: "山形" }).success,
     false,
   );

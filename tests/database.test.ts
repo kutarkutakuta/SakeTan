@@ -262,13 +262,37 @@ test("brand applications are public, immediately attach to a shop, and can be ap
     db.query("select public.review_brand_application($1,'approve',null)", [
       pendingBrand,
     ]),
-    /登録する酒蔵名を入力してください/,
+    /先に酒蔵を登録するか、既存酒蔵を選択してください/,
   );
   assert.equal(
     await scalar(
-      "select public.review_brand_application($1,'approve',null,null,'申請酒造','しんせいしゅぞう','山形県','https://example.com/brewery')",
+      "select public.review_brand_application($1,'register_brewery',null,null,'申請酒造','しんせいしゅぞう','山形県','https://example.com/brewery')",
       [pendingBrand],
     ),
+    pendingBrand,
+  );
+  assert.deepEqual(
+    (
+      await db.query(
+        "select b.registration_status,w.name as brewery_name,w.name_kana as brewery_name_kana,w.prefecture,w.website_url,b.registered_at is not null as registered from public.brands b join public.breweries w on w.id=b.brewery_id where b.id=$1",
+        [pendingBrand],
+      )
+    ).rows,
+    [
+      {
+        registration_status: "pending",
+        brewery_name: "申請酒造",
+        brewery_name_kana: "しんせいしゅぞう",
+        prefecture: "山形県",
+        website_url: "https://example.com/brewery",
+        registered: false,
+      },
+    ],
+  );
+  assert.equal(
+    await scalar("select public.review_brand_application($1,'approve',null)", [
+      pendingBrand,
+    ]),
     pendingBrand,
   );
   assert.deepEqual(

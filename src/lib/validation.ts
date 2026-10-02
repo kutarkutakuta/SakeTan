@@ -99,7 +99,7 @@ export const actionSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("brand_application_review"),
     brand_id: z.uuid(),
-    action: z.enum(["approve", "merge", "reject"]),
+    action: z.enum(["approve", "register_brewery", "merge", "reject"]),
     target_brand_id: z.uuid().nullable(),
     brewery_id: z.uuid().nullable(),
     brewery_name: z.string().trim().min(1).max(150).nullable(),
