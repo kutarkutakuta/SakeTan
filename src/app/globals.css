@@ -729,6 +729,14 @@ nav {
   line-height: 1.45;
   overflow-wrap: anywhere;
 }
+.shop-card-location {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
 .shop-card-brands {
   position: relative;
   z-index: 2;

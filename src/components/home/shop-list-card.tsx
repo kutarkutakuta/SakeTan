@@ -36,6 +36,8 @@ export function ShopListCard({
   shop: Shop;
   shopHref: string;
 }) {
+  const location = [shop.prefecture, shop.city].filter(Boolean).join(" ");
+
   return (
     <div
       className={"shop-card " + (selected ? "active" : "")}
@@ -61,6 +63,9 @@ export function ShopListCard({
         <div className="shop-card-main">
           <span className="shop-card-copy">
             <h3>{shop.name}</h3>
+            {location && (
+              <span className="shop-card-location">{location}</span>
+            )}
           </span>
         </div>
         <div className="shop-card-actions">
