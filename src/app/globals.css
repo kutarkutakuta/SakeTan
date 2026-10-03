@@ -1283,6 +1283,11 @@ nav {
   color: var(--muted);
   margin-top: 8px;
 }
+.edit-admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 .shop-head .actions {
   flex: none;
   flex-wrap: nowrap;
@@ -2650,26 +2655,29 @@ nav {
   gap: 9px;
   margin-top: 8px;
 }
-.history-controls {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px 20px;
-  margin-bottom: 18px;
+.history-page-head {
+  align-items: center;
 }
-.history-controls label {
-  display: grid;
-  gap: 7px;
+.history-head-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  min-width: 0;
+}
+.history-actor-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   color: var(--muted);
   font-size: 14px;
   font-weight: 600;
 }
-.history-controls select {
+.history-actor-filter select {
   min-width: 190px;
   font-size: 16px;
 }
-.history-controls > span {
+.history-count {
   color: var(--muted);
   font-size: 14px;
 }
@@ -3903,11 +3911,16 @@ nav {
   .page-head h1 {
     font-size: 26px;
   }
-  .history-controls {
-    align-items: stretch;
-    flex-direction: column;
+  .history-head-actions {
+    width: 100%;
+    justify-content: space-between;
   }
-  .history-controls select {
+  .history-actor-filter {
+    min-width: 0;
+    flex: 1;
+  }
+  .history-actor-filter select {
+    min-width: 0;
     width: 100%;
   }
   .info-page {

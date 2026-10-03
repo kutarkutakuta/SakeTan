@@ -140,11 +140,11 @@ export function EditDetailClient({
         <p className="muted">登録情報を読み込んでいます…</p>
       ) : !state.found ? (
         <p className="notice">登録情報が見つかりません</p>
-      ) : (type === "brand" || type === "brewery") && !id ? (
+      ) : (type === "brand" || type === "brewery") && !id && !state.admin ? (
         <div className="card">
-          <h2>{entity.name}マスタは、さけのわから同期しています</h2>
+          <h2>{entity.name}マスタは管理者が管理しています</h2>
           <p className="hint">
-            ここから新しい{entity.name}を登録することはできません。
+            新しい{entity.name}の登録は管理者のみ行えます。
           </p>
         </div>
       ) : state.signedIn ? (

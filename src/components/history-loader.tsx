@@ -131,26 +131,31 @@ export function HistoryLoader() {
         <ArrowLeft size={17} />
         戻る
       </a>
-      <div className="page-head">
-        <div>
-          <h1>更新履歴</h1>
-        </div>
-      </div>
-      <div className="card history-controls">
-        <label htmlFor="history-actor-filter">
-          表示するユーザー
-          <select
-            id="history-actor-filter"
-            value={actor}
-            onChange={(event) =>
-              changeActor(event.target.value as "non_admin" | "all")
-            }
+      <div className="page-head history-page-head">
+        <h1>更新履歴</h1>
+        <div className="history-head-actions">
+          <label
+            className="history-actor-filter"
+            htmlFor="history-actor-filter"
           >
-            <option value="non_admin">管理者を除く</option>
-            <option value="all">全ユーザー</option>
-          </select>
-        </label>
-        {data && <span>{data.count.toLocaleString("ja-JP")}件</span>}
+            <span className="sr-only">表示するユーザー</span>
+            <select
+              id="history-actor-filter"
+              value={actor}
+              onChange={(event) =>
+                changeActor(event.target.value as "non_admin" | "all")
+              }
+            >
+              <option value="non_admin">管理者を除く</option>
+              <option value="all">全ユーザー</option>
+            </select>
+          </label>
+          {data && (
+            <span className="history-count">
+              {data.count.toLocaleString("ja-JP")}件
+            </span>
+          )}
+        </div>
       </div>
       {loading && !data && <p className="muted">更新履歴を読み込んでいます…</p>}
       {error && !data && (

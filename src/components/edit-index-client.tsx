@@ -36,6 +36,16 @@ export function EditIndexClient() {
       </a>
       <div className="page-head">
         <h1>登録情報を編集</h1>
+        {access.admin && (
+          <div className="edit-admin-actions" aria-label="マスター登録">
+            <a className="button small ghost" href="/edit/brewery/new">
+              酒蔵を登録
+            </a>
+            <a className="button small" href="/edit/brand/new">
+              銘柄を登録
+            </a>
+          </div>
+        )}
       </div>
       <EditSearch
         admin={access.admin}

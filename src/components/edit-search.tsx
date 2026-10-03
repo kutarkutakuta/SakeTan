@@ -266,7 +266,7 @@ export function EditSearch({
 
       {!admin && signedIn && (
         <p className="notice master-source-note">
-          銘柄と酒蔵は、かなのみ編集できます。名称・酒蔵の紐付けなどは、さけのわデータを利用しています。
+          銘柄と酒蔵は、かなのみ編集できます。名称・酒蔵の紐付けなどの変更は管理者が行います。
         </p>
       )}
       {!signedIn && (

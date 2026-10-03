@@ -103,6 +103,19 @@ test("Google metadata cannot promote users; email is not public; raw writes deni
     db.query("insert into public.brands(name) values('不正')"),
   );
 });
+test("legacy brand request intake has been removed", async () => {
+  await db.exec("reset role");
+  assert.equal(
+    await scalar<string | null>("select to_regclass('public.brand_requests')"),
+    null,
+  );
+  assert.equal(
+    await scalar<number>(
+      "select count(*)::integer from pg_proc where pronamespace='public'::regnamespace and proname in ('submit_brand_request','review_brand_request')",
+    ),
+    0,
+  );
+});
 test("shops do not store website URLs", async () => {
   await db.exec("reset role");
   assert.equal(
@@ -545,12 +558,45 @@ test("display names remain custom after provider metadata refresh", async () => 
     "好みの名前",
   );
 });
-test("even admins cannot create local brand masters", async () => {
+test("admins can create local brewery and brand masters", async () => {
   await asUser(admin);
+  const localBrewery = await scalar(
+    "select public.save_master('brewery',null,$1)",
+    [
+      JSON.stringify({
+        name: "ローカル酒造",
+        name_kana: "ろーかるしゅぞう",
+        prefecture: "長野県",
+      }),
+    ],
+  );
+  const localBrand = await scalar(
+    "select public.save_master('brand',null,$1)",
+    [
+      JSON.stringify({
+        name: "ローカル銘柄",
+        name_kana: "ろーかるめいがら",
+        brewery_id: localBrewery,
+      }),
+    ],
+  );
+  assert.equal(
+    await scalar("select name from public.breweries where id=$1", [
+      localBrewery,
+    ]),
+    "ローカル酒造",
+  );
+  assert.equal(
+    await scalar("select brewery_id from public.brands where id=$1", [
+      localBrand,
+    ]),
+    localBrewery,
+  );
+  await asUser(alice);
   await assert.rejects(
-    db.query(
-      "select public.save_master('brand',null,'{\"name\":\"ローカル銘柄\"}')",
-    ),
+    db.query("select public.save_master('brand',null,$1)", [
+      JSON.stringify({ name: "利用者作成銘柄" }),
+    ]),
   );
 });
 test("posting creates relation atomically, out-of-order posts aggregate min/max without duplicates", async () => {
@@ -1262,7 +1308,6 @@ test("anonymous contributions can be claimed by an existing account exactly once
     ["shop_brands", "created_by"],
     ["sightings", "user_id"],
     ["change_histories", "changed_by"],
-    ["brand_requests", "submitted_by"],
   ])
     assert.equal(
       await scalar<number>(

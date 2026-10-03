@@ -5,8 +5,7 @@ import { BrandStatusList } from "@/components/brand-status-list";
 
 export const metadata: Metadata = {
   title: "銘柄の状態",
-  description:
-    "日本酒銘柄の登録状況と、取扱店舗を確認できます。",
+  description: "日本酒銘柄の登録状況と、取扱店舗を確認できます。",
 };
 
 export default function BrandStatusesPage() {
@@ -18,7 +17,6 @@ export default function BrandStatusesPage() {
       </Link>
       <div className="page-head">
         <div>
-          <p className="eyebrow">登録状況と取扱店舗を確認</p>
           <h1>銘柄の状態</h1>
         </div>
       </div>

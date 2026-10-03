@@ -78,6 +78,21 @@ test("shop product parser supports a site-specific selector", () => {
   ]);
 });
 
+test("site-specific selectors split slash-separated brand names", () => {
+  const products = extractProducts(
+    '<ul><li class="brand">愛宕の松/伯楽星</li></ul>',
+    "https://shop.example/list",
+    ".brand",
+  );
+  assert.deepEqual(
+    products.map(({ sourceName, evidence }) => ({ sourceName, evidence })),
+    [
+      { sourceName: "愛宕の松", evidence: "愛宕の松/伯楽星" },
+      { sourceName: "伯楽星", evidence: "愛宕の松/伯楽星" },
+    ],
+  );
+});
+
 test("shop product parser reads storefront categories with brewery context", () => {
   const products = extractProducts(
     '<link rel="chapter" href="/?category_id=1" title="鶴齢/雪男【新潟 青木酒造】 | CATEGORY">' +
@@ -630,6 +645,39 @@ test("automatic approval accepts exact and confirmed aliases once per brand", ()
   assert.equal(
     approved.find((item) => item.sourceName.startsWith("獺祭 "))?.approved,
     false,
+  );
+});
+
+test("写楽 and 冩樂 resolve to the confirmed canonical brand", () => {
+  const catalogBrand = {
+    id: "10000000-0000-4000-8000-000000000030",
+    name: "写楽（冩樂）",
+    nameKana: null,
+    breweryName: "宮泉銘醸",
+  } satisfies CatalogBrand;
+  const items = buildReviewItems(
+    [
+      {
+        sourceName: "写楽",
+        sourceUrl: null,
+        pageUrl: "https://shop.example/items",
+        method: "selector",
+      },
+      {
+        sourceName: "冩樂",
+        sourceUrl: null,
+        pageUrl: "https://shop.example/items",
+        method: "selector",
+      },
+    ],
+    [catalogBrand],
+  );
+  assert.deepEqual(
+    items.map((item) => ({ matchKind: item.matchKind, brandId: item.brandId })),
+    [
+      { matchKind: "alias", brandId: catalogBrand.id },
+      { matchKind: "alias", brandId: catalogBrand.id },
+    ],
   );
 });
 

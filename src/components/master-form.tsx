@@ -336,7 +336,6 @@ export function MasterForm({
               </p>
             </>
           )}
-          <p className="hint">酒蔵マスタも、さけのわから同期しています。</p>
         </div>
       ) : (
         <>

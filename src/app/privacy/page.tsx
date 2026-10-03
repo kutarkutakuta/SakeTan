@@ -76,7 +76,7 @@ export default function PrivacyPage() {
             <li>Supabase：認証、データベースおよび関連機能</li>
             <li>Google Maps Platform：地図、現在地周辺および店舗検索</li>
             <li>Google、X、Facebook：希望した場合のソーシャルログイン</li>
-            <li>さけのわデータ：酒蔵・銘柄マスタのデータ提供元</li>
+            <li>外部データ提供元：酒蔵・銘柄マスタの情報源</li>
           </ul>
           <p>
             各サービスによる情報の取り扱いには、それぞれの利用規約やプライバシーポリシーが適用されます。

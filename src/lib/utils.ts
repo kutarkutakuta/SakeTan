@@ -77,7 +77,7 @@ export const labels: Record<string, string> = {
   shop_id: "酒屋",
   brand_id: "銘柄",
   status: "取扱状況",
-  external_url: "さけのわURL",
+  external_url: "銘柄ページURL",
   registration_status: "登録状態",
   requested_brewery_name: "申請された酒蔵名",
   registered_at: "登録日",

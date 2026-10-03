@@ -226,17 +226,22 @@ function extractElements(
   const results: ExtractedProduct[] = [];
   $(selector).each((_, node) => {
     const element = $(node);
-    const name = elementName($, element);
-    if (!name) return;
-    results.push({
-      sourceName: name,
-      sourceBreweryName: null,
-      sourceUrl: elementUrl(element, pageUrl),
-      pageUrl,
-      pageNumber: null,
-      evidence: name,
-      method,
-    });
+    const publishedName = elementName($, element);
+    if (!publishedName) return;
+    for (const name of publishedName
+      .split(/[\/／]/u)
+      .map((value) => value.trim())
+      .filter(Boolean)) {
+      results.push({
+        sourceName: name,
+        sourceBreweryName: null,
+        sourceUrl: elementUrl(element, pageUrl),
+        pageUrl,
+        pageNumber: null,
+        evidence: publishedName,
+        method,
+      });
+    }
   });
   return results;
 }
@@ -745,13 +750,17 @@ export function matchProduct(
   const exact = candidates[0].score >= 1000;
   const tied =
     candidates.length > 1 && candidates[0].score === candidates[1].score;
-  const alias = confirmedAlias(
-    cleanProductName(product.sourceName.replace(/【[^】]*】/g, " ")),
+  const sourceForMatch = cleanProductName(
+    product.sourceName.replace(/【[^】]*】/g, " "),
   );
+  const alias = confirmedAlias(sourceForMatch);
+  const directExact =
+    normalizeProductName(sourceForMatch) ===
+    normalizeProductName(candidates[0].brandName);
   const matchKind: MatchKind = exact
     ? tied
       ? "ambiguous"
-      : alias
+      : alias && !directExact
         ? "alias"
         : "exact"
     : tied
