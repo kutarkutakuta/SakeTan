@@ -5,6 +5,7 @@ import {
   loadGoogleMaps,
   loadGooglePlaces,
 } from "@/lib/google-maps";
+import { addressComponent, municipality } from "@/lib/google-address";
 
 type Position = { latitude: number; longitude: number };
 type PlaceSelection = Position & {
@@ -14,40 +15,6 @@ type PlaceSelection = Position & {
   prefecture: string | null;
   city: string | null;
 };
-
-function component(
-  items: google.maps.places.AddressComponent[] | undefined,
-  types: string[],
-) {
-  for (const type of types) {
-    const value = items?.find((item) => item.types.includes(type))?.longText;
-    if (value) return value;
-  }
-  return null;
-}
-
-function municipality(
-  items: google.maps.places.AddressComponent[] | undefined,
-) {
-  const locality = component(items, ["locality"]);
-  const sublocality = component(items, ["sublocality_level_1"]);
-
-  // 政令指定都市では「市」と「区」が別々のコンポーネントで返る。
-  // 東京23区など locality 自体が区の場合、下位の町名は結合しない。
-  if (
-    locality?.endsWith("市") &&
-    sublocality?.endsWith("区") &&
-    !locality.endsWith(sublocality)
-  ) {
-    return `${locality}${sublocality}`;
-  }
-
-  return (
-    locality ??
-    component(items, ["administrative_area_level_2", "postal_town"]) ??
-    (sublocality?.endsWith("区") ? sublocality : null)
-  );
-}
 
 export default function LocationPickerMap({
   position,
@@ -131,7 +98,7 @@ export default function LocationPickerMap({
                     longitude: place.location.lng(),
                     googlePlaceId: place.id,
                     name: place.displayName || "",
-                    prefecture: component(place.addressComponents, [
+                    prefecture: addressComponent(place.addressComponents, [
                       "administrative_area_level_1",
                     ]),
                     city: municipality(place.addressComponents),

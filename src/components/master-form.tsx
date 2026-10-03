@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import { errorMessage, fetchJson, mutate } from "@/lib/client";
+import { changeReasonError } from "@/lib/change-reason";
 import { mapReturnPath } from "@/lib/map-view";
 import type { Brewery, EntityType } from "@/lib/types";
 import { LocationPicker } from "@/components/location-picker";
@@ -16,6 +17,8 @@ export function MasterForm({
   shopId,
   afterSaveHref,
   kanaOnly = false,
+  canDeactivate = true,
+  admin,
 }: {
   type: EntityType;
   id: string | null;
@@ -24,6 +27,8 @@ export function MasterForm({
   shopId?: string;
   afterSaveHref?: string;
   kanaOnly?: boolean;
+  canDeactivate?: boolean;
+  admin: boolean;
 }) {
   const { showToast } = useToast();
   const [searchError, setSearchError] = useState("");
@@ -41,6 +46,10 @@ export function MasterForm({
   const [shopCity, setShopCity] = useState(String(initial.city ?? ""));
   const [duplicateState, setDuplicateState] = useState({
     blocking: false,
+    pending: false,
+  });
+  const [areaState, setAreaState] = useState({
+    error: false,
     pending: false,
   });
   useEffect(() => {
@@ -85,6 +94,8 @@ export function MasterForm({
     const f = new FormData(form);
     const text = (key: string) => String(f.get(key) ?? "").trim();
     try {
+      const reasonError = !admin && changeReasonError(text("reason"));
+      if (reasonError) throw new Error(reasonError);
       const result = await mutate({
         kind: "master_kana",
         type,
@@ -113,12 +124,19 @@ export function MasterForm({
         throw new Error("登録済み店舗の確認が終わるまでお待ちください");
       if (type === "shop" && !id && duplicateState.blocking)
         throw new Error("この店舗はすでに登録されています");
+      if (type === "shop" && areaState.pending)
+        throw new Error("地域情報の確認が終わるまでお待ちください");
+      if (type === "shop" && areaState.error)
+        throw new Error("地図位置を選び直して地域情報を確認してください");
       let selectedBrewery = brewery?.id ?? null;
+      const reasonError = id && !admin && changeReasonError(text("reason"));
+      if (reasonError) throw new Error(reasonError);
       const data: Record<string, unknown> = {
         name: text("name"),
         name_kana: type === "shop" ? text("name_kana") : nullable("name_kana"),
       };
-      if (id) data.is_active = f.get("is_active") === "on";
+      if (id && (type !== "shop" || canDeactivate))
+        data.is_active = f.get("is_active") === "on";
       if (type === "brand") data.brewery_id = selectedBrewery;
       else {
         data.prefecture =
@@ -204,12 +222,15 @@ export function MasterForm({
           </small>
         </label>
         <label>
-          変更理由 <span className="muted">任意</span>
+          変更理由 <span className="required">必須</span>
           <textarea
             name="reason"
+            minLength={2}
             maxLength={500}
+            required
             placeholder="例：公式サイトの表記に合わせて修正"
           />
+          <small>2文字以上で、変更内容が分かる理由を入力してください。</small>
         </label>
         <button disabled={busy} type="submit" className="button full">
           {busy ? "保存しています…" : "かなを保存"}
@@ -240,12 +261,19 @@ export function MasterForm({
               ? initial.google_place_id
               : null
           }
+          prefecture={shopPrefecture}
+          city={shopCity}
           duplicateCheckEnabled={!id}
           onDuplicateStateChange={setDuplicateState}
+          onAreaStateChange={setAreaState}
           onPlaceDetails={(details) => {
             if (details.name) setShopName(details.name);
-            setShopPrefecture(details.prefecture ?? "");
-            setShopCity(details.city ?? "");
+            if (details.prefecture) {
+              if (!details.city && details.prefecture !== shopPrefecture)
+                setShopCity("");
+              setShopPrefecture(details.prefecture);
+            }
+            if (details.city) setShopCity(details.city);
           }}
         />
       )}
@@ -346,29 +374,10 @@ export function MasterForm({
               onChange={setBreweryPrefecture}
             />
           ) : (
-            <label>
-              都道府県 <span className="muted">任意</span>
-              <input
-                name="prefecture"
-                value={shopPrefecture}
-                onChange={(event) => setShopPrefecture(event.target.value)}
-                maxLength={50}
-                placeholder="例：長野県"
-              />
-            </label>
+            <input type="hidden" name="prefecture" value={shopPrefecture} />
           )}
           {type === "shop" && (
-            <>
-              <label>
-                市区町村 <span className="muted">任意</span>
-                <input
-                  name="city"
-                  value={shopCity}
-                  onChange={(event) => setShopCity(event.target.value)}
-                  maxLength={100}
-                />
-              </label>
-            </>
+            <input type="hidden" name="city" value={shopCity} />
           )}
           {type === "brewery" && (
             <label>
@@ -385,24 +394,42 @@ export function MasterForm({
       )}
       {id && (
         <>
-          <label className="check-label">
-            <input
-              type="checkbox"
-              name="is_active"
-              defaultChecked={initial.is_active !== false}
-            />
-            {entityLabels[type]}を有効にする
-          </label>
-          <p className="hint">
-            チェックを外すと検索・取扱情報に表示されなくなります。履歴は残ります。
-          </p>
+          {type !== "shop" || canDeactivate ? (
+            <>
+              <label className="check-label">
+                <input
+                  type="checkbox"
+                  name="is_active"
+                  defaultChecked={initial.is_active !== false}
+                />
+                {entityLabels[type]}を有効にする
+              </label>
+              <p className="hint">
+                チェックを外すと検索・取扱情報に表示されなくなります。履歴は残ります。
+              </p>
+            </>
+          ) : (
+            <p className="hint">
+              店舗の無効化は登録者本人または管理者だけ実行できます。
+            </p>
+          )}
           <label>
-            変更理由 <span className="muted">任意</span>
+            変更理由{" "}
+            <span className={admin ? "muted" : "required"}>
+              {admin ? "任意" : "必須"}
+            </span>
             <textarea
               name="reason"
+              minLength={admin ? undefined : 2}
               maxLength={500}
+              required={!admin}
               placeholder="例：お店の移転に伴い地図位置を変更"
             />
+            {!admin && (
+              <small>
+                2文字以上で、変更内容が分かる理由を入力してください。
+              </small>
+            )}
           </label>
         </>
       )}
@@ -414,6 +441,7 @@ export function MasterForm({
       <button
         disabled={
           busy ||
+          (type === "shop" && (areaState.pending || areaState.error)) ||
           (type === "shop" &&
             !id &&
             (duplicateState.pending || duplicateState.blocking))
@@ -423,13 +451,17 @@ export function MasterForm({
       >
         {busy
           ? "保存しています…"
-          : type === "shop" && !id && duplicateState.pending
-            ? "登録済み店舗を確認中…"
-            : type === "shop" && !id && duplicateState.blocking
-              ? "登録済みの店舗です"
-              : id
-                ? "変更を保存"
-                : entityLabels[type] + "を登録"}
+          : type === "shop" && areaState.pending
+            ? "地域情報を確認中…"
+            : type === "shop" && areaState.error
+              ? "地図位置を選び直してください"
+              : type === "shop" && !id && duplicateState.pending
+                ? "登録済み店舗を確認中…"
+                : type === "shop" && !id && duplicateState.blocking
+                  ? "登録済みの店舗です"
+                  : id
+                    ? "変更を保存"
+                    : entityLabels[type] + "を登録"}
       </button>
     </form>
   );

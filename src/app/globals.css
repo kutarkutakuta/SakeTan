@@ -1792,6 +1792,26 @@ nav {
   font-size: 14px;
   color: var(--muted);
 }
+.location-area {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  line-height: 1.5;
+}
+.location-area span {
+  flex: none;
+  color: var(--muted);
+  font-size: 14px;
+}
+.location-area strong {
+  min-width: 0;
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
 .duplicate-check-status {
   color: var(--muted);
   font-size: 14px;

@@ -196,6 +196,19 @@ test("signed-in users can only update brand and brewery kana through the public 
   );
 
   await asUser(alice);
+  await assert.rejects(
+    db.query("select public.update_master_kana('brand',$1,'みっつめ',null)", [
+      thirdBrand,
+    ]),
+    /変更理由を入力してください/,
+  );
+  await assert.rejects(
+    db.query(
+      "select public.update_master_kana('brand',$1,'みっつめ','あああ')",
+      [thirdBrand],
+    ),
+    /同じ文字の繰り返し/,
+  );
   assert.equal(
     await scalar(
       "select public.update_master_kana('brand',$1,'  みっつめのしけんしゅ  ','読みを確認')",
@@ -227,6 +240,15 @@ test("signed-in users can only update brand and brewery kana through the public 
       shop,
     ]),
     /かなを編集できるのは銘柄と酒蔵のみです/,
+  );
+
+  await asUser(admin);
+  assert.equal(
+    await scalar(
+      "select public.update_master_kana('brewery',$1,'しけんしゅぞう',null)",
+      [brewery],
+    ),
+    brewery,
   );
 });
 test("brand applications are public, immediately attach to a shop, and can be approved", async () => {
@@ -857,6 +879,58 @@ test("master edits append history; source metadata and unsupported entity fields
       "select public.save_master('shop_brand',$1,'{\"is_active\":false}')",
       [shop],
     ),
+  );
+});
+test("only the registering user or an administrator can deactivate a shop", async () => {
+  await asUser(bob);
+  await assert.rejects(
+    db.query("select public.save_master('shop',$1,'{\"is_active\":false}')", [
+      shop,
+    ]),
+    /登録者または管理者/,
+  );
+  assert.equal(
+    await scalar<boolean>("select is_active from public.shops where id=$1", [
+      shop,
+    ]),
+    true,
+  );
+
+  await asUser(alice);
+  await assert.rejects(
+    db.query("select public.save_master('shop',$1,'{\"is_active\":false}')", [
+      shop,
+    ]),
+    /変更理由を入力してください/,
+  );
+  await assert.rejects(
+    db.query(
+      "select public.save_master('shop',$1,'{\"is_active\":false}','あああ')",
+      [shop],
+    ),
+    /同じ文字の繰り返し/,
+  );
+  await db.query(
+    "select public.save_master('shop',$1,'{\"is_active\":false}','閉店を確認')",
+    [shop],
+  );
+  assert.equal(
+    await scalar<boolean>("select is_active from public.shops where id=$1", [
+      shop,
+    ]),
+    false,
+  );
+
+  await asUser(admin);
+  await db.query(
+    "select public.save_master('shop',$1,'{\"is_active\":true}')",
+    [shop],
+  );
+  assert.equal(
+    await scalar<boolean>("select is_active from public.shops where id=$1", [
+      shop,
+    ]),
+    true,
   );
 });
 test("history pages exclude administrator edits by default and can include all users", async () => {

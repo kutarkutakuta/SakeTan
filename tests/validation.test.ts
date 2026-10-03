@@ -31,6 +31,39 @@ import {
   namedRows,
   rankingSchema,
 } from "../scripts/sakenowa-data";
+import { changeReasonError } from "../src/lib/change-reason";
+import { addressComponent, municipality } from "../src/lib/google-address";
+
+test("change reasons reject blanks and repeated characters without blocking concise reasons", () => {
+  assert.equal(changeReasonError(" "), "変更理由を入力してください");
+  assert.match(changeReasonError("あ") ?? "", /具体的/);
+  assert.match(changeReasonError(" あ あ あ ") ?? "", /具体的/);
+  assert.equal(changeReasonError("誤字"), null);
+  assert.equal(changeReasonError("店舗が移転"), null);
+});
+
+test("Google place and reverse-geocode components resolve Japanese areas", () => {
+  const placeComponents = [
+    { types: ["administrative_area_level_1"], longText: "宮城県" },
+    { types: ["locality"], longText: "仙台市" },
+    { types: ["sublocality_level_1"], longText: "青葉区" },
+  ];
+  const geocoderComponents = [
+    { types: ["administrative_area_level_1"], long_name: "東京都" },
+    { types: ["locality"], long_name: "新宿区" },
+  ];
+
+  assert.equal(
+    addressComponent(placeComponents, ["administrative_area_level_1"]),
+    "宮城県",
+  );
+  assert.equal(municipality(placeComponents), "仙台市青葉区");
+  assert.equal(
+    addressComponent(geocoderComponents, ["administrative_area_level_1"]),
+    "東京都",
+  );
+  assert.equal(municipality(geocoderComponents), "新宿区");
+});
 
 test("brand matches outrank brewery matches", () => {
   const brewery = {

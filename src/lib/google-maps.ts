@@ -25,6 +25,11 @@ export async function loadGooglePlaces() {
   return importLibrary("places");
 }
 
+export async function loadGoogleGeocoding() {
+  configure();
+  return importLibrary("geocoding");
+}
+
 export function googleMapId() {
   return process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID || "DEMO_MAP_ID";
 }

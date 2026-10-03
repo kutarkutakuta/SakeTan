@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { mutate } from "@/lib/client";
+import { changeReasonError } from "@/lib/change-reason";
 import type { Brand, Brewery } from "@/lib/types";
 import { useToast } from "@/components/toast-provider";
 
@@ -44,6 +45,8 @@ export function KanaEditDialog({
   async function save() {
     setBusy(true);
     try {
+      const reasonError = !admin && changeReasonError(reason);
+      if (reasonError) throw new Error(reasonError);
       const normalizedKana = nameKana.trim() || null;
       await mutate({
         kind: "master_kana",
@@ -113,13 +116,23 @@ export function KanaEditDialog({
             </small>
           </label>
           <label>
-            変更理由 <span className="muted">任意</span>
+            変更理由{" "}
+            <span className={admin ? "muted" : "required"}>
+              {admin ? "任意" : "必須"}
+            </span>
             <textarea
               value={reason}
               onChange={(event) => setReason(event.target.value)}
+              minLength={admin ? undefined : 2}
               maxLength={500}
+              required={!admin}
               placeholder="例：公式サイトの表記に合わせて修正"
             />
+            {!admin && (
+              <small>
+                2文字以上で、変更内容が分かる理由を入力してください。
+              </small>
+            )}
           </label>
           <div className="quick-kana-actions">
             {admin && (

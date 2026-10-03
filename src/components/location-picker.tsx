@@ -1,8 +1,10 @@
 "use client";
 import dynamic from "next/dynamic";
 import { ArrowRight, Store } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { errorMessage, fetchJson } from "@/lib/client";
+import { addressComponent, municipality } from "@/lib/google-address";
+import { loadGoogleGeocoding } from "@/lib/google-maps";
 
 type Position = { latitude: number; longitude: number };
 type PlaceSelection = Position & {
@@ -35,14 +37,20 @@ const LocationMap = dynamic(() => import("./location-picker-map"), {
 export function LocationPicker({
   initialPosition,
   initialGooglePlaceId,
+  prefecture,
+  city,
   duplicateCheckEnabled,
   onDuplicateStateChange,
+  onAreaStateChange,
   onPlaceDetails,
 }: {
   initialPosition: Position | null;
   initialGooglePlaceId: string | null;
+  prefecture: string;
+  city: string;
   duplicateCheckEnabled: boolean;
   onDuplicateStateChange: (state: DuplicateState) => void;
+  onAreaStateChange: (state: { pending: boolean; error: boolean }) => void;
   onPlaceDetails: (details: {
     name: string;
     prefecture: string | null;
@@ -60,6 +68,16 @@ export function LocationPicker({
   >([]);
   const [duplicateError, setDuplicateError] = useState("");
   const [checkingDuplicates, setCheckingDuplicates] = useState(false);
+  const [resolvingArea, setResolvingArea] = useState(false);
+  const [areaError, setAreaError] = useState("");
+  const geocodeRequest = useRef(0);
+
+  useEffect(
+    () => () => {
+      geocodeRequest.current += 1;
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!duplicateCheckEnabled || !position) {
@@ -119,12 +137,16 @@ export function LocationPicker({
   }, [duplicateCheckEnabled, googlePlaceId, onDuplicateStateChange, position]);
 
   function selectPlace(place: PlaceSelection) {
+    geocodeRequest.current += 1;
     if (duplicateCheckEnabled)
       onDuplicateStateChange({ blocking: false, pending: true });
     setPosition(place);
     setGooglePlaceId(place.googlePlaceId);
     setGeocode("PLACE");
     setSelectedPlace(place.label);
+    setResolvingArea(false);
+    setAreaError("");
+    onAreaStateChange({ pending: false, error: false });
     onPlaceDetails(place);
   }
 
@@ -135,7 +157,41 @@ export function LocationPicker({
     setGooglePlaceId(null);
     setGeocode("USER_ADJUSTED");
     setSelectedPlace("");
+    const request = ++geocodeRequest.current;
+    setResolvingArea(true);
+    setAreaError("");
+    onAreaStateChange({ pending: true, error: false });
+    void loadGoogleGeocoding()
+      .then(async ({ Geocoder }) => {
+        const { results } = await new Geocoder().geocode({
+          location: { lat: next.latitude, lng: next.longitude },
+        });
+        if (request !== geocodeRequest.current) return;
+        const components = results[0]?.address_components;
+        if (!components) throw new Error("地域情報を取得できませんでした");
+        onPlaceDetails({
+          name: "",
+          prefecture: addressComponent(components, [
+            "administrative_area_level_1",
+          ]),
+          city: municipality(components),
+        });
+        onAreaStateChange({ pending: false, error: false });
+      })
+      .catch(() => {
+        if (request === geocodeRequest.current) {
+          setAreaError(
+            "地域情報を自動取得できませんでした。位置を選び直してください。",
+          );
+          onAreaStateChange({ pending: false, error: true });
+        }
+      })
+      .finally(() => {
+        if (request === geocodeRequest.current) setResolvingArea(false);
+      });
   }
+
+  const area = [prefecture, city].filter(Boolean).join(" ");
 
   return (
     <section className="location-picker" aria-labelledby="location-heading">
@@ -145,7 +201,7 @@ export function LocationPicker({
             地図位置<span className="required">必須</span>
           </h3>
           <p className="hint">
-            店舗を検索して候補を選ぶと、店舗名・都道府県・市区町村も入力されます。
+            店舗を検索して候補を選ぶと、店舗名と地域情報も自動で保存されます。
           </p>
         </div>
       </div>
@@ -214,6 +270,17 @@ export function LocationPicker({
         value={geocode ? "google" : ""}
       />
       <input type="hidden" name="geocode_precision" value={geocode ?? ""} />
+      <div className="location-area" aria-live="polite">
+        <span>地域</span>
+        <strong>
+          {resolvingArea ? "地域情報を確認しています…" : area || "地域情報なし"}
+        </strong>
+      </div>
+      {areaError && (
+        <p className="location-message error" role="alert">
+          {areaError}
+        </p>
+      )}
       <p className="location-status" aria-live="polite">
         {position
           ? selectedPlace

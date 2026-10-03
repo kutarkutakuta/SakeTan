@@ -18,6 +18,7 @@ type DetailState = {
   brewery: Brewery | null;
   signedIn: boolean;
   admin: boolean;
+  canDeactivate: boolean;
   found: boolean;
 };
 
@@ -60,9 +61,10 @@ export function EditDetailClient({
         !id && type === "brand" && requestedName ? { name: requestedName } : {};
       let brewery: Brewery | null = null;
       let found = true;
+      let canDeactivate = type !== "shop" || access.admin;
       if (id && db) {
         const fields = {
-          shop: "id,name,name_kana,prefecture,city,latitude,longitude,google_place_id,geocode_source,geocode_precision,is_active",
+          shop: "id,name,name_kana,prefecture,city,latitude,longitude,google_place_id,geocode_source,geocode_precision,is_active,created_by",
           brand: "id,name,name_kana,brewery_id,is_active",
           brewery: "id,name,name_kana,prefecture,website_url,is_active",
         }[type];
@@ -75,6 +77,11 @@ export function EditDetailClient({
         if (!rawData) found = false;
         else {
           initial = rawData as unknown as Record<string, unknown>;
+          if (type === "shop") {
+            canDeactivate =
+              access.admin ||
+              access.user?.id === (initial.created_by as string | null);
+          }
           if (type === "brand" && typeof initial.brewery_id === "string") {
             const { data } = await db
               .from("breweries")
@@ -91,6 +98,7 @@ export function EditDetailClient({
           brewery,
           signedIn: Boolean(access.user && !access.anonymous),
           admin: access.admin,
+          canDeactivate,
           found,
         });
     })().catch((reason) => {
@@ -156,6 +164,8 @@ export function EditDetailClient({
           shopId={shopId}
           afterSaveHref={returnTo}
           kanaOnly={(type === "brand" || type === "brewery") && !state.admin}
+          canDeactivate={state.canDeactivate}
+          admin={state.admin}
         />
       ) : (
         <LoginRequired next={next} ready={configured()} />
