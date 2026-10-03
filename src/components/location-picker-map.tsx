@@ -174,15 +174,16 @@ export default function LocationPickerMap({
         borderColor: "#ffffff",
         glyphColor: "#ffffff",
       });
-      marker.current = new libraries.marker.AdvancedMarkerElement({
+      const draggableMarker = new libraries.marker.AdvancedMarkerElement({
         map: map.current,
         position: point,
         content: pin,
         title: "酒屋の位置",
         gmpDraggable: true,
       });
-      marker.current.addListener("dragend", () => {
-        const current = marker.current?.position;
+      marker.current = draggableMarker;
+      draggableMarker.addEventListener("gmp-dragend", () => {
+        const current = draggableMarker.position;
         if (!current) return;
         const value = current as google.maps.LatLng;
         onChangeRef.current({
