@@ -42,8 +42,14 @@ export async function GET(request: Request) {
 
   async function searchShops() {
     if (requestedShopLimit === null) {
-      const result = await client.rpc("search_shops", { p_query: q });
-      return { ...result, hasMore: false };
+      const result = await client
+        .rpc("search_shops", { p_query: q })
+        .limit(201);
+      return {
+        ...result,
+        data: result.data?.slice(0, 200) ?? null,
+        hasMore: (result.data?.length ?? 0) > 200,
+      };
     }
     const result = await client.rpc("search_shop_candidates", {
       p_query: q,

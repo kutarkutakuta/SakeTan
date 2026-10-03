@@ -93,6 +93,7 @@ export function useShopMetadata(
       (chunk) =>
         `/api/shops/brand-totals?ids=${encodeURIComponent(chunk.join(","))}`,
       abort.signal,
+      500,
     )
       .then(setBrandTotals)
       .catch((reason) => {
@@ -149,10 +150,11 @@ async function fetchInChunks<T>(
   ids: string[],
   endpoint: (ids: string[]) => string,
   signal: AbortSignal,
+  chunkSize = 50,
 ) {
   const chunks = Array.from(
-    { length: Math.ceil(ids.length / 50) },
-    (_, index) => ids.slice(index * 50, index * 50 + 50),
+    { length: Math.ceil(ids.length / chunkSize) },
+    (_, index) => ids.slice(index * chunkSize, (index + 1) * chunkSize),
   );
   const parts = await Promise.all(
     chunks.map(async (chunk) => {

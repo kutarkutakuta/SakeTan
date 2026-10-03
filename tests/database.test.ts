@@ -795,6 +795,56 @@ test("brand, kana, brewery and shop search; bounds and brand filters", async () 
     0,
   );
 });
+test("map search returns all matches beyond 1000 and respects bounds", async () => {
+  await db.exec("reset role; begin");
+  try {
+    await db.exec(`
+      insert into public.shops(name,name_kana,latitude,longitude)
+      select '上限確認店' || n,'じょうげんかくにん',35,139
+      from generate_series(1,200) n;
+      insert into public.shops(name,name_kana,latitude,longitude,is_active)
+      values ('上限確認店 範囲外','じょうげんかくにん',40,140,true),
+             ('上限確認店 無効','じょうげんかくにん',35,139,false);
+    `);
+    const matchCount = () =>
+      scalar<number>(
+        "select count(*)::integer from public.search_shops('上限確認店',null,34,36,138,140)",
+      );
+    await asUser(null);
+    assert.equal(await matchCount(), 200);
+    await db.exec("reset role");
+    await db.exec(`
+      insert into public.shops(name,name_kana,latitude,longitude)
+      values ('上限確認店201','じょうげんかくにん',35,139);
+    `);
+    await asUser(null);
+    assert.equal(await matchCount(), 201);
+    await db.exec("reset role");
+    await db.exec(`
+      insert into public.shops(name,name_kana,latitude,longitude)
+      values ('上限確認店202','じょうげんかくにん',35,139);
+    `);
+    await asUser(null);
+    assert.equal(await matchCount(), 202);
+    await db.exec("reset role");
+    await db.exec(`
+      insert into public.shops(name,name_kana,latitude,longitude)
+      select '上限確認店' || n,'じょうげんかくにん',35,139
+      from generate_series(203,1201) n;
+    `);
+    await asUser(null);
+    assert.equal(await matchCount(), 1201);
+    assert.equal(
+      await scalar<number>(
+        "select count(*)::integer from public.search_shops('上限確認店',$1,34,36,138,140)",
+        [brand],
+      ),
+      0,
+    );
+  } finally {
+    await db.exec("rollback; reset role");
+  }
+});
 test("shop candidate search orders by distance and supports paging", async () => {
   await db.exec("reset role");
   await db.query(

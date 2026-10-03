@@ -4,7 +4,7 @@ import { invalidShopIdsResponse, shopIdsFromRequest } from "@/lib/shop-api";
 type ShopBrandTotalRow = { shop_id: string; total: number | string };
 
 export async function GET(request: Request) {
-  const shopIds = shopIdsFromRequest(request);
+  const shopIds = shopIdsFromRequest(request, 500);
   if (!shopIds) return invalidShopIdsResponse();
 
   const db = await supabase();

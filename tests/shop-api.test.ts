@@ -25,3 +25,20 @@ test("invalidShopIdsResponse returns the shared validation error", async () => {
     error: "酒屋IDを確認してください",
   });
 });
+
+test("brand totals can use 500-shop batches while other metadata stays at 50", () => {
+  const ids = Array.from(
+    { length: 501 },
+    (_, index) =>
+      `10000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`,
+  );
+  const request = (count: number) =>
+    new Request(
+      `https://example.test/api?ids=${ids.slice(0, count).join(",")}`,
+    );
+
+  assert.equal(shopIdsFromRequest(request(50))?.length, 50);
+  assert.equal(shopIdsFromRequest(request(51)), null);
+  assert.equal(shopIdsFromRequest(request(500), 500)?.length, 500);
+  assert.equal(shopIdsFromRequest(request(501), 500), null);
+});

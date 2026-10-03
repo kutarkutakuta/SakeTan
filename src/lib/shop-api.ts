@@ -1,12 +1,12 @@
 import { z } from "zod";
 
-const shopIdsSchema = z.array(z.uuid()).min(1).max(50);
+const shopIdsSchema = z.array(z.uuid()).min(1);
 
-export function shopIdsFromRequest(request: Request) {
+export function shopIdsFromRequest(request: Request, maximum = 50) {
   const ids = new URL(request.url).searchParams.get("ids") ?? "";
-  const result = shopIdsSchema.safeParse([
-    ...new Set(ids.split(",").filter(Boolean)),
-  ]);
+  const result = shopIdsSchema
+    .max(maximum)
+    .safeParse([...new Set(ids.split(",").filter(Boolean))]);
   return result.success ? result.data : null;
 }
 

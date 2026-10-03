@@ -180,6 +180,7 @@ export function Home({
     () => visibleShopList(shops, shopListCenter, selected, visibleShopLimit),
     [selected, shopListCenter, shops, visibleShopLimit],
   );
+  const shopCountLabel = resolvingInitialArea ? "…" : `${shops.length}件`;
   const searchOrigin = userLocation ?? mapView?.center ?? center;
   const searchLatitude = searchOrigin?.[0];
   const searchLongitude = searchOrigin?.[1];
@@ -231,12 +232,13 @@ export function Home({
         if (filter) params.set("brand_id", filter.id);
         if (area)
           Object.entries(area).forEach(([k, v]) => params.set(k, String(v)));
-        const nextShops = await fetchJson<Shop[]>(
+        const data = await fetchJson<{ shops: Shop[] }>(
           "/api/shops?" + params,
           undefined,
           "検索できませんでした",
         );
         if (seq !== areaSequence.current) return;
+        const nextShops = data.shops;
         const nextSelected =
           selectedShopId && nextShops.some((shop) => shop.id === selectedShopId)
             ? selectedShopId
@@ -772,13 +774,9 @@ export function Home({
             <div className="result-heading">
               <div className="result-heading-copy">
                 <h2>
-                  {brand ? `「${brand.name}」を扱う酒屋` : "地図の酒屋"}{" "}
-                  <span className="count">
-                    {resolvingInitialArea
-                      ? "…"
-                      : visibleShops.length < shops.length
-                        ? `${visibleShops.length}/${shops.length}`
-                        : shops.length}
+                  {brand ? `「${brand.name}」を扱う酒屋` : "地図の酒屋"}
+                  <span className="count" role="status">
+                    {shopCountLabel}
                   </span>
                 </h2>
               </div>
@@ -807,12 +805,8 @@ export function Home({
                   <strong>
                     {brand ? `「${brand.name}」を扱う酒屋` : "地図の酒屋"}
                   </strong>
-                  <span className="count">
-                    {resolvingInitialArea
-                      ? "…"
-                      : visibleShops.length < shops.length
-                        ? `${visibleShops.length}/${shops.length}`
-                        : shops.length}
+                  <span className="count" role="status">
+                    {shopCountLabel}
                   </span>
                 </span>
                 {mobileSheetSnap === "full" ? (
