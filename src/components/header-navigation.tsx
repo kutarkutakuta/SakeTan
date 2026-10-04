@@ -1,10 +1,11 @@
 "use client";
 
-import type { FocusEvent, MouseEvent } from "react";
+import { useEffect, useState, type FocusEvent, type MouseEvent } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown, CircleQuestionMark, Menu, Search, X } from "lucide-react";
-import { HeaderAuth } from "@/components/header-auth";
+import { HeaderAuth, type HeaderViewer } from "@/components/header-auth";
+import { fetchJson } from "@/lib/client";
 
 const registrationLinks = [
   { href: "/brands", label: "銘柄の状態" },
@@ -46,6 +47,21 @@ function closeOnFocusOut(event: FocusEvent<HTMLDetailsElement>) {
 
 export function HeaderNavigation() {
   const pathname = usePathname();
+  const [viewer, setViewer] = useState<HeaderViewer | null>();
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetchJson<HeaderViewer>(
+      "/api/viewer",
+      { cache: "no-store", signal: controller.signal },
+      "アカウント情報を取得できませんでした",
+    )
+      .then(setViewer)
+      .catch(() => {
+        if (!controller.signal.aborted) setViewer(null);
+      });
+    return () => controller.abort();
+  }, []);
 
   return (
     <nav className="header-navigation" aria-label="メインメニュー">
@@ -66,7 +82,7 @@ export function HeaderNavigation() {
             <RegistrationLinks />
           </div>
         </details>
-        <HeaderAuth />
+        <HeaderAuth viewer={viewer} />
       </div>
 
       {pathname === "/" && (
@@ -107,7 +123,7 @@ export function HeaderNavigation() {
             <RegistrationLinks />
           </div>
           <div className="mobile-header-account">
-            <HeaderAuth />
+            <HeaderAuth viewer={viewer} />
           </div>
         </div>
       </details>

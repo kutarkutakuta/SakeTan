@@ -1,47 +1,52 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { LogIn, UserRound } from "lucide-react";
-import { fetchJson } from "@/lib/client";
 
-type HeaderViewer = {
+export type HeaderViewer = {
   signedIn: boolean;
   anonymous: boolean;
   name: string | null;
 };
 
-export function HeaderAuth() {
-  const [viewer, setViewer] = useState<HeaderViewer | null>(null);
+export function HeaderAuth({
+  viewer,
+}: {
+  viewer: HeaderViewer | null | undefined;
+}) {
+  // Undefined is pending; null is a failed lookup, not a signed-out viewer.
+  if (viewer === undefined)
+    return (
+      <span
+        className="button small ghost header-auth-link header-auth-pending"
+        role="status"
+        aria-label="アカウント情報を確認中"
+        aria-busy="true"
+      >
+        <UserRound size={17} aria-hidden="true" />
+        <span
+          className="header-auth-label header-auth-placeholder"
+          aria-hidden="true"
+        />
+      </span>
+    );
 
-  useEffect(() => {
-    const controller = new AbortController();
-    void fetchJson<HeaderViewer>(
-      "/api/viewer",
-      { cache: "no-store", signal: controller.signal },
-      "アカウント情報を取得できませんでした",
-    )
-      .then(setViewer)
-      .catch(() => undefined);
-    return () => controller.abort();
-  }, []);
-
-  if (viewer?.signedIn)
+  if (viewer === null || viewer.signedIn)
     return (
       <Link
         className="button small ghost header-auth-link"
         href="/account"
         prefetch={false}
-        aria-label={viewer.name ?? "アカウント"}
+        aria-label={viewer?.name ?? "アカウント"}
       >
         <UserRound size={17} />
         <span className="account-name header-auth-label">
-          {viewer.name ?? "アカウント"}
+          {viewer?.name ?? "アカウント"}
         </span>
       </Link>
     );
 
-  const label = viewer?.anonymous ? "アカウントを保存" : "ログイン";
+  const label = viewer.anonymous ? "アカウントを保存" : "ログイン";
   return (
     <Link
       className="button small ghost header-auth-link"

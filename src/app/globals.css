@@ -131,6 +131,9 @@ footer {
   font-weight: 500;
 }
 .header {
+  --header-button-bg: #f6eedf;
+  --header-button-border: #d8c5a9;
+  --header-button-ink: #634a38;
   position: relative;
   z-index: 2000;
   height: 72px;
@@ -139,7 +142,30 @@ footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: var(--bg);
+  gap: 16px;
+  background-color: #fbf7ee;
+  background-image:
+    linear-gradient(to right, #fbf7ee 390px, #fbf7ee00 560px),
+    url("/og-background.png");
+  background-position: left center;
+  background-size: 100% 100%, max(200vw, 1730px) auto;
+  background-repeat: no-repeat;
+}
+.header-plum {
+  flex: 1;
+  min-width: 0;
+  align-self: stretch;
+  background: url("/plum-branch.png") right top / auto 56px no-repeat;
+  opacity: 0.7;
+  pointer-events: none;
+}
+.brand-illustration {
+  flex: none;
+  width: 280px;
+  height: 210px;
+  background: url("/og-background.png") 82% center / auto 100% no-repeat;
+  border-radius: 16px;
+  mask-image: radial-gradient(ellipse at center, black 45%, transparent 75%);
 }
 .logo {
   display: flex;
@@ -213,6 +239,39 @@ nav {
   display: flex;
   align-items: center;
   gap: 22px;
+}
+.header .header-auth-link.button,
+.header .mobile-search-trigger,
+.header .mobile-menu-trigger {
+  background: var(--header-button-bg);
+  border-color: var(--header-button-border);
+  border-radius: 6px;
+  color: var(--header-button-ink);
+  box-shadow: none;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+.header .header-auth-link:hover,
+.header .mobile-search-trigger:hover,
+.header .mobile-menu-trigger:hover,
+.header .mobile-header-details[open] .mobile-menu-trigger {
+  background: #efe1cb;
+  border-color: #b89a72;
+  color: #8d3e2b;
+}
+.header .header-auth-link:focus-visible,
+.header .mobile-search-trigger:focus-visible,
+.header .mobile-menu-trigger:focus-visible {
+  outline: 2px solid #8d3e2b;
+  outline-offset: 3px;
+}
+.header-auth-pending {
+  cursor: default;
+}
+.header-auth-placeholder {
+  width: 5em;
+  height: 1em;
+  border-radius: 4px;
+  background: #d8c5a980;
 }
 .nav-help {
   display: inline-flex;
@@ -1315,6 +1374,18 @@ nav {
 }
 .info-hero {
   margin-bottom: 42px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  align-items: center;
+  gap: 24px;
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fbf7ee;
+}
+.info-hero h1 {
+  font-size: 28px;
+  line-height: 1.5;
 }
 .info-lead {
   margin-top: 12px;
@@ -2754,6 +2825,24 @@ nav {
 .login-page-card {
   padding: 36px;
 }
+.login-brand-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: -36px -36px 28px;
+  padding: 12px 36px;
+  border-bottom: 1px solid var(--line);
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: #fbf7ee;
+}
+.login-brand-banner .brand-illustration {
+  width: 180px;
+  height: 140px;
+}
+.login-brand-banner .logo-title {
+  font-size: 28px;
+}
 .login-page-card h1 {
   font-size: 28px;
 }
@@ -3548,6 +3637,13 @@ nav {
   .header {
     height: 56px;
     padding: 0 10px;
+    gap: 6px;
+    background-image:
+      linear-gradient(to right, #fbf7ee 190px, #fbf7ee00 245px),
+      url("/og-background.png");
+  }
+  .header-plum {
+    background-size: auto 34px;
   }
   .logo {
     gap: 8px;
@@ -3940,6 +4036,14 @@ nav {
   }
   .info-hero {
     margin-bottom: 34px;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 22px 18px;
+  }
+  .info-hero > .brand-illustration {
+    width: min(100%, 280px);
+    height: 155px;
+    justify-self: center;
   }
   .info-hero h1 {
     font-size: 28px;
@@ -4056,6 +4160,19 @@ nav {
   }
   .login-page-card {
     padding: 26px 20px;
+  }
+  .login-brand-banner {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 120px);
+    margin: -26px -20px 24px;
+    padding: 12px 20px;
+  }
+  .login-brand-banner .logo-title {
+    font-size: 24px;
+  }
+  .login-brand-banner .brand-illustration {
+    width: 100%;
+    height: 108px;
   }
   .contribution-heading {
     align-items: flex-start;

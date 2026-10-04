@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BrandIllustration } from "@/components/brand-illustration";
 import {
   ArrowLeft,
   ArrowRight,
@@ -41,15 +42,19 @@ export default function HelpPage() {
       </Link>
 
       <section className="info-hero" aria-labelledby="help-title">
-        <p className="info-lead">
-          「
-          <span className="logo-title" style={{ fontSize: "20px" }}>
-            さけのありか
-          </span>
-          」
-          は、飲みたい日本酒から取扱店を探したり、近くの酒屋から取扱銘柄を探したりできる、
-          みんなで育てる酒屋マップです。
-        </p>
+        <div className="info-hero-copy">
+          <h1 id="help-title">さけのありかについて</h1>
+          <p className="info-lead">
+            「
+            <span className="logo-title" style={{ fontSize: "20px" }}>
+              さけのありか
+            </span>
+            」
+            は、飲みたい日本酒から取扱店を探したり、近くの酒屋から取扱銘柄を探したりできる、
+            みんなで育てる酒屋マップです。
+          </p>
+        </div>
+        <BrandIllustration />
       </section>
 
       <section className="info-section" aria-labelledby="important-title">

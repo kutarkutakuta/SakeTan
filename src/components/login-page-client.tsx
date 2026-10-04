@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { LoginOptions } from "@/components/login-options";
+import { BrandIllustration } from "@/components/brand-illustration";
 import { ToastOnMount } from "@/components/toast-provider";
 import { configured, viewerIdentity } from "@/lib/supabase/browser";
 import { safeNext } from "@/lib/utils";
@@ -38,6 +39,10 @@ export function LoginPageClient() {
         戻る
       </a>
       <section className="card login-page-card">
+        <div className="login-brand-banner">
+          <span className="logo-title">さけのありか</span>
+          <BrandIllustration />
+        </div>
         <p className="eyebrow">さけたんを、続けて使う。</p>
         <h1>
           {account?.anonymous
