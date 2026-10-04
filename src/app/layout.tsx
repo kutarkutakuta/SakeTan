@@ -10,7 +10,7 @@ import { ToastProvider } from "@/components/toast-provider";
 const siteName = "さけのありか";
 const siteUrl = new URL("https://xn--l8jsqp0k5g.jp/");
 const socialImage = {
-  url: "/og-background.png",
+  url: "/og-image.png",
   width: 1730,
   height: 909,
   alt: "さけのありか — 飲みたい酒から酒屋を探せる、みんなで作る酒屋マップ",

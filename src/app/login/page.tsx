@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-background.png",
+        url: "/og-image.png",
         width: 1730,
         height: 909,
         alt: "さけのありか — 飲みたい酒から酒屋を探せる、みんなで作る酒屋マップ",
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title,
     description,
-    images: ["/og-background.png"],
+    images: ["/og-image.png"],
   },
 };
 

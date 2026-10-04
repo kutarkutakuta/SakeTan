@@ -27,7 +27,6 @@ import {
   useShopCommentPopover,
 } from "./home/shop-comment-popover";
 import { ShopListCard } from "./home/shop-list-card";
-import { ListingNotice } from "./home/listing-notice";
 import { useShopMetadata } from "./home/use-shop-metadata";
 import { useToast } from "./toast-provider";
 import { errorMessage, fetchJson } from "@/lib/client";
@@ -775,11 +774,11 @@ export function Home({
               <div className="result-heading-copy">
                 <h2>
                   {brand ? `「${brand.name}」を扱う酒屋` : "地図の酒屋"}
-                  <span className="count" role="status">
-                    {shopCountLabel}
-                  </span>
                 </h2>
               </div>
+              <span className="desktop-result-count count" role="status">
+                {shopCountLabel}
+              </span>
               <button
                 type="button"
                 className="shop-sheet-toggle"
@@ -815,7 +814,6 @@ export function Home({
                   <ChevronUp size={22} aria-hidden="true" />
                 )}
               </button>
-              <ListingNotice />
             </div>
             {error && (
               <p className="notice error" role="alert">
