@@ -38,6 +38,7 @@ import {
   type MapView,
 } from "@/lib/map-view";
 import { mapBoundsCenter, visibleShopList } from "@/lib/shop-order";
+import { mapShopCountLabel, mapShopLimit } from "@/lib/shop-api";
 import type { Brand, Bounds, Shop } from "@/lib/types";
 
 type MobileSheetSnap = "peek" | "half" | "full";
@@ -113,6 +114,7 @@ export function Home({
     [initialMapView, initialShopPosition],
   );
   const [shops, setShops] = useState<Shop[]>(initialShop ? [initialShop] : []);
+  const [shopTotal, setShopTotal] = useState(initialShop ? 1 : 0);
   const [query, setQuery] = useState("");
   const [hideSearchResults, setHideSearchResults] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(
@@ -179,7 +181,9 @@ export function Home({
     () => visibleShopList(shops, shopListCenter, selected, visibleShopLimit),
     [selected, shopListCenter, shops, visibleShopLimit],
   );
-  const shopCountLabel = resolvingInitialArea ? "…" : `${shops.length}件`;
+  const shopCountLabel = resolvingInitialArea
+    ? "…"
+    : mapShopCountLabel(shopTotal);
   const searchOrigin = userLocation ?? mapView?.center ?? center;
   const searchLatitude = searchOrigin?.[0];
   const searchLongitude = searchOrigin?.[1];
@@ -231,7 +235,7 @@ export function Home({
         if (filter) params.set("brand_id", filter.id);
         if (area)
           Object.entries(area).forEach(([k, v]) => params.set(k, String(v)));
-        const data = await fetchJson<{ shops: Shop[] }>(
+        const data = await fetchJson<{ shops: Shop[]; total: number }>(
           "/api/shops?" + params,
           undefined,
           "検索できませんでした",
@@ -244,6 +248,7 @@ export function Home({
             : null;
         setVisibleShopLimit(shopsPerPage);
         setShops(nextShops);
+        setShopTotal(data.total);
         setShopListCenter(
           listCenter ?? (area ? mapBoundsCenter(area) : undefined),
         );
@@ -418,6 +423,7 @@ export function Home({
     setQuery("");
     setResults(emptySearchResults());
     setShops([shop]);
+    setShopTotal(1);
     setShopListCenter(
       typeof shop.latitude === "number" && typeof shop.longitude === "number"
         ? [shop.latitude, shop.longitude]
@@ -800,7 +806,9 @@ export function Home({
                   size={34}
                   aria-hidden="true"
                 />
-                <span className="shop-sheet-label">
+                <span
+                  className={`shop-sheet-label${shopTotal > mapShopLimit ? " shop-sheet-label-limited" : ""}`}
+                >
                   <strong>
                     {brand ? `「${brand.name}」を扱う酒屋` : "地図の酒屋"}
                   </strong>

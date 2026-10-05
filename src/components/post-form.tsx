@@ -606,7 +606,7 @@ export function PostForm({
                       setRequestBrandKana(event.target.value)
                     }
                     maxLength={150}
-                    placeholder="例：だっと"
+                    placeholder="銘柄かな"
                   />
                 </label>
                 <label className="brand-application-brewery">
@@ -619,7 +619,7 @@ export function PostForm({
                     }}
                     maxLength={150}
                     required
-                    placeholder="例：羽田酒造"
+                    placeholder="酒蔵名"
                     aria-describedby="brand-application-brewery-hint"
                   />
                   {requestBreweryBusy && (

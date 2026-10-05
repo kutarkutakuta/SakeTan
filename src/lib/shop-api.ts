@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+export const mapShopLimit = 200;
+
+export function mapShopCountLabel(total: number) {
+  return total > mapShopLimit
+    ? `${total}件中${mapShopLimit}件まで表示`
+    : `${total}件`;
+}
+
 const shopIdsSchema = z.array(z.uuid()).min(1);
 
 export function shopIdsFromRequest(request: Request, maximum = 50) {

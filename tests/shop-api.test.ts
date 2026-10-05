@@ -1,9 +1,21 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { invalidShopIdsResponse, shopIdsFromRequest } from "@/lib/shop-api";
+import {
+  invalidShopIdsResponse,
+  mapShopCountLabel,
+  shopIdsFromRequest,
+} from "@/lib/shop-api";
 
 const firstId = "10000000-0000-4000-8000-000000000001";
 const secondId = "10000000-0000-4000-8000-000000000002";
+
+test("map count shows the total only when the 200-shop limit is exceeded", () => {
+  assert.equal(mapShopCountLabel(0), "0件");
+  assert.equal(mapShopCountLabel(199), "199件");
+  assert.equal(mapShopCountLabel(200), "200件");
+  assert.equal(mapShopCountLabel(201), "201件中200件まで表示");
+  assert.equal(mapShopCountLabel(1201), "1201件中200件まで表示");
+});
 
 test("shopIdsFromRequest validates and deduplicates shop IDs", () => {
   const request = new Request(

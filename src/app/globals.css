@@ -148,7 +148,9 @@ footer {
     linear-gradient(to right, #fbf7ee 390px, #fbf7ee00 560px),
     url("/og-background.png");
   background-position: left center;
-  background-size: 100% 100%, max(200vw, 1730px) auto;
+  background-size:
+    100% 100%,
+    max(200vw, 1730px) auto;
   background-repeat: no-repeat;
 }
 .header-plum {
@@ -248,7 +250,10 @@ nav {
   border-radius: 6px;
   color: var(--header-button-ink);
   box-shadow: none;
-  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
 }
 .header .header-auth-link:hover,
 .header .mobile-search-trigger:hover,
@@ -599,6 +604,7 @@ nav {
 }
 .result-heading {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-start;
   gap: 4px;
@@ -615,8 +621,8 @@ nav {
   flex: none;
   margin-left: auto;
 }
-.desktop-result-count {
-  margin-left: 0;
+.result-heading .desktop-result-count {
+  margin-left: auto;
 }
 .listing-notice-trigger,
 .listing-notice-close {
@@ -3921,6 +3927,14 @@ nav {
     grid-row: 1;
     justify-self: start;
     line-height: 1.5;
+  }
+  .shop-sheet-label-limited {
+    grid-template-columns: minmax(0, 1fr) max-content;
+  }
+  .shop-sheet-label-limited .count {
+    grid-column: 2;
+    grid-row: 1;
+    white-space: nowrap;
   }
   .shop-sheet-toggle > svg:last-child {
     grid-column: 3;
