@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Copy, Plus, Search, Store, X } from "lucide-react";
 import { errorMessage, fetchJson, mutate } from "@/lib/client";
 import { loadBrandCatalog } from "@/lib/brand-catalog";
+import { prioritizeBrewerySearchResults } from "@/lib/brewery-search";
 import {
   brandFilterCriteriaLabel,
   brandPrefecture,
@@ -124,7 +125,9 @@ export function PostForm({
           { signal: abort.signal },
           "酒蔵候補を取得できませんでした",
         );
-        setRequestBreweryResults(data.slice(0, 5));
+        setRequestBreweryResults(
+          prioritizeBrewerySearchResults(data, requestBreweryName),
+        );
       } catch (reason) {
         if (!abort.signal.aborted)
           setRequestBreweryError(

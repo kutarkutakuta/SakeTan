@@ -39,8 +39,37 @@ if ($LASTEXITCODE -ne 0) {
   throw "pg_dump failed with exit code: $LASTEXITCODE"
 }
 
-Get-ChildItem -LiteralPath $backupRoot -Filter "saketan-*.dump" -File |
-  Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-1) } |
+$allBackups = @(Get-ChildItem -LiteralPath $backupRoot -Filter "saketan-*.dump" -File |
+  Sort-Object LastWriteTime -Descending
+)
+
+# 変更履歴を通常の復元に使う前提で、バックアップは災害復旧用に最小限保持する。
+# - 最新の1本
+# - 最新のバックアップとは別に、直近2週の各週から1本ずつ
+$keepBackups = @()
+if ($allBackups.Count -gt 0) {
+  $keepBackups += $allBackups[0]
+}
+
+$weeklyBackups = $allBackups |
+  Select-Object -Skip 1 |
+  Group-Object {
+    $date = $_.LastWriteTime.Date
+    $daysFromMonday = ([int]$date.DayOfWeek + 6) % 7
+    $date.AddDays(-$daysFromMonday).ToString("yyyy-MM-dd")
+  } |
+  Sort-Object Name -Descending |
+  Select-Object -First 2 |
+  ForEach-Object {
+    $_.Group | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+  }
+
+$keepBackups += $weeklyBackups
+$keepPaths = @($keepBackups | ForEach-Object { $_.FullName })
+
+$allBackups |
+  Where-Object { $keepPaths -notcontains $_.FullName } |
   Remove-Item -Force
 
 Write-Output "Backup completed: $backupFile"
+Write-Output ("Retained backups: " + $keepPaths.Count)

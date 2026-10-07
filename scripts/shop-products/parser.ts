@@ -346,39 +346,92 @@ function extractBrandTables($: CheerioAPI, pageUrl: string) {
       table.prevAll("a[id]").first().text();
     const tablePrefecture =
       table.attr("data-source-prefecture") ?? prefectureFromText(tableHeading);
-    const rows = $(tableNode)
-      .find("tr")
-      .map((_, rowNode) => {
+    const rawRows = $(tableNode).find("tr").toArray();
+    const firstRowWithCells = rawRows
+      .map((rowNode) => $(rowNode).find("td"))
+      .find((cells) => cells.length >= 2);
+    const hasRowspanBrandColumns = Boolean(
+      firstRowWithCells &&
+        firstRowWithCells.eq(0).attr("rowspan") &&
+        firstRowWithCells.eq(1).attr("rowspan"),
+    );
+    let rows: Array<{
+      brandNames: string;
+      breweryName: string;
+      sourcePrefecture: string | null;
+    }> = [];
+    if (hasRowspanBrandColumns) {
+      const activeCells: Array<{ text: string; remaining: number } | undefined> = [];
+      for (const rowNode of rawRows) {
         const cells = $(rowNode).find("td");
-        if (cells.length < 2) return null;
-        const brandCell =
-          cells.length >= 3 ? cells.eq(cells.length - 2) : cells.eq(0);
-        const breweryCell = cells.eq(cells.length - 1);
-        const sourcePrefecture =
-          cells.length >= 3
-            ? prefectureName(cells.eq(0).text())
-            : tablePrefecture;
-        const brandNames = cleanProductName(brandCell.text());
-        const breweryName = cleanProductName(breweryCell.text());
+        const placed: string[] = [];
+        let column = 0;
+        cells.each((__, cellNode) => {
+          while (activeCells[column]?.remaining) {
+            placed[column] = activeCells[column]!.text;
+            activeCells[column]!.remaining -= 1;
+            column += 1;
+          }
+          const cell = $(cellNode);
+          const text = cleanProductName(cell.text());
+          const rowspan = Math.max(1, Number(cell.attr("rowspan")) || 1);
+          placed[column] = text;
+          activeCells[column] = { text, remaining: rowspan - 1 };
+          column += 1;
+        });
+        while (activeCells[column]?.remaining) {
+          placed[column] = activeCells[column]!.text;
+          activeCells[column]!.remaining -= 1;
+          column += 1;
+        }
+        const rawBreweryName = placed[0] ?? "";
+        const brandNames = placed[1] ?? "";
+        if (!brandNames || !rawBreweryName) continue;
+        const sourcePrefecture = prefectureFromText(rawBreweryName);
+        const breweryName = cleanProductName(
+          rawBreweryName.replace(/\s*[（(][^）)]*[）)]/gu, ""),
+        );
         if (
-          !brandNames ||
           !breweryName ||
           brandNames.length > 150 ||
           breweryName.length > 150
         )
-          return null;
-        return { brandNames, breweryName, sourcePrefecture };
-      })
-      .get()
-      .filter(
-        (
-          row,
-        ): row is {
-          brandNames: string;
-          breweryName: string;
-          sourcePrefecture: string | null;
-        } => Boolean(row),
-      );
+          continue;
+        rows.push({ brandNames, breweryName, sourcePrefecture });
+      }
+    } else {
+      rows = rawRows
+        .map((rowNode) => {
+          const cells = $(rowNode).find("td");
+          if (cells.length < 2) return null;
+          const brandCell =
+            cells.length >= 3 ? cells.eq(cells.length - 2) : cells.eq(0);
+          const breweryCell = cells.eq(cells.length - 1);
+          const sourcePrefecture =
+            cells.length >= 3
+              ? prefectureName(cells.eq(0).text())
+              : tablePrefecture;
+          const brandNames = cleanProductName(brandCell.text());
+          const breweryName = cleanProductName(breweryCell.text());
+          if (
+            !brandNames ||
+            !breweryName ||
+            brandNames.length > 150 ||
+            breweryName.length > 150
+          )
+            return null;
+          return { brandNames, breweryName, sourcePrefecture };
+        })
+        .filter(
+          (
+            row,
+          ): row is {
+            brandNames: string;
+            breweryName: string;
+            sourcePrefecture: string | null;
+          } => Boolean(row),
+        );
+    }
     if (rows.length < 5) return;
     const brewerySignals = rows.filter((row) =>
       /(酒造|醸造|酒蔵|酒店|商店|本店|酒造場|醸造所)/.test(row.breweryName),
@@ -491,6 +544,39 @@ function extractDiamondLeadingBrands($: CheerioAPI, pageUrl: string) {
   return results;
 }
 
+function extractKanaBrandMenu($: CheerioAPI, pageUrl: string) {
+  const results: ExtractedProduct[] = [];
+  $("a[href]").each((_, node) => {
+    const element = $(node);
+    const href = element.attr("href");
+    if (!href) return;
+    const pathname = new URL(href, pageUrl).pathname;
+    if (!/^\/nihonsyu(?:\/|$)/u.test(pathname)) return;
+    const text = cleanProductName(element.text());
+    const match = text.match(/^(.+?)\s*[（(]([^()（）]+)[）)]$/u);
+    if (!match) return;
+    const producerMatch = match[2].match(/^(.+?)\s*・\s*([^・]+)$/u);
+    if (!producerMatch) return;
+    const sourceName = cleanProductName(match[1]);
+    const sourceBreweryName = cleanProductName(producerMatch[1]);
+    const sourcePrefecture = prefectureName(producerMatch[2]);
+    if (!sourceName || !sourceBreweryName) return;
+    pushProduct(
+      results,
+      sourceName,
+      elementUrl(element, pageUrl),
+      pageUrl,
+      "category",
+      {
+        sourceBreweryName,
+        sourcePrefecture,
+        evidence: text,
+      },
+    );
+  });
+  return results;
+}
+
 export function extractProducts(
   html: string,
   pageUrl: string,
@@ -512,6 +598,7 @@ export function extractProducts(
   products.push(...extractBrandImageAlts($, pageUrl));
   products.push(...extractRegionalBrandLists($, pageUrl));
   products.push(...extractDiamondLeadingBrands($, pageUrl));
+  products.push(...extractKanaBrandMenu($, pageUrl));
   products.push(...extractBrandTables($, pageUrl));
   products.push(
     ...extractElements(
@@ -574,6 +661,7 @@ export function paginationLinks(html: string, pageUrl: string) {
       element.attr("aria-label") ?? element.text(),
     ).toLocaleLowerCase("ja");
     const rel = element.attr("rel")?.toLocaleLowerCase("en") ?? "";
+    const className = element.attr("class")?.toLocaleLowerCase("en") ?? "";
     const insidePager = Boolean(
       element.closest(
         '[class*="pagination" i], [class*="pager" i], [class*="pagenavi" i], .wp-pagenavi',
@@ -581,6 +669,7 @@ export function paginationLinks(html: string, pageUrl: string) {
     );
     const isNext =
       rel.split(/\s+/).includes("next") ||
+      className.split(/\s+/).includes("is-next") ||
       /^(次|次へ|次の.+|next(?:\s+page)?|›|»|>)/i.test(label) ||
       /次|next/i.test(element.attr("aria-label") ?? "") ||
       (insidePager && /^\d+$/.test(label));

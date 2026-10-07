@@ -119,7 +119,6 @@ export function HeaderNavigation() {
             ヘルプ
           </Link>
           <div className="mobile-header-section">
-            <p>登録情報</p>
             <RegistrationLinks />
           </div>
           <div className="mobile-header-account">
