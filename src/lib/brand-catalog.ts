@@ -1,21 +1,11 @@
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase/browser";
 import type { Brand } from "@/lib/types";
 
 const pageSize = 1000;
 
 export async function loadBrandCatalog(signal: AbortSignal): Promise<Brand[]> {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-  if (!url || !key) throw new Error("銘柄一覧の接続先が設定されていません");
-
-  // This is a public, RLS-protected read. No user session or secret key is sent.
-  const db = createClient(url, key, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-      detectSessionInUrl: false,
-    },
-  });
+  const db = await supabase();
+  if (!db) throw new Error("銘柄一覧の接続先が設定されていません");
   const brands: Brand[] = [];
   let lastId: string | undefined;
 
