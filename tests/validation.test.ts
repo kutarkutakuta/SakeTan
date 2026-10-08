@@ -16,6 +16,7 @@ import { featuredShopBrands } from "../src/lib/shop-brand-order";
 import {
   brandFilterCriteriaLabel,
   kanaGroup,
+  matchesBrandQuery,
   sortBrands,
   sortShopBrands,
 } from "../src/lib/brand-index";
@@ -95,6 +96,21 @@ test("brand matches outrank brewery matches", () => {
   assert.deepEqual(
     results.map((brand) => brand.name),
     ["一ノ蔵", "Again"],
+  );
+});
+
+test("kana search treats づ and ず as the same", () => {
+  assert.equal(
+    matchesBrandQuery(
+      {
+        id: "zu-du",
+        name: "続きの酒",
+        name_kana: "つづきのさけ",
+        brewery_id: null,
+      },
+      "つずき",
+    ),
+    true,
   );
 });
 

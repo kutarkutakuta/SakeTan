@@ -740,11 +740,23 @@ test("brand, kana, brewery and shop search; bounds and brand filters", async () 
     "select public.submit_brand_application('検索中の申請','検索用酒造',null,$1)",
     [shop],
   );
+  const kanaVariantBrand = await scalar(
+    "select public.submit_brand_application_v2('づ検索銘柄','つづきのさけ',null,'検索用酒造','かな検索の確認',$1)",
+    [shop],
+  );
   await asUser(null);
   assert.equal(
     (await db.query("select * from public.search_brands('しけんしゅぞう')"))
       .rows.length,
     1,
+  );
+  assert.equal(
+    (
+      await db.query<{ name: string }>(
+        "select name from public.search_brands('つずきのさけ')",
+      )
+    ).rows.some(({ name }) => name === "づ検索銘柄"),
+    true,
   );
   assert.equal(
     (
@@ -770,6 +782,9 @@ test("brand, kana, brewery and shop search; bounds and brand filters", async () 
   await asUser(admin);
   await db.query("select public.review_brand_application($1,'reject',null)", [
     searchablePendingBrand,
+  ]);
+  await db.query("select public.review_brand_application($1,'reject',null)", [
+    kanaVariantBrand,
   ]);
   await asUser(null);
   assert.equal(
@@ -851,7 +866,8 @@ test("shop candidate search orders by distance and supports paging", async () =>
     `insert into public.shops(name,name_kana,latitude,longitude) values
       ('距離順 遠い店','きょりじゅん とおいみせ',36,139),
       ('距離順 近い店','きょりじゅん ちかいみせ',35.001,139),
-      ('距離順 中間店','きょりじゅん ちゅうかんみせ',35.1,139)`,
+      ('距離順 中間店','きょりじゅん ちゅうかんみせ',35.1,139),
+      ('づ表記店','つづきのみせ',35,139)`,
   );
   await asUser(null);
 
@@ -869,6 +885,14 @@ test("shop candidate search orders by distance and supports paging", async () =>
   assert.deepEqual(
     secondPage.rows.map(({ name }) => name),
     ["距離順 遠い店"],
+  );
+  assert.deepEqual(
+    (
+      await db.query<{ name: string }>(
+        "select name from public.search_shop_candidates('つずき',35,139,2,0)",
+      )
+    ).rows.map(({ name }) => name),
+    ["づ表記店"],
   );
 });
 test("only owner/admin can edit sighting; dates recompute on edit and soft delete", async () => {

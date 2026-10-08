@@ -1,7 +1,10 @@
 import type { Brewery } from "@/lib/types";
+import { normalizeKanaSearchText } from "@/lib/search-text";
 
 function normalizeSearchText(value: string) {
-  return value.normalize("NFKC").toLocaleLowerCase("ja").replace(/\s+/gu, "");
+  return normalizeKanaSearchText(
+    value.normalize("NFKC").toLocaleLowerCase("ja").replace(/\s+/gu, ""),
+  );
 }
 
 function matchRank(brewery: Brewery, query: string) {

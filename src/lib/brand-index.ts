@@ -1,4 +1,5 @@
 import type { Brand, ShopBrand } from "./types";
+import { normalizeKanaSearchText } from "./search-text";
 
 export const prefectures = [
   "北海道",
@@ -188,7 +189,9 @@ export function matchesBrandQuery(brand: Brand, query: string) {
 }
 
 function normalizeSearchText(value: string) {
-  return value.trim().normalize("NFKC").toLocaleLowerCase();
+  return normalizeKanaSearchText(
+    value.trim().normalize("NFKC").toLocaleLowerCase(),
+  );
 }
 
 function brandSearchRank(brand: Brand, query: string) {
