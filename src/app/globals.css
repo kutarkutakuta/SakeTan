@@ -1359,6 +1359,12 @@ nav {
   color: var(--muted);
   margin-top: 8px;
 }
+.page-head .shop-location {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
 .edit-admin-actions {
   display: flex;
   flex-wrap: wrap;

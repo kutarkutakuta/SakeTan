@@ -101,6 +101,9 @@ export function ShopPageLoader({
       relation.brands?.is_active,
   );
   const googleMapsUrl = googleMapsShopUrl(data.shop);
+  const shopLocation = [data.shop.prefecture, data.shop.city]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <main id="main" className="page shop-page">
@@ -116,6 +119,7 @@ export function ShopPageLoader({
               <span className="shop-title-kana">{data.shop.name_kana}</span>
             )}
           </h1>
+          {shopLocation && <p className="shop-location">{shopLocation}</p>}
           <div className="shop-links">
             <a
               className="text-link"
