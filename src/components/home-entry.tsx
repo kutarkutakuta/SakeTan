@@ -3,6 +3,7 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { HomePageLoader } from "@/components/home-page-loader";
+import { HomeRedirect } from "@/components/home-redirect";
 import type { EntityType } from "@/lib/types";
 
 const ShopPageLoader = lazy(() =>
@@ -76,12 +77,5 @@ export function HomeEntry({ ready }: { ready: boolean }) {
         />
       </Suspense>
     );
-  return (
-    <main id="main" className="page narrow">
-      <h1>ページが見つかりません</h1>
-      <a className="button" href="/">
-        地図へ戻る
-      </a>
-    </main>
-  );
+  return <HomeRedirect />;
 }

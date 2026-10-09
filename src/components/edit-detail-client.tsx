@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { ArrowLeft, History } from "lucide-react";
+import { z } from "zod";
+import { HomeRedirect } from "@/components/home-redirect";
 import { LoginRequired } from "@/components/login-required";
 import { MasterForm } from "@/components/master-form";
 import { authorization, configured, supabase } from "@/lib/supabase/browser";
@@ -54,6 +56,7 @@ export function EditDetailClient({
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (id && !z.uuid().safeParse(id).success) return;
     let active = true;
     void (async () => {
       const [db, access] = await Promise.all([supabase(), authorization()]);
@@ -122,6 +125,9 @@ export function EditDetailClient({
         ? `/shops/${id}`
         : `/edit?type=${type}`;
 
+  if ((id && !z.uuid().safeParse(id).success) || (state && !state.found))
+    return <HomeRedirect />;
+
   return (
     <main id="main" className="page narrow">
       <a className="back" href={back}>
@@ -146,8 +152,6 @@ export function EditDetailClient({
         </p>
       ) : !state ? (
         <p className="muted">登録情報を読み込んでいます…</p>
-      ) : !state.found ? (
-        <p className="notice">登録情報が見つかりません</p>
       ) : (type === "brand" || type === "brewery") && !id && !state.admin ? (
         <div className="card">
           <h2>{entity.name}マスタは管理者が管理しています</h2>

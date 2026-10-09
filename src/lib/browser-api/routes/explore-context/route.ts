@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { supabase } from "@/lib/supabase/browser";
+import type { Brand } from "@/lib/types";
 
 const schema = z.object({
   brand_id: z.uuid().optional(),
@@ -20,7 +21,7 @@ export async function GET(request: Request) {
       ? db
           .from("brands")
           .select(
-            "id,name,name_kana,brewery_id,external_url,brewery_name,prefecture,sakenowa_rank,sakenowa_score,sakenowa_rank_year_month,is_active,registration_status,requested_brewery_name,registered_at",
+            "id,name,name_kana,brewery_id,external_url,breweries(id,name,name_kana,prefecture),sakenowa_rank,sakenowa_score,sakenowa_rank_year_month,is_active,registration_status,requested_brewery_name,registered_at",
           )
           .eq("id", parsed.data.brand_id)
           .maybeSingle()
@@ -41,8 +42,24 @@ export async function GET(request: Request) {
       { error: "表示条件を読み込めませんでした" },
       { status: 500 },
     );
+  if (
+    (parsed.data.brand_id && !brandResult.data) ||
+    (parsed.data.shop_id && !shopResult.data)
+  )
+    return Response.json({ error: "情報が見つかりません" }, { status: 404 });
+  const brand = brandResult.data as unknown as Brand | null;
   return Response.json(
-    { brand: brandResult.data, shop: shopResult.data },
+    {
+      brand: brand
+        ? {
+            ...brand,
+            brewery_name:
+              brand.breweries?.name ?? brand.requested_brewery_name ?? null,
+            prefecture: brand.breweries?.prefecture ?? null,
+          }
+        : null,
+      shop: shopResult.data,
+    },
     { headers: { "Cache-Control": "private, no-store" } },
   );
 }

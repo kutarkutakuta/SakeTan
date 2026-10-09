@@ -6,7 +6,13 @@ import { useParams, useSearchParams } from "next/navigation";
 import { ArrowLeft, ExternalLink, History, Pencil, Plus } from "lucide-react";
 import { ShopBrandList } from "@/components/shop-brand-list";
 import { ShopPageTabs } from "@/components/shop-page-tabs";
-import { errorMessage, fetchJson, isAbortError } from "@/lib/client";
+import { HomeRedirect } from "@/components/home-redirect";
+import {
+  errorMessage,
+  fetchJson,
+  isAbortError,
+  isMissingPageError,
+} from "@/lib/client";
 import { safeMapReturnPath } from "@/lib/map-view";
 import type { Shop, ShopBrand } from "@/lib/types";
 import { googleMapsShopUrl } from "@/lib/utils";
@@ -40,11 +46,13 @@ export function ShopPageLoader({
   const [data, setData] = useState<ShopPageData | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [missing, setMissing] = useState(false);
 
   const load = useCallback(
     async (signal?: AbortSignal) => {
       setLoading(true);
       setError("");
+      setMissing(false);
       try {
         const result = await fetchJson<ShopPageData>(
           `/api/shops/${id}/page-data`,
@@ -54,6 +62,10 @@ export function ShopPageLoader({
         setData(result);
       } catch (reason) {
         if (isAbortError(reason)) return;
+        if (isMissingPageError(reason)) {
+          setMissing(true);
+          return;
+        }
         setError(errorMessage(reason, "酒屋情報を読み込めませんでした"));
       } finally {
         if (!signal?.aborted) setLoading(false);
@@ -72,6 +84,7 @@ export function ShopPageLoader({
     (query === undefined
       ? searchParams.get("return_to")
       : new URLSearchParams(query).get("return_to")) ?? undefined;
+  if (missing) return <HomeRedirect />;
   if (!data)
     return (
       <main id="main" className="page shop-page">

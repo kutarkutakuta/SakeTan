@@ -2,6 +2,23 @@ import { browserApi } from "@/lib/browser-api";
 
 type ApiError = { error?: unknown };
 
+export class ApiRequestError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
+    super(message);
+    this.name = "ApiRequestError";
+  }
+}
+
+export function isMissingPageError(reason: unknown) {
+  return (
+    reason instanceof ApiRequestError &&
+    (reason.status === 400 || reason.status === 404)
+  );
+}
+
 function apiErrorMessage(data: unknown, fallback: string) {
   const error =
     data && typeof data === "object" && "error" in data
@@ -16,7 +33,8 @@ export async function fetchJson<T>(
   init: RequestInit | undefined,
   fallback: string,
 ) {
-  const signal = init?.signal ?? (input instanceof Request ? input.signal : undefined);
+  const signal =
+    init?.signal ?? (input instanceof Request ? input.signal : undefined);
   if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
   const request = browserApi(input, init).then(
     (response) => response ?? fetch(input, init),
@@ -34,7 +52,8 @@ export async function fetchJson<T>(
       })
     : await request;
   const data: unknown = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(apiErrorMessage(data, fallback));
+  if (!response.ok)
+    throw new ApiRequestError(apiErrorMessage(data, fallback), response.status);
   if (data === null) throw new Error(fallback);
   return data as T;
 }

@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import postgres from "postgres";
 import { adminClient, paged } from "./supabase-admin";
+import { confirmedRankingMappings } from "./sakenowa-ranking-confirmations";
 import {
   areaSchema,
   brandSchema,
@@ -63,7 +64,12 @@ async function main() {
       .order("id")
       .range(from, to),
   );
-  let plan = planSakenowaRankings(datasets, localBrands, localBreweries);
+  let plan = planSakenowaRankings(
+    datasets,
+    localBrands,
+    localBreweries,
+    confirmedRankingMappings,
+  );
   const reportPath = resolve(directory, "report.md");
   await writeFile(
     reportPath,
@@ -90,7 +96,12 @@ async function main() {
         const currentBreweries = await tx<
           LocalRankingBrewery[]
         >`select id,name,prefecture,source,source_id,is_active from public.breweries`;
-        plan = planSakenowaRankings(datasets, currentBrands, currentBreweries);
+        plan = planSakenowaRankings(
+          datasets,
+          currentBrands,
+          currentBreweries,
+          confirmedRankingMappings,
+        );
         if (!plan.updates.length)
           throw new Error("安全に照合できた銘柄がないため中止しました");
         const [newest] =
@@ -127,6 +138,14 @@ async function main() {
         from desired d where b.id=d.id and
           row(b.sakenowa_rank,b.sakenowa_score,b.sakenowa_rank_year_month,b.sakenowa_area_rank,b.sakenowa_area_score,b.sakenowa_area_id,b.sakenowa_area_name)
           is distinct from row(d.rank,d.score,d.month,d.area_rank,d.area_score,d.area_id,d.area_name)`;
+        const [verified] = await tx`with incoming as (
+          select * from jsonb_to_recordset(${tx.json(plan.updates)}::jsonb)
+          as r(id uuid,rank integer,score double precision,area_rank integer,area_score double precision,area_id integer,area_name text)
+        ) select count(*)::integer as total from incoming r join public.brands b on b.id=r.id
+          where row(b.sakenowa_rank,b.sakenowa_score,b.sakenowa_rank_year_month,b.sakenowa_area_rank,b.sakenowa_area_score,b.sakenowa_area_id,b.sakenowa_area_name)
+          is not distinct from row(r.rank,r.score,${datasets.rankings.yearMonth}::text,r.area_rank,r.area_score,r.area_id,r.area_name)`;
+        if (verified.total !== plan.updates.length)
+          throw new Error("ランキングの書き込み結果が照合計画と一致しません");
       });
     } finally {
       await sql.end();
@@ -156,6 +175,7 @@ async function main() {
         overall: plan.updates.filter((r) => r.rank != null).length,
         regional: plan.updates.filter((r) => r.area_rank != null).length,
         review: plan.issues.length,
+        confirmed: plan.confirmedMatches.length,
         applied: apply,
         report: reportPath,
       },

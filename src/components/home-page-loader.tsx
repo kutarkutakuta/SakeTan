@@ -3,7 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Home } from "@/components/home";
-import { errorMessage, fetchJson, isAbortError } from "@/lib/client";
+import { HomeRedirect } from "@/components/home-redirect";
+import {
+  errorMessage,
+  fetchJson,
+  isAbortError,
+  isMissingPageError,
+} from "@/lib/client";
 import { parseMapView, readSessionMapView, type MapView } from "@/lib/map-view";
 import type { Brand, Shop } from "@/lib/types";
 
@@ -37,6 +43,7 @@ export function HomePageLoader({ ready }: { ready: boolean }) {
     contextQuery ? null : { brand: null, shop: null },
   );
   const [loadError, setLoadError] = useState("");
+  const [missing, setMissing] = useState(false);
 
   useEffect(() => {
     setSavedMapView(readSessionMapView() ?? null);
@@ -59,12 +66,17 @@ export function HomePageLoader({ ready }: { ready: boolean }) {
       .then(setContext)
       .catch((reason) => {
         if (isAbortError(reason)) return;
+        if (isMissingPageError(reason)) {
+          setMissing(true);
+          return;
+        }
         setLoadError(errorMessage(reason, "表示条件を読み込めませんでした"));
         setContext({ brand: null, shop: null });
       });
     return () => controller.abort();
   }, [contextQuery]);
 
+  if (missing) return <HomeRedirect />;
   if (!context || (!urlMapView && savedMapView === undefined))
     return <main id="main" className="explore" />;
 

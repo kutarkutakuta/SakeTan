@@ -2,6 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   planSakenowaRankings,
+  rankingReport,
+  type ConfirmedRankingMapping,
   type RankingDatasets,
   type LocalRankingBrand,
   type LocalRankingBrewery,
@@ -120,6 +122,115 @@ test("renamed IDs still reject duplicate IDs, unapproved targets, and brewery mi
     assert.equal(plan.issues.length, 1);
   }
 });
+test("explicitly confirmed brand and brewery IDs allow rankings without changing masters", () => {
+  const localBrewery = {
+    ...brewery,
+    name: "現在の酒蔵",
+    source: null,
+    source_id: null,
+  };
+  const confirmation: ConfirmedRankingMapping = {
+    apiBrandId: 109,
+    localBrandId: "local",
+    apiBreweryId: 100,
+    localBreweryId: "brewery",
+    reason: "ユーザー確認済み",
+  };
+  assert.equal(
+    planSakenowaRankings(datasets, [brand], [localBrewery]).updates.length,
+    0,
+  );
+  const plan = planSakenowaRankings(
+    datasets,
+    [brand],
+    [localBrewery],
+    [confirmation],
+  );
+  assert.equal(plan.updates.length, 1);
+  assert.equal(plan.updates[0].area_rank, 2);
+  assert.equal(plan.issues.length, 0);
+  assert.equal(plan.confirmedMatches.length, 1);
+  assert.equal(plan.confirmedMatches[0].localBrewery, "現在の酒蔵");
+  assert.ok(
+    rankingReport(plan, "202609", true).includes(
+      "ユーザー確認済みの個別対応: 1銘柄",
+    ),
+  );
+  assert.equal(localBrewery.source_id, null);
+  assert.equal(brand.brewery_id, "brewery");
+});
+
+test("confirmed exceptions still reject reassigned IDs, inactive masters, and region changes", () => {
+  const localBrewery = { ...brewery, source: null, source_id: null };
+  const confirmation: ConfirmedRankingMapping = {
+    apiBrandId: 109,
+    localBrandId: "local",
+    apiBreweryId: 100,
+    localBreweryId: "brewery",
+    reason: "ユーザー確認済み",
+  };
+  for (const changed of [
+    { apiBrandId: 110 },
+    { localBrandId: "other" },
+    { apiBreweryId: 101 },
+    { localBreweryId: "other" },
+  ]) {
+    assert.equal(
+      planSakenowaRankings(
+        datasets,
+        [brand],
+        [localBrewery],
+        [{ ...confirmation, ...changed }],
+      ).updates.length,
+      0,
+    );
+  }
+  for (const changed of [{ is_active: false }, { prefecture: "青森県" }]) {
+    assert.equal(
+      planSakenowaRankings(
+        datasets,
+        [brand],
+        [{ ...localBrewery, ...changed }],
+        [confirmation],
+      ).updates.length,
+      0,
+    );
+  }
+  for (const changed of [
+    { is_active: false },
+    { registration_status: "pending" },
+    { source_id: "other" },
+    { brewery_id: null },
+  ]) {
+    assert.equal(
+      planSakenowaRankings(
+        datasets,
+        [{ ...brand, ...changed }],
+        [localBrewery],
+        [confirmation],
+      ).updates.length,
+      0,
+    );
+  }
+  assert.equal(
+    planSakenowaRankings(
+      {
+        ...datasets,
+        rankings: {
+          ...datasets.rankings,
+          areas: [
+            { areaId: 2, ranking: [{ brandId: 109, rank: 1, score: 4.2 }] },
+          ],
+        },
+      },
+      [brand],
+      [localBrewery],
+      [confirmation],
+    ).updates.length,
+    0,
+  );
+});
+
 test("brewery and region mismatch, missing catalogs, and broken/cyclic merges require review", () => {
   assert.equal(
     planSakenowaRankings(datasets, [brand], [{ ...brewery, source_id: "101" }])

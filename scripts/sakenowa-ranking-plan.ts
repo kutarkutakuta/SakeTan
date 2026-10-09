@@ -48,10 +48,19 @@ export type RankingIssue = {
   candidates: { id: string; name: string; brewery: string | null }[];
 };
 
+export type ConfirmedRankingMapping = {
+  apiBrandId: number;
+  localBrandId: string;
+  apiBreweryId: number;
+  localBreweryId: string;
+  reason: string;
+};
+
 export function planSakenowaRankings(
   datasets: RankingDatasets,
   localBrands: LocalRankingBrand[],
   localBreweries: LocalRankingBrewery[],
+  confirmedMappings: readonly ConfirmedRankingMapping[] = [],
 ) {
   const apiBrands = new Map(datasets.apiBrands.map((b) => [b.id, b]));
   const apiBreweries = new Map(datasets.apiBreweries.map((b) => [b.id, b]));
@@ -75,6 +84,13 @@ export function planSakenowaRankings(
   const selected = new Set([...overall.keys(), ...regional.keys()]);
   const updates = new Map<string, RankingUpdate>();
   const issues: RankingIssue[] = [];
+  const confirmedMatches: {
+    apiId: number;
+    name: string;
+    apiBrewery: string;
+    localBrewery: string;
+    reason: string;
+  }[] = [];
   for (const apiId of selected) {
     const apiBrand = apiBrands.get(apiId);
     const apiBrewery =
@@ -88,6 +104,7 @@ export function planSakenowaRankings(
     const regionalRank = regional.get(apiId);
     let target = source;
     let reason = "";
+    let confirmedMatch: (typeof confirmedMatches)[number] | undefined;
     if (!apiBrand) reason = "APIの銘柄一覧にIDなし";
     else if (sources.length !== 1)
       reason = sources.length ? "外部IDが重複" : "外部IDの対応先なし";
@@ -108,6 +125,15 @@ export function planSakenowaRankings(
       const brewery = target
         ? breweries.get(target.brewery_id ?? "")
         : undefined;
+      const confirmation = confirmedMappings.find(
+        (mapping) =>
+          mapping.apiBrandId === apiId &&
+          mapping.localBrandId === target?.id &&
+          mapping.apiBreweryId === apiBrewery.id &&
+          mapping.localBreweryId === brewery?.id &&
+          apiBrewery.areaId != null &&
+          areas.get(apiBrewery.areaId) === brewery?.prefecture,
+      );
       if (
         !reason &&
         (!target?.is_active || target.registration_status !== "approved")
@@ -117,8 +143,9 @@ export function planSakenowaRankings(
         !reason &&
         !(
           brewery?.is_active &&
-          brewery.source === "sakenowa" &&
-          brewery.source_id === String(apiBrewery.id)
+          ((brewery.source === "sakenowa" &&
+            brewery.source_id === String(apiBrewery.id)) ||
+            confirmation)
         )
       )
         reason = "酒蔵IDが一致しない";
@@ -129,6 +156,15 @@ export function planSakenowaRankings(
           !areas.has(regionalRank.areaId))
       )
         reason = "地域IDが一致しない";
+      if (!reason && confirmation && brewery) {
+        confirmedMatch = {
+          apiId,
+          name: target.name,
+          apiBrewery: apiBrewery.name,
+          localBrewery: brewery.name,
+          reason: confirmation.reason,
+        };
+      }
     }
     if (reason || !target) {
       issues.push({
@@ -153,6 +189,7 @@ export function planSakenowaRankings(
       continue;
     }
     const national = overall.get(apiId);
+    if (confirmedMatch) confirmedMatches.push(confirmedMatch);
     const update: RankingUpdate = {
       id: target.id,
       rank: national?.rank ?? null,
@@ -193,6 +230,7 @@ export function planSakenowaRankings(
     selectedCount: selected.size,
     updates: [...updates.values()],
     issues,
+    confirmedMatches,
   };
 }
 
@@ -210,8 +248,16 @@ export function rankingReport(
     `- 対象: 全国全件＋各地域5位以内（${plan.selectedCount}銘柄）`,
     `- 確認できた反映先: ${plan.updates.length}銘柄`,
     `- 要確認・除外: ${plan.issues.length}銘柄`,
+    `- ユーザー確認済みの個別対応: ${plan.confirmedMatches.length}銘柄`,
     `- DB反映: ${applied ? "適用済み" : "なし"}`,
     "- 銘柄名・外部ID・有効状態の変更、新規マスタ作成は行いません。",
+    "",
+    "## 確認済みの個別対応",
+    "",
+    ...plan.confirmedMatches.map(
+      (match) =>
+        `- ${cell(match.name)}（API ID ${match.apiId}）: APIの酒蔵「${cell(match.apiBrewery)}」、現在の酒蔵「${cell(match.localBrewery)}」。${cell(match.reason)}`,
+    ),
     "",
     "## 要確認",
     "",

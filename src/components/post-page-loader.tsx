@@ -6,7 +6,13 @@ import { useSearchParams } from "next/navigation";
 import { ArrowLeft, Store } from "lucide-react";
 import { AvailabilityInfo } from "@/components/availability-info";
 import { PostForm } from "@/components/post-form";
-import { errorMessage, fetchJson, isAbortError } from "@/lib/client";
+import { HomeRedirect } from "@/components/home-redirect";
+import {
+  errorMessage,
+  fetchJson,
+  isAbortError,
+  isMissingPageError,
+} from "@/lib/client";
 import type { PostShop, PostShopRelation } from "@/lib/types";
 
 type PostData = {
@@ -22,12 +28,14 @@ export function PostPageLoader() {
   const [data, setData] = useState<PostData | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(Boolean(shopId));
+  const [missing, setMissing] = useState(false);
 
   const load = useCallback(
     async (signal?: AbortSignal) => {
       if (!shopId) return;
       setLoading(true);
       setError("");
+      setMissing(false);
       try {
         const result = await fetchJson<PostData>(
           `/api/shops/${shopId}/post-data`,
@@ -37,6 +45,10 @@ export function PostPageLoader() {
         setData(result);
       } catch (reason) {
         if (isAbortError(reason)) return;
+        if (isMissingPageError(reason)) {
+          setMissing(true);
+          return;
+        }
         setError(errorMessage(reason, "取扱情報を取得できませんでした"));
       } finally {
         if (!signal?.aborted) setLoading(false);
@@ -52,6 +64,7 @@ export function PostPageLoader() {
     return () => controller.abort();
   }, [load]);
 
+  if (missing) return <HomeRedirect />;
   if (!shopId)
     return (
       <main id="main" className="page narrow">

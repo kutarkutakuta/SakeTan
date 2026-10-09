@@ -35,6 +35,12 @@ export default {
       const shell = new URL("/", url);
       return env.ASSETS.fetch(new Request(shell, request));
     }
-    return new Response("Not Found", { status: 404 });
+    // Missing scripts and images must not be replaced by home page HTML.
+    if (
+      url.pathname.startsWith("/_next/") ||
+      /\/[^/]+\.[^/]+$/.test(url.pathname)
+    )
+      return new Response("Not Found", { status: 404 });
+    return Response.redirect(new URL("/", url), 307);
   },
 };
