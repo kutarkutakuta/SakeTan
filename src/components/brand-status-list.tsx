@@ -114,6 +114,7 @@ export function BrandStatusList() {
             brand.breweries?.name ??
             brand.requested_brewery_name ??
             "酒蔵未登録";
+          const prefecture = brand.breweries?.prefecture;
           const date = pending ? brand.created_at : brand.registered_at;
           return (
             <article className="card brand-status-card" key={brand.id}>
@@ -132,7 +133,10 @@ export function BrandStatusList() {
                       </span>
                     )}
                   </h2>
-                  <p>{brewery}</p>
+                  <p>
+                    {brewery}
+                    {prefecture && `（${prefecture}）`}
+                  </p>
                 </div>
                 <div className="brand-status-card-links">
                   <Link
@@ -176,12 +180,14 @@ export function BrandStatusList() {
               ) : (
                 <p className="hint">取扱店舗はまだ登録されていません。</p>
               )}
-              {pending && data.admin && (
+              {data.admin && (
                 <div className="brand-status-admin">
-                  <p>
-                    <strong>申請理由：</strong>
-                    {brand.application_reason ?? "記載なし"}
-                  </p>
+                  {pending && (
+                    <p>
+                      <strong>申請理由：</strong>
+                      {brand.application_reason ?? "記載なし"}
+                    </p>
+                  )}
                   <BrandReviewActions brand={brand} onReviewed={() => load()} />
                 </div>
               )}

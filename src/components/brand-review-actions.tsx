@@ -17,7 +17,8 @@ export function BrandReviewActions({
   onReviewed: () => void | Promise<void>;
 }) {
   const { showToast } = useToast();
-  const needsBrewery = !brand.brewery_id;
+  const pending = brand.registration_status === "pending";
+  const needsBrewery = pending && !brand.brewery_id;
   const requestedBreweryName = brand.requested_brewery_name?.trim() ?? "";
   const [busy, setBusy] = useState(false);
   const [breweryMode, setBreweryMode] = useState<BreweryMode>("existing");
@@ -179,7 +180,7 @@ export function BrandReviewActions({
 
   return (
     <div className="brand-review-actions">
-      {needsBrewery && (
+      {pending && needsBrewery && (
         <section
           className="brand-review-brewery"
           aria-labelledby={`brewery-${brand.id}`}
@@ -300,25 +301,26 @@ export function BrandReviewActions({
         </section>
       )}
       <div className="actions">
-        {needsBrewery && breweryMode === "new" ? (
-          <button
-            className="button small"
-            disabled={busy || !registrationReady}
-            type="button"
-            onClick={() => void review("register_brewery")}
-          >
-            酒蔵を登録
-          </button>
-        ) : (
-          <button
-            className="button small"
-            disabled={busy || !approvalReady}
-            type="button"
-            onClick={() => void review("approve")}
-          >
-            登録を承認
-          </button>
-        )}
+        {pending &&
+          (needsBrewery && breweryMode === "new" ? (
+            <button
+              className="button small"
+              disabled={busy || !registrationReady}
+              type="button"
+              onClick={() => void review("register_brewery")}
+            >
+              酒蔵を登録
+            </button>
+          ) : (
+            <button
+              className="button small"
+              disabled={busy || !approvalReady}
+              type="button"
+              onClick={() => void review("approve")}
+            >
+              登録を承認
+            </button>
+          ))}
         <button
           className="button small ghost"
           disabled={busy}
@@ -327,17 +329,19 @@ export function BrandReviewActions({
         >
           既存銘柄に統合
         </button>
-        <button
-          className="button small ghost danger"
-          disabled={busy}
-          type="button"
-          onClick={() => {
-            if (window.confirm("この銘柄の申請を却下しますか？"))
-              void review("reject");
-          }}
-        >
-          却下
-        </button>
+        {pending && (
+          <button
+            className="button small ghost danger"
+            disabled={busy}
+            type="button"
+            onClick={() => {
+              if (window.confirm("この銘柄の申請を却下しますか？"))
+                void review("reject");
+            }}
+          >
+            却下
+          </button>
+        )}
       </div>
       {mergeOpen && (
         <div className="brand-merge-picker">

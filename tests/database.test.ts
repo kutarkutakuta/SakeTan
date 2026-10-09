@@ -493,6 +493,54 @@ test("admin can merge a pending brand while retaining its shop relation", async 
     [shop, otherBrand],
   );
 });
+test("admin can merge an approved brand from the brand status workflow", async () => {
+  await db.exec("reset role");
+  const registeredSource = await scalar(
+    "insert into public.brands(name,source,source_id) values('登録済みの別表記','sakenowa','brand-approved-merge') returning id",
+  );
+  await db.query(
+    "insert into public.shop_brands(shop_id,brand_id,created_by,status,is_active,first_seen_at,last_seen_at) values($1,$2,$3,'available',true,'2026-10-01','2026-10-01')",
+    [shop, registeredSource, admin],
+  );
+
+  await asUser(admin);
+  assert.equal(
+    await scalar("select public.review_brand_application($1,'merge',$2)", [
+      registeredSource,
+      otherBrand,
+    ]),
+    otherBrand,
+  );
+  assert.deepEqual(
+    (
+      await db.query(
+        "select registration_status,is_active,merged_into_brand_id from public.brands where id=$1",
+        [registeredSource],
+      )
+    ).rows,
+    [
+      {
+        registration_status: "merged",
+        is_active: false,
+        merged_into_brand_id: otherBrand,
+      },
+    ],
+  );
+  assert.equal(
+    await scalar<number>(
+      "select count(*)::integer from public.shop_brands where shop_id=$1 and brand_id=$2",
+      [shop, otherBrand],
+    ),
+    1,
+  );
+  assert.equal(
+    await scalar(
+      "select status from public.shop_brands where shop_id=$1 and brand_id=$2",
+      [shop, otherBrand],
+    ),
+    "available",
+  );
+});
 test("signed-in users can restore only the kana from the latest matching history", async () => {
   await db.exec("reset role");
   const kanaBrand = await scalar(
