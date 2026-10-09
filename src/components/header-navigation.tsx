@@ -9,7 +9,7 @@ import { fetchJson } from "@/lib/client";
 
 const registrationLinks = [
   { href: "/brands", label: "銘柄の状態" },
-  { href: "/edit", label: "登録情報を編集" },
+  { href: "/edit", label: "登録情報を探す" },
   { href: "/history", label: "更新履歴" },
 ] as const;
 

@@ -4,6 +4,7 @@ import { Search } from "lucide-react";
 import { errorMessage, fetchJson, mutate } from "@/lib/client";
 import { changeReasonError } from "@/lib/change-reason";
 import { mapReturnPath } from "@/lib/map-view";
+import { masterDetailHref } from "@/lib/master-navigation";
 import type { Brewery, EntityType } from "@/lib/types";
 import { LocationPicker } from "@/components/location-picker";
 import { PrefectureRadioGroup } from "@/components/prefecture-radio-group";
@@ -16,6 +17,7 @@ export function MasterForm({
   initialBrewery,
   shopId,
   afterSaveHref,
+  breweryReturnTo,
   kanaOnly = false,
   canDeactivate = true,
   admin,
@@ -26,6 +28,7 @@ export function MasterForm({
   initialBrewery: Brewery | null;
   shopId?: string;
   afterSaveHref?: string;
+  breweryReturnTo?: string;
   kanaOnly?: boolean;
   canDeactivate?: boolean;
   admin: boolean;
@@ -326,7 +329,14 @@ export function MasterForm({
                 選び直す
               </button>
               {id && (
-                <a className="inline-link" href={"/edit/brewery/" + brewery.id}>
+                <a
+                  className="inline-link"
+                  href={
+                    breweryReturnTo
+                      ? masterDetailHref("brewery", brewery.id, breweryReturnTo)
+                      : "/edit/brewery/" + brewery.id
+                  }
+                >
                   酒蔵を編集
                 </a>
               )}

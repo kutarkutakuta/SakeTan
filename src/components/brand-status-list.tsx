@@ -144,7 +144,7 @@ export function BrandStatusList() {
                       "/brands",
                     )}`}
                   >
-                    {data.admin ? "詳細編集" : "かなを編集"}
+                    銘柄情報
                   </Link>
                   <Link href={`/history?type=brand&id=${brand.id}`}>
                     更新履歴

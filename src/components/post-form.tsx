@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { Copy, Plus, Search, Store, X } from "lucide-react";
 import { errorMessage, fetchJson, mutate } from "@/lib/client";
 import { loadBrandCatalog } from "@/lib/brand-catalog";
@@ -25,6 +24,7 @@ import type {
 } from "@/lib/types";
 import { AvailabilityInfo } from "./availability-info";
 import { BrandFilterControls, BrandFilterCount } from "./brand-filter-controls";
+import { BrandInfoLink } from "./brand-info-link";
 import {
   ShopBrandCopyDialog,
   type ShopBrandCopyResult,
@@ -359,29 +359,16 @@ export function PostForm({
             visibleCount={visibleBrands.length}
             totalCount={catalog.length}
           />
-          {availableCount > 0 &&
-            (copyAllowed ? (
-              <button
-                type="button"
-                className="button ghost small post-copy-button"
-                onClick={() => setCopyOpen(true)}
-              >
-                <Copy size={17} />
-                他店舗へコピー
-              </button>
-            ) : (
-              <Link
-                className="button ghost small post-copy-button"
-                href={
-                  "/login?next=" +
-                  encodeURIComponent(`/post?shop_id=${shop.id}`)
-                }
-                prefetch={false}
-              >
-                <Copy size={17} />
-                ログインしてコピー
-              </Link>
-            ))}
+          {copyAllowed && availableCount > 0 && (
+            <button
+              type="button"
+              className="button ghost small post-copy-button"
+              onClick={() => setCopyOpen(true)}
+            >
+              <Copy size={17} />
+              他店舗へコピー
+            </button>
+          )}
           <a className="post-shop" href={`/shops/${shop.id}`}>
             <Store size={18} />
             <span>{shop.name}</span>
@@ -504,7 +491,11 @@ export function PostForm({
                   )}
                 </span>
                 <span className="brand-option-name">
-                  <strong>{brand.name}</strong>
+                  <BrandInfoLink
+                    brandId={brand.id}
+                    brandName={brand.name}
+                    returnTo={`/post?shop_id=${shop.id}`}
+                  />
                   {brand.registration_status === "pending" && (
                     <span className="status-badge pending">申請中</span>
                   )}

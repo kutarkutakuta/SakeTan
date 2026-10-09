@@ -4,10 +4,13 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, History } from "lucide-react";
 import { z } from "zod";
 import { HomeRedirect } from "@/components/home-redirect";
+import { BrandShopList } from "@/components/brand-shop-list";
 import { LoginRequired } from "@/components/login-required";
 import { MasterForm } from "@/components/master-form";
+import { sortBrands } from "@/lib/brand-index";
+import { masterDetailHref, masterReturnPath } from "@/lib/master-navigation";
 import { authorization, configured, supabase } from "@/lib/supabase/browser";
-import type { Brewery, EntityType } from "@/lib/types";
+import type { Brand, Brewery, EntityType } from "@/lib/types";
 
 const entities = {
   shop: { table: "shops", name: "酒屋" },
@@ -18,6 +21,7 @@ const entities = {
 type DetailState = {
   initial: Record<string, unknown>;
   brewery: Brewery | null;
+  brands: Brand[];
   signedIn: boolean;
   admin: boolean;
   canDeactivate: boolean;
@@ -36,13 +40,7 @@ export function EditDetailClient({
   const params = new URLSearchParams(query);
   const shopId = params.get("shop_id") ?? undefined;
   const requestedName = params.get("name")?.slice(0, 150) ?? "";
-  const requestedReturnTo = params.get("return_to") ?? undefined;
-  const returnTo =
-    requestedReturnTo === "/brands" ||
-    requestedReturnTo === "/edit" ||
-    requestedReturnTo?.startsWith("/edit?")
-      ? requestedReturnTo
-      : undefined;
+  const returnTo = masterReturnPath(params.get("return_to"));
   const id = recordId === "new" ? null : recordId;
   const entity = entities[type];
   const nextParams = new URLSearchParams();
@@ -63,23 +61,33 @@ export function EditDetailClient({
       let initial: Record<string, unknown> =
         !id && type === "brand" && requestedName ? { name: requestedName } : {};
       let brewery: Brewery | null = null;
+      let brands: Brand[] = [];
       let found = true;
       let canDeactivate = type !== "shop" || access.admin;
       if (id && db) {
         const fields = {
           shop: "id,name,name_kana,prefecture,city,latitude,longitude,google_place_id,geocode_source,geocode_precision,is_active,created_by",
           brand: "id,name,name_kana,brewery_id,is_active",
-          brewery: "id,name,name_kana,prefecture,website_url,is_active",
+          brewery:
+            "id,name,name_kana,prefecture,website_url,is_active,brands(id,name,name_kana,brewery_id,registration_status)",
         }[type];
-        const { data: rawData, error: queryError } = await db
-          .from(entity.table)
-          .select(fields)
-          .eq("id", id)
-          .maybeSingle();
+        let request = db.from(entity.table).select(fields).eq("id", id);
+        if (type === "brewery") {
+          request = request
+            .eq("brands.is_active", true)
+            .in("brands.registration_status", ["pending", "approved"]);
+        }
+        const { data: rawData, error: queryError } =
+          await request.maybeSingle();
         if (queryError) throw new Error("登録情報を取得できませんでした");
         if (!rawData) found = false;
         else {
           initial = rawData as unknown as Record<string, unknown>;
+          if (type === "brewery") {
+            const { brands: relatedBrands, ...record } = initial;
+            initial = record;
+            brands = sortBrands((relatedBrands ?? []) as Brand[], "brand");
+          }
           if (type === "shop") {
             canDeactivate =
               access.admin ||
@@ -99,6 +107,7 @@ export function EditDetailClient({
         setState({
           initial,
           brewery,
+          brands,
           signedIn: Boolean(access.user && !access.anonymous),
           admin: access.admin,
           canDeactivate,
@@ -117,6 +126,37 @@ export function EditDetailClient({
     };
   }, [entity.table, id, requestedName, type]);
 
+  const publicRecord =
+    id && state?.found && !error && type !== "shop" ? state.initial : null;
+  const recordName =
+    typeof publicRecord?.name === "string" ? publicRecord.name.trim() : "";
+  const recordKana =
+    typeof publicRecord?.name_kana === "string"
+      ? publicRecord.name_kana.trim()
+      : "";
+  const recordBrewery = type === "brand" ? state?.brewery : null;
+  const recordPrefecture =
+    type === "brand"
+      ? (recordBrewery?.prefecture?.trim() ?? "")
+      : typeof publicRecord?.prefecture === "string"
+        ? publicRecord.prefecture.trim()
+        : "";
+  const titleContext = [recordBrewery?.name?.trim(), recordPrefecture]
+    .filter(Boolean)
+    .join("・");
+  const publicTitle = recordName
+    ? `${recordName}${titleContext ? `｜${titleContext}` : ""} - さけのありか`
+    : "";
+
+  useEffect(() => {
+    if (!publicTitle) return;
+    const previousTitle = document.title;
+    document.title = publicTitle;
+    return () => {
+      document.title = previousTitle;
+    };
+  }, [publicTitle]);
+
   const back = shopId
     ? `/post?shop_id=${encodeURIComponent(shopId)}`
     : returnTo
@@ -134,8 +174,39 @@ export function EditDetailClient({
         <ArrowLeft size={17} />
         戻る
       </a>
-      <div className="page-head">
-        <h1>{id ? `${entity.name}を編集` : `新しい${entity.name}を登録`}</h1>
+      <div className="page-head master-detail-head">
+        <div>
+          <h1 className={recordName ? "shop-title" : undefined}>
+            {recordName ? (
+              <>
+                <span>{recordName}</span>
+                {recordKana && (
+                  <span className="shop-title-kana">{recordKana}</span>
+                )}
+              </>
+            ) : id ? (
+              `${entity.name}を編集`
+            ) : (
+              `新しい${entity.name}を登録`
+            )}
+          </h1>
+          {recordName && (type === "brand" || recordPrefecture) && (
+            <p className="shop-location master-detail-location">
+              {type === "brand" ? (
+                recordBrewery ? (
+                  <a href={masterDetailHref("brewery", recordBrewery.id, next)}>
+                    {recordBrewery.name}
+                    {recordPrefecture && `（${recordPrefecture}）`}
+                  </a>
+                ) : (
+                  "酒蔵未登録"
+                )
+              ) : (
+                recordPrefecture
+              )}
+            </p>
+          )}
+        </div>
         {id && (
           <a
             className="button ghost small"
@@ -146,6 +217,43 @@ export function EditDetailClient({
           </a>
         )}
       </div>
+      {recordName && publicRecord?.is_active === false && (
+        <p className="notice">この{entity.name}は無効化されています。</p>
+      )}
+      {recordName && type === "brewery" && state && (
+        <section
+          className="master-related-section"
+          aria-labelledby="brewery-brands-heading"
+        >
+          <h2 id="brewery-brands-heading">この酒蔵の銘柄</h2>
+          {state.brands.length ? (
+            <ul className="brewery-brand-list">
+              {state.brands.map((brand) => (
+                <li key={brand.id}>
+                  <a href={masterDetailHref("brand", brand.id, next)}>
+                    <span>
+                      {brand.name}
+                      {brand.name_kana && (
+                        <span className="brewery-brand-kana">
+                          （{brand.name_kana}）
+                        </span>
+                      )}
+                    </span>
+                    {brand.registration_status === "pending" && (
+                      <span className="brewery-brand-pending">申請中</span>
+                    )}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="muted">登録されている銘柄はありません。</p>
+          )}
+        </section>
+      )}
+      {recordName && type === "brand" && id && (
+        <BrandShopList key={id} brandId={id} />
+      )}
       {error ? (
         <p className="notice error" role="alert">
           {error}
@@ -160,17 +268,23 @@ export function EditDetailClient({
           </p>
         </div>
       ) : state.signedIn ? (
-        <MasterForm
-          type={type}
-          id={id}
-          initial={state.initial}
-          initialBrewery={state.brewery}
-          shopId={shopId}
-          afterSaveHref={returnTo}
-          kanaOnly={(type === "brand" || type === "brewery") && !state.admin}
-          canDeactivate={state.canDeactivate}
-          admin={state.admin}
-        />
+        <>
+          {recordName && (
+            <h2 className="master-edit-heading">{entity.name}を編集</h2>
+          )}
+          <MasterForm
+            type={type}
+            id={id}
+            initial={state.initial}
+            initialBrewery={state.brewery}
+            shopId={shopId}
+            afterSaveHref={returnTo}
+            breweryReturnTo={type === "brand" ? next : undefined}
+            kanaOnly={(type === "brand" || type === "brewery") && !state.admin}
+            canDeactivate={state.canDeactivate}
+            admin={state.admin}
+          />
+        </>
       ) : (
         <LoginRequired next={next} ready={configured()} />
       )}

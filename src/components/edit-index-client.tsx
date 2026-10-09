@@ -35,7 +35,7 @@ export function EditIndexClient() {
         ← 地図に戻る
       </a>
       <div className="page-head">
-        <h1>登録情報を編集</h1>
+        <h1>登録情報を探す</h1>
         {access.admin && (
           <div className="edit-admin-actions" aria-label="マスター登録">
             <a className="button small ghost" href="/edit/brewery/new">

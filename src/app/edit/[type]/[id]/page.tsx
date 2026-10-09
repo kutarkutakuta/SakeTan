@@ -6,7 +6,7 @@ import type { EntityType } from "@/lib/types";
 const types: EntityType[] = ["shop", "brand", "brewery"];
 
 export const metadata: Metadata = {
-  title: "登録情報を編集",
+  title: "登録情報",
 };
 
 export default async function EditPage({

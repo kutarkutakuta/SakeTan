@@ -1749,6 +1749,7 @@ nav {
 .brand-option-meta button {
   color: inherit;
   text-decoration: underline;
+  text-decoration-style: dotted;
   text-underline-offset: 3px;
 }
 .brand-item-meta button:hover,
@@ -1765,6 +1766,19 @@ nav {
   flex-wrap: wrap;
   align-items: baseline;
   gap: 2px 9px;
+}
+.brand-name-link {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-style: solid;
+  text-underline-offset: 3px;
+}
+.brand-name-link:hover,
+.brand-name-link:focus-visible {
+  color: var(--primary);
 }
 .brand-item-kana {
   color: var(--muted);
@@ -3141,6 +3155,115 @@ nav {
 .prefecture-radio-clear {
   margin-top: 10px;
   font-size: 14px;
+}
+.master-detail-head > div {
+  min-width: 0;
+}
+.master-detail-head h1,
+.master-detail-head .shop-title-kana {
+  overflow-wrap: anywhere;
+}
+.master-detail-head .shop-title-kana {
+  white-space: normal;
+}
+.master-detail-location a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.master-edit-heading {
+  margin-bottom: 12px;
+  font-size: 20px;
+}
+.master-related-section {
+  margin-bottom: 24px;
+}
+.master-related-section h2 {
+  margin-bottom: 8px;
+  font-size: 20px;
+  line-height: 1.5;
+}
+.brewery-brand-list,
+.brand-shop-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.brewery-brand-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+}
+.brewery-brand-list li {
+  min-width: 0;
+  max-width: 100%;
+}
+.brewery-brand-list a,
+.brand-shop-list a {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  padding: 4px 0;
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.brewery-brand-kana,
+.brewery-brand-pending,
+.brand-shop-location {
+  color: var(--muted);
+  font-size: 14px;
+}
+.brand-shop-list {
+  margin-bottom: 12px;
+}
+.brand-shop-list li + li {
+  border-top: 1px solid var(--line);
+}
+.brand-shop-list a {
+  padding: 8px 0;
+  text-decoration: none;
+}
+.brand-shop-list a > span:first-child {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.brand-shop-prefectures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0 16px;
+}
+.brand-shop-prefectures button {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.brand-shop-prefectures button:hover {
+  border-color: var(--primary);
+}
+.brand-shop-prefectures button[aria-pressed="true"] {
+  border-color: var(--primary);
+  background: var(--tint);
+  color: var(--primary);
+}
+.brand-shop-region-panel[hidden] {
+  display: none;
+}
+.brand-shop-region-panel h3 {
+  margin-bottom: 4px;
+  font-size: 16px;
+  line-height: 1.5;
 }
 .master-readonly-summary {
   display: grid;

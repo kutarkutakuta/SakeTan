@@ -124,7 +124,7 @@ export function EditSearch({
 
   return (
     <div className="card edit-search-card">
-      <div className="edit-type-switch" aria-label="編集対象">
+      <div className="edit-type-switch" aria-label="検索対象">
         {targets.map(({ type, label }) => (
           <button
             key={type}
@@ -211,16 +211,16 @@ export function EditSearch({
                   <strong>{item.name}</strong>
                   {resultDetails(target, item)}
                 </span>
-                {(target === "shop" || signedIn) && (
-                  <span className="edit-result-action">
-                    {target === "shop"
+                <span className="edit-result-action">
+                  {!signedIn
+                    ? "詳細"
+                    : target === "shop"
                       ? "編集"
                       : admin
                         ? "詳細編集"
                         : "かなを編集"}
-                    <ChevronRight size={18} />
-                  </span>
-                )}
+                  <ChevronRight size={18} />
+                </span>
               </>
             );
             const returnTo = `/edit?type=${target}&q=${encodeURIComponent(
@@ -249,16 +249,22 @@ export function EditSearch({
               <a
                 className="edit-result"
                 key={item.id}
-                href={`/edit/${target}/${item.id}?return_to=${encodeURIComponent(
-                  `/edit?type=shop&q=${encodeURIComponent(normalizedQuery)}`,
-                )}`}
+                href={
+                  signedIn
+                    ? `/edit/${target}/${item.id}?return_to=${encodeURIComponent(returnTo)}`
+                    : `/shops/${item.id}`
+                }
               >
                 {content}
               </a>
             ) : (
-              <div className="edit-result" key={item.id}>
+              <a
+                className="edit-result"
+                key={item.id}
+                href={`/edit/${target}/${item.id}?return_to=${encodeURIComponent(returnTo)}`}
+              >
                 {content}
-              </div>
+              </a>
             );
           })}
         </div>
@@ -271,7 +277,7 @@ export function EditSearch({
       )}
       {!signedIn && (
         <p className="notice master-source-note">
-          銘柄と酒蔵のかなは、どなたでも確認できます。編集するにはログインしてください。
+          登録情報はログインせずに確認できます。編集するにはログインしてください。
         </p>
       )}
 

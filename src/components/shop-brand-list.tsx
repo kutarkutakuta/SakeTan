@@ -16,6 +16,7 @@ import {
   shopBrandRankingTag,
 } from "@/lib/shop-brand-order";
 import { BrandFilterControls, BrandFilterCount } from "./brand-filter-controls";
+import { BrandInfoLink } from "./brand-info-link";
 
 const shopSortOptions: Array<[BrandCatalogSort, string]> = [
   ["ranking", "ランキング順"],
@@ -160,7 +161,11 @@ export function ShopBrandList({
                   {unavailable && (
                     <span className="sr-only">現在は取扱なし：</span>
                   )}
-                  <strong>{brand.name}</strong>
+                  <BrandInfoLink
+                    brandId={brand.id}
+                    brandName={brand.name}
+                    returnTo={`/shops/${relation.shop_id}`}
+                  />
                   {brand.registration_status === "pending" && (
                     <span className="status-badge pending">申請中</span>
                   )}
