@@ -84,11 +84,15 @@ export function ShopPageLoader({
   useEffect(() => {
     if (!data?.shop.name) return;
     const previousTitle = document.title;
-    document.title = shopPageTitle(data.shop.name);
+    document.title = shopPageTitle(
+      data.shop.name,
+      data.shop.prefecture,
+      data.shop.city,
+    );
     return () => {
       document.title = previousTitle;
     };
-  }, [data?.shop.name]);
+  }, [data?.shop.name, data?.shop.prefecture, data?.shop.city]);
 
   const returnTo =
     (query === undefined
