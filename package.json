@@ -12,6 +12,7 @@
     "db:migrate": "tsx --env-file=.env.local scripts/migrate.ts",
     "test": "tsx --test tests/*.test.ts",
     "report:sakenowa": "tsx --env-file=.env.local scripts/import-sakenowa.ts",
+    "sync:sakenowa-rankings": "tsx --env-file=.env.local scripts/sync-sakenowa-rankings.ts",
     "import:sakenowa": "tsx --env-file=.env.local scripts/import-sakenowa.ts",
     "import:sakeno-shops": "tsx --env-file=.env.local scripts/import-sakeno-shops.ts",
     "import:shop-products": "tsx --env-file=.env.local scripts/import-shop-products.ts"

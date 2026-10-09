@@ -13,6 +13,10 @@ type ShopBrandPreviewRow = {
   sakenowa_score: number | null;
   sakenowa_rank_year_month: string | null;
   registration_status: "pending" | "approved";
+  sakenowa_area_rank: number | null;
+  sakenowa_area_score: number | null;
+  sakenowa_area_id: number | null;
+  sakenowa_area_name: string | null;
 };
 type ShopBrandPreview = { brands: Brand[]; total: number };
 
@@ -48,6 +52,10 @@ export async function GET(request: Request) {
       sakenowa_score: row.sakenowa_score,
       sakenowa_rank_year_month: row.sakenowa_rank_year_month,
       registration_status: row.registration_status,
+      sakenowa_area_rank: row.sakenowa_area_rank,
+      sakenowa_area_score: row.sakenowa_area_score,
+      sakenowa_area_id: row.sakenowa_area_id,
+      sakenowa_area_name: row.sakenowa_area_name,
     });
   }
   return Response.json(result);

@@ -11,7 +11,19 @@ import {
   type KanaGroup,
 } from "@/lib/brand-index";
 import type { ShopBrand } from "@/lib/types";
+import {
+  shopBrandRankingLabel,
+  shopBrandRankingTag,
+} from "@/lib/shop-brand-order";
 import { BrandFilterControls, BrandFilterCount } from "./brand-filter-controls";
+
+const shopSortOptions: Array<[BrandCatalogSort, string]> = [
+  ["ranking", "ランキング順"],
+  ["brand", "銘柄順"],
+  ["brewery", "蔵元順"],
+  ["region", "県順"],
+  ["recent", "最近追加順"],
+];
 
 export function ShopBrandList({
   description,
@@ -30,7 +42,7 @@ export function ShopBrandList({
     Set<BrandFilterTarget>
   >(() => new Set(["brand"]));
   const [selectedKana, setSelectedKana] = useState<Set<KanaGroup>>(new Set());
-  const [sort, setSort] = useState<BrandCatalogSort>("brand");
+  const [sort, setSort] = useState<BrandCatalogSort>("ranking");
   const visible = useMemo(
     () =>
       sortShopBrands(
@@ -91,6 +103,7 @@ export function ShopBrandList({
         onKanaChange={setSelectedKana}
         sort={sort}
         onSortChange={setSort}
+        sortOptions={shopSortOptions}
         emphasizePrefectures={hasFilterConflict && selectedPrefectures.size > 0}
         emphasizeKana={hasFilterConflict && selectedKana.size > 0}
       />
@@ -100,6 +113,7 @@ export function ShopBrandList({
           const brewery = brand.breweries;
           const prefecture = brewery?.prefecture;
           const unavailable = relation.status === "unavailable";
+          const rankingTag = shopBrandRankingTag(brand);
           return (
             <div
               className={`brand-item${unavailable ? " is-unavailable" : ""}`}
@@ -131,6 +145,15 @@ export function ShopBrandList({
                     </button>
                   ) : (
                     <span>酒蔵未登録</span>
+                  )}
+                  {rankingTag && (
+                    <span
+                      className={`brand-ranking-tag is-${rankingTag.kind}-ranked`}
+                      aria-label={shopBrandRankingLabel(brand) ?? undefined}
+                      title={shopBrandRankingLabel(brand) ?? undefined}
+                    >
+                      {rankingTag.label}
+                    </span>
                   )}
                 </span>
                 <span className="brand-item-name">

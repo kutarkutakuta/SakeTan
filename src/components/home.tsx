@@ -778,9 +778,7 @@ export function Home({
           >
             <div className="result-heading">
               <div className="result-heading-copy">
-                <h2>
-                  {brand ? `「${brand.name}」を扱う酒屋` : "地図の酒屋"}
-                </h2>
+                <h2>{brand ? `「${brand.name}」を扱う酒屋` : "地図の酒屋"}</h2>
               </div>
               <span className="desktop-result-count count" role="status">
                 {shopCountLabel}

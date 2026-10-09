@@ -2,6 +2,8 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
+import { compareShopBrands } from "../src/lib/shop-brand-order";
+import type { Brand } from "../src/lib/types";
 const db = new PGlite();
 const alice = "10000000-0000-4000-8000-000000000001",
   bob = "10000000-0000-4000-8000-000000000002",
@@ -723,6 +725,68 @@ test("shop brand previews return the total with only the requested top rows", as
     "update public.shop_brands set is_active=false,status='unavailable' where shop_id=$1 and brand_id=$2",
     [shop, otherBrand],
   );
+});
+test("regional preview selection and expanded ordering use the same priorities", async () => {
+  await db.exec("reset role");
+  await db.exec("begin");
+  try {
+    const rankingShop = await scalar(
+      "insert into public.shops(name,name_kana,prefecture,city,latitude,longitude) values('ランキング試験店','らんきんぐしけんてん','東京都','千代田区',35.6,139.7) returning id",
+    );
+    const fixtures: Brand[] = [];
+    for (const [name, kana, rank, areaRank] of [
+      ["地域の酒", "な", null, 1],
+      ["未ランクの酒", "ハ", null, null],
+      ["全国二十位", "あ", 20, 2],
+      ["全国三位", "わ", 3, null],
+      ["未ランクの先頭", "ア", null, null],
+    ] as const) {
+      const id = await scalar(
+        "insert into public.brands(name,name_kana,brewery_id,sakenowa_rank,sakenowa_area_rank,sakenowa_area_name) values($1,$2,$3,$4,$5,'北海道') returning id",
+        [name, kana, brewery, rank, areaRank],
+      );
+      fixtures.push({
+        id,
+        name,
+        name_kana: kana,
+        brewery_id: brewery,
+        sakenowa_rank: rank,
+        sakenowa_area_rank: areaRank,
+      });
+      await db.query(
+        "insert into public.shop_brands(shop_id,brand_id,status) values($1,$2,'available')",
+        [rankingShop, id],
+      );
+    }
+    await asUser(null);
+    const { rows } = await db.query<{
+      brand_id: string;
+      sakenowa_area_rank: number | null;
+      registration_status: string;
+    }>("select * from public.shop_brand_previews(array[$1]::uuid[],20)", [
+      rankingShop,
+    ]);
+    assert.deepEqual(
+      rows.map((r) => r.brand_id),
+      fixtures.sort(compareShopBrands).map((b) => b.id),
+    );
+    assert.deepEqual(
+      rows.map((r) => r.registration_status),
+      Array(5).fill("approved"),
+    );
+    assert.equal(rows[2].sakenowa_area_rank, 1);
+    const top = await db.query<{ brand_id: string }>(
+      "select * from public.shop_brand_previews(array[$1]::uuid[],3)",
+      [rankingShop],
+    );
+    assert.deepEqual(
+      top.rows.map((r) => r.brand_id),
+      rows.slice(0, 3).map((r) => r.brand_id),
+    );
+  } finally {
+    await db.exec("rollback");
+    await db.exec("reset role");
+  }
 });
 test("shop brand totals include requested shops with no active brands", async () => {
   await db.exec("reset role");

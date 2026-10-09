@@ -193,6 +193,35 @@ export default function HelpPage() {
         </ul>
       </section>
 
+      <section className="info-section" aria-labelledby="brand-ranking-title">
+        <h2 id="brand-ranking-title">銘柄の色と並び順について</h2>
+        <p className="info-section-intro">
+          酒屋一覧の銘柄は、さけのわのランキングをもとに色分けしています。
+        </p>
+        <ul className="brand-ranking-legend">
+          <li>
+            <span className="help-brand-sample is-national-ranked">
+              さけのわ全国ランク入り
+            </span>
+            <span>淡い朱色：全国の総合ランキングに入っている銘柄です。</span>
+          </li>
+          <li>
+            <span className="help-brand-sample is-regional-ranked">
+              各地域5位以内
+            </span>
+            <span>
+              淡いオレンジ：地域ランキングで5位以内の銘柄です。全国ランクにも入っている場合は、全国ランクの色を優先します。
+            </span>
+          </li>
+          <li>
+            <span className="help-brand-sample">その他の銘柄</span>
+            <span>
+              薄いグレー：上記以外、またはランキング情報が未反映の銘柄です。
+            </span>
+          </li>
+        </ul>
+      </section>
+
       <section className="info-section" aria-labelledby="usage-title">
         <h2 id="usage-title">ログインは必要なときだけ</h2>
         <p className="info-section-intro">

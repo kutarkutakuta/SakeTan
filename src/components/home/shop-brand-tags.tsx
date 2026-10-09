@@ -1,4 +1,5 @@
 import type { Brand } from "@/lib/types";
+import { shopBrandRankingLabel } from "@/lib/shop-brand-order";
 import type { ShopBrandPreview } from "./use-shop-metadata";
 
 export function ShopBrandTags({
@@ -28,13 +29,15 @@ export function ShopBrandTags({
     <div className="shop-card-brands" id={contentId}>
       {brands.map((brand) => {
         const pending = brand.registration_status === "pending";
+        const ranking = shopBrandRankingLabel(brand);
         return (
           <button
             type="button"
-            className={`shop-card-brand${pending ? " has-pending" : ""}`}
+            className={`shop-card-brand${pending ? " has-pending" : ""}${ranking ? (brand.sakenowa_rank != null ? " is-national-ranked" : " is-regional-ranked") : ""}`}
             key={brand.id}
             onClick={() => onBrandSelect(brand)}
-            aria-label={`${brand.name}${pending ? "（申請中）" : ""}で絞り込む`}
+            title={ranking ?? undefined}
+            aria-label={`${brand.name}${pending ? "（申請中）" : ""}${ranking ? `（${ranking}）` : ""}で絞り込む`}
           >
             {brand.name}
             {pending && (

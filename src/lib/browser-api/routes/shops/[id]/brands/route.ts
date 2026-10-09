@@ -19,7 +19,7 @@ export async function GET(
   const { data, error } = await db
     .from("shop_brands")
     .select(
-      "last_seen_at,brands!inner(id,name,name_kana,brewery_id,sakenowa_rank,sakenowa_score,sakenowa_rank_year_month,registration_status,breweries(id,is_active))",
+      "last_seen_at,brands!inner(id,name,name_kana,brewery_id,sakenowa_rank,sakenowa_score,sakenowa_rank_year_month,sakenowa_area_rank,sakenowa_area_score,sakenowa_area_id,sakenowa_area_name,registration_status,breweries(id,is_active))",
     )
     .eq("shop_id", id.data)
     .eq("is_active", true)

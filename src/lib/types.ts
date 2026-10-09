@@ -17,6 +17,10 @@ export type Brand = {
   sakenowa_rank?: number | null;
   sakenowa_score?: number | null;
   sakenowa_rank_year_month?: string | null;
+  sakenowa_area_rank?: number | null;
+  sakenowa_area_score?: number | null;
+  sakenowa_area_id?: number | null;
+  sakenowa_area_name?: string | null;
   breweries?: Brewery | null;
   is_active?: boolean;
   registration_status?: "pending" | "approved" | "rejected" | "merged";

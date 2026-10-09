@@ -348,7 +348,7 @@ test("Sakenowa overall rankings validate rank, score and target month", () => {
   );
 });
 
-test("map pin brands prioritize Sakenowa rank, then recent sightings", () => {
+test("map pin brands prioritize Sakenowa rank, then brand readings", () => {
   const brand = (id: string, rank: number | null = null) => ({
     id,
     name: id,
@@ -365,7 +365,7 @@ test("map pin brands prioritize Sakenowa rank, then recent sightings", () => {
 
   assert.deepEqual(
     result.map((item) => item.id),
-    ["rank-3", "rank-20", "recent", "older"],
+    ["rank-3", "rank-20", "older", "recent"],
   );
 });
 

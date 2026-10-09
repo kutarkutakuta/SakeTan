@@ -1,5 +1,6 @@
 import type { Brand, ShopBrand } from "./types";
 import { normalizeKanaSearchText } from "./search-text";
+import { compareShopBrands } from "./shop-brand-order";
 
 export const prefectures = [
   "北海道",
@@ -66,7 +67,8 @@ export const kanaGroups = [
 
 export type KanaGroup = (typeof kanaGroups)[number] | "other";
 export type BrandFilterTarget = "brand" | "brewery";
-export type BrandCatalogSort = "brand" | "brewery" | "region" | "recent";
+export type BrandCatalogSort =
+  "brand" | "brewery" | "region" | "recent" | "ranking";
 
 const collator = new Intl.Collator("ja", {
   sensitivity: "base",
@@ -239,6 +241,7 @@ function compareBrands(
   b: Brand,
   by: Exclude<BrandCatalogSort, "recent">,
 ) {
+  if (by === "ranking") return compareShopBrands(a, b);
   if (by === "region") {
     const region = collator.compare(
       brandPrefecture(a) ?? "",
@@ -276,6 +279,7 @@ export function sortShopBrands(
   query = "",
 ) {
   return [...items].sort((a, b) => {
+    if (by === "ranking") return compareShopBrands(a.brands, b.brands);
     const aRank = brandSearchRank(a.brands, query);
     const bRank = brandSearchRank(b.brands, query);
     if (aRank && bRank) {
