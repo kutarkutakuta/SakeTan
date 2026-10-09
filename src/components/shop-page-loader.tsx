@@ -14,6 +14,7 @@ import {
   isMissingPageError,
 } from "@/lib/client";
 import { safeMapReturnPath } from "@/lib/map-view";
+import { shopPageTitle } from "@/lib/shop-page-title";
 import type { Shop, ShopBrand } from "@/lib/types";
 import { googleMapsShopUrl } from "@/lib/utils";
 
@@ -79,6 +80,15 @@ export function ShopPageLoader({
     void load(controller.signal);
     return () => controller.abort();
   }, [load]);
+
+  useEffect(() => {
+    if (!data?.shop.name) return;
+    const previousTitle = document.title;
+    document.title = shopPageTitle(data.shop.name);
+    return () => {
+      document.title = previousTitle;
+    };
+  }, [data?.shop.name]);
 
   const returnTo =
     (query === undefined
