@@ -15,8 +15,9 @@ test("ID pages serve the static shell while missing pages redirect home", async 
 
   for (const path of [
     "/shops/shop-id",
+    "/brands/brand-id",
+    "/breweries/brewery-id",
     "/edit/shop/new",
-    "/edit/brand/brand-id",
   ]) {
     const response = await router.fetch(
       new Request(`https://example.com${path}`),
@@ -25,7 +26,7 @@ test("ID pages serve the static shell while missing pages redirect home", async 
     );
     assert.equal(await response.text(), "static shell");
   }
-  assert.deepEqual(fetched, ["/", "/", "/"]);
+  assert.deepEqual(fetched, ["/", "/", "/", "/"]);
 
   const missing = await router.fetch(
     new Request("https://example.com/unknown"),
@@ -34,7 +35,7 @@ test("ID pages serve the static shell while missing pages redirect home", async 
   );
   assert.equal(missing.status, 307);
   assert.equal(missing.headers.get("Location"), "https://example.com/");
-  assert.equal(fetched.length, 3);
+  assert.equal(fetched.length, 4);
 
   const staleApi = await router.fetch(
     new Request("https://example.com/api/action"),
@@ -42,6 +43,52 @@ test("ID pages serve the static shell while missing pages redirect home", async 
     undefined,
   );
   assert.equal(staleApi.status, 410);
+});
+
+test("legacy brand and brewery detail URLs redirect to public paths", async () => {
+  const env = {
+    ASSETS: { fetch: async () => new Response("static shell") },
+  };
+  for (const [legacy, destination] of [
+    [
+      "/edit/brand/brand-id?return_to=%2Fbrands",
+      "/brands/brand-id?return_to=%2Fbrands",
+    ],
+    ["/edit/brewery/brewery-id", "/breweries/brewery-id"],
+  ]) {
+    const response = await router.fetch(
+      new Request(`https://example.com${legacy}`),
+      env,
+      undefined,
+    );
+    assert.equal(response.status, 308);
+    assert.equal(
+      response.headers.get("Location"),
+      `https://example.com${destination}`,
+    );
+  }
+});
+
+test("crawler files are served as static assets", async () => {
+  const fetched: string[] = [];
+  const env = {
+    ASSETS: {
+      fetch: async (request: Request) => {
+        fetched.push(new URL(request.url).pathname);
+        return new Response("static crawler file");
+      },
+    },
+  };
+
+  for (const path of ["/sitemap.xml", "/robots.txt"]) {
+    const response = await router.fetch(
+      new Request(`https://example.com${path}`),
+      env,
+      undefined,
+    );
+    assert.equal(await response.text(), "static crawler file");
+  }
+  assert.deepEqual(fetched, ["/sitemap.xml", "/robots.txt"]);
 });
 
 test("missing page redirects discard query parameters and support HEAD", async () => {

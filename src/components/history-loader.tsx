@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { RestoreButton } from "@/components/restore-button";
 import { errorMessage, fetchJson, isAbortError } from "@/lib/client";
+import { masterDetailPath } from "@/lib/master-navigation";
 import type { History } from "@/lib/types";
 import { changedFields, labels } from "@/lib/utils";
 
@@ -196,7 +197,15 @@ export function HistoryLoader() {
               {history.entity_type !== "shop_brand" && (
                 <a
                   className="inline-link"
-                  href={`/edit/${history.entity_type}/${history.entity_id}`}
+                  href={
+                    history.entity_type === "brand" ||
+                    history.entity_type === "brewery"
+                      ? masterDetailPath(
+                          history.entity_type,
+                          history.entity_id,
+                        )
+                      : `/edit/shop/${history.entity_id}`
+                  }
                 >
                   編集
                 </a>

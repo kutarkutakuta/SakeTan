@@ -5,11 +5,13 @@
   "scripts": {
     "dev": "next dev --hostname 127.0.0.1 --port 3000",
     "build": "next build",
+    "prebuild": "npm run generate:sitemap",
     "build:cloudflare": "opennextjs-cloudflare build && node scripts/copy-static-pages.mjs",
     "start": "next start --hostname 127.0.0.1 --port 3000",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write src scripts tests package.json tsconfig.json next.config.ts README.md",
     "db:migrate": "tsx --env-file=.env.local scripts/migrate.ts",
+    "generate:sitemap": "tsx --env-file=.env.local scripts/generate-sitemap.ts",
     "test": "tsx --test tests/*.test.ts",
     "report:sakenowa": "tsx --env-file=.env.local scripts/import-sakenowa.ts",
     "sync:sakenowa-rankings": "tsx --env-file=.env.local scripts/sync-sakenowa-rankings.ts",

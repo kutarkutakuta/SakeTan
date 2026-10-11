@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Search, X } from "lucide-react";
 import { BrandReviewActions } from "@/components/brand-review-actions";
 import { errorMessage, fetchJson } from "@/lib/client";
+import { masterDetailHref } from "@/lib/master-navigation";
 import type { BrandStatusItem } from "@/lib/types";
 
 type StatusData = {
@@ -140,9 +141,7 @@ export function BrandStatusList() {
                 </div>
                 <div className="brand-status-card-links">
                   <Link
-                    href={`/edit/brand/${brand.id}?return_to=${encodeURIComponent(
-                      "/brands",
-                    )}`}
+                    href={masterDetailHref("brand", brand.id, "/brands")}
                   >
                     銘柄情報
                   </Link>

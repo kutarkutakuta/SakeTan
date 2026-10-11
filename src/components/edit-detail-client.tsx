@@ -8,7 +8,11 @@ import { BrandShopList } from "@/components/brand-shop-list";
 import { LoginRequired } from "@/components/login-required";
 import { MasterForm } from "@/components/master-form";
 import { sortBrands } from "@/lib/brand-index";
-import { masterDetailHref, masterReturnPath } from "@/lib/master-navigation";
+import {
+  masterDetailHref,
+  masterDetailPath,
+  masterReturnPath,
+} from "@/lib/master-navigation";
 import { authorization, configured, supabase } from "@/lib/supabase/browser";
 import type { Brand, Brewery, EntityType } from "@/lib/types";
 
@@ -48,7 +52,9 @@ export function EditDetailClient({
   if (requestedName) nextParams.set("name", requestedName);
   if (returnTo) nextParams.set("return_to", returnTo);
   const next =
-    `/edit/${type}/${recordId}` +
+    (type === "brand" || type === "brewery"
+      ? masterDetailPath(type, recordId)
+      : `/edit/shop/${recordId}`) +
     (nextParams.size ? `?${nextParams.toString()}` : "");
   const [state, setState] = useState<DetailState | null>(null);
   const [error, setError] = useState("");
@@ -185,7 +191,13 @@ export function EditDetailClient({
                 )}
               </>
             ) : id ? (
-              `${entity.name}を編集`
+              state ? (
+                `${entity.name}を編集`
+              ) : (
+                <span className="sr-only">
+                  {entity.name}の登録情報を読み込んでいます…
+                </span>
+              )
             ) : (
               `新しい${entity.name}を登録`
             )}

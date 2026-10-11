@@ -4,6 +4,8 @@ node_modules/
 .wrangler/
 .env*
 !.env.example
+public/robots.txt
+public/sitemap.xml
 *.tsbuildinfo
 .sites-runtime/
 test-results/

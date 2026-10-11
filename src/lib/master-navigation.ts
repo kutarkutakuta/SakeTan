@@ -11,10 +11,15 @@ export function masterReturnPath(value: string | null | undefined) {
     );
     return z.uuid().safeParse(shopId).success ? value : undefined;
   }
-  const detail = /^\/(?:edit\/(?:brand|brewery|shop)|shops)\/([^/]+)$/u.exec(
+  const detail =
+    /^\/(?:edit\/(?:brand|brewery|shop)|shops|brands|breweries)\/([^/]+)$/u.exec(
     pathname,
-  );
+    );
   return detail && z.uuid().safeParse(detail[1]).success ? value : undefined;
+}
+
+export function masterDetailPath(type: "brand" | "brewery", id: string) {
+  return `/${type === "brand" ? "brands" : "breweries"}/${id}`;
 }
 
 export function masterDetailHref(
@@ -22,5 +27,5 @@ export function masterDetailHref(
   id: string,
   returnTo: string,
 ) {
-  return `/edit/${type}/${id}?${new URLSearchParams({ return_to: returnTo })}`;
+  return `${masterDetailPath(type, id)}?${new URLSearchParams({ return_to: returnTo })}`;
 }

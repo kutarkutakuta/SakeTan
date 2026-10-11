@@ -9,7 +9,7 @@ const brandId = "12958fa6-062a-4b2e-9962-49e859a69b7c";
 const breweryId = "b227e9b6-6536-4a88-9a3a-80c186d2b8b4";
 
 test("master links preserve the originating detail and its return context", () => {
-  const brand = `/edit/brand/${brandId}?return_to=%2Fbrands`;
+  const brand = `/brands/${brandId}?return_to=%2Fbrands`;
   const brewery = masterDetailHref("brewery", breweryId, brand);
   const breweryReturn = new URL(
     brewery,
@@ -32,7 +32,7 @@ test("master return paths retain list searches and shop posting context", () => 
     "/brands",
     "/edit",
     "/edit?type=brand&q=%E5%B8%82",
-    `/edit/brand/${brandId}?shop_id=${breweryId}`,
+    `/brands/${brandId}?shop_id=${breweryId}`,
   ]) {
     assert.equal(masterReturnPath(path), path);
   }
@@ -44,7 +44,7 @@ test("a shop brand link returns to the original public shop page", () => {
   const href = masterDetailHref("brand", brandId, shop);
   assert.equal(
     new URL(href, "https://example.test").pathname,
-    `/edit/brand/${brandId}`,
+    `/brands/${brandId}`,
   );
   assert.equal(
     masterReturnPath(
@@ -81,6 +81,8 @@ test("master return paths reject external, malformed and unrelated destinations"
     "/post?shop_id=https://evil.test",
     "/edit/brand/invalid",
     "/edit/brewery/new",
+    "/brands/invalid",
+    "/breweries/new",
     "/edit/../brands",
   ]) {
     assert.equal(masterReturnPath(path), undefined);

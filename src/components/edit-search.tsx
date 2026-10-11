@@ -6,6 +6,7 @@ import { ChevronRight, Plus, Search, X } from "lucide-react";
 import { KanaEditDialog } from "@/components/kana-edit-dialog";
 import { useToast } from "@/components/toast-provider";
 import { errorMessage, fetchJson } from "@/lib/client";
+import { masterDetailHref } from "@/lib/master-navigation";
 import type { Brand, Brewery, EntityType, Shop } from "@/lib/types";
 
 type SearchItem = Brand | Brewery | Shop;
@@ -226,13 +227,15 @@ export function EditSearch({
             const returnTo = `/edit?type=${target}&q=${encodeURIComponent(
               normalizedQuery,
             )}`;
+            const detailHref =
+              target === "shop"
+                ? `/edit/shop/${item.id}?return_to=${encodeURIComponent(returnTo)}`
+                : masterDetailHref(target, item.id, returnTo);
             return target !== "shop" && admin ? (
               <Link
                 className="edit-result"
                 key={item.id}
-                href={`/edit/${target}/${item.id}?return_to=${encodeURIComponent(
-                  returnTo,
-                )}`}
+                href={detailHref}
               >
                 {content}
               </Link>
@@ -251,7 +254,7 @@ export function EditSearch({
                 key={item.id}
                 href={
                   signedIn
-                    ? `/edit/${target}/${item.id}?return_to=${encodeURIComponent(returnTo)}`
+                    ? detailHref
                     : `/shops/${item.id}`
                 }
               >
@@ -261,7 +264,7 @@ export function EditSearch({
               <a
                 className="edit-result"
                 key={item.id}
-                href={`/edit/${target}/${item.id}?return_to=${encodeURIComponent(returnTo)}`}
+                href={detailHref}
               >
                 {content}
               </a>

@@ -64,6 +64,19 @@ export function HomeEntry({ ready }: { ready: boolean }) {
         />
       </Suspense>
     );
+  const publicMaster = /^\/(brands|breweries)\/([^/]+)\/?$/.exec(
+    location.pathname,
+  );
+  if (publicMaster)
+    return (
+      <Suspense fallback={<main id="main" className="page narrow" />}>
+        <EditDetailClient
+          type={publicMaster[1] === "brands" ? "brand" : "brewery"}
+          recordId={decodeURIComponent(publicMaster[2])}
+          query={location.search}
+        />
+      </Suspense>
+    );
   const edit = /^\/edit\/(shop|brand|brewery)\/([^/]+)\/?$/.exec(
     location.pathname,
   );

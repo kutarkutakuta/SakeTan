@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { mutate } from "@/lib/client";
 import { changeReasonError } from "@/lib/change-reason";
+import { masterDetailPath } from "@/lib/master-navigation";
 import type { Brand, Brewery } from "@/lib/types";
 import { useToast } from "@/components/toast-provider";
 
@@ -136,7 +137,7 @@ export function KanaEditDialog({
           </label>
           <div className="quick-kana-actions">
             {admin && (
-              <a className="button ghost" href={`/edit/${type}/${item.id}`}>
+              <a className="button ghost" href={masterDetailPath(type, item.id)}>
                 詳細編集
               </a>
             )}

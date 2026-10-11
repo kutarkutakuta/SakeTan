@@ -28,8 +28,24 @@ export default {
     if (url.pathname === "/admin/brand-requests")
       return Response.redirect(new URL("/brands", url), 308);
 
+    if (url.pathname === "/robots.txt" || url.pathname === "/sitemap.xml")
+      return env.ASSETS.fetch(request);
+
+    const legacyMaster = /^\/edit\/(brand|brewery)\/([^/]+)\/?$/.exec(
+      url.pathname,
+    );
+    if (legacyMaster && legacyMaster[2] !== "new") {
+      const destination = new URL(
+        `/${legacyMaster[1] === "brand" ? "brands" : "breweries"}/${legacyMaster[2]}`,
+        url,
+      );
+      destination.search = url.search;
+      return Response.redirect(destination, 308);
+    }
+
     if (
       /^\/shops\/[^/]+\/?$/.test(url.pathname) ||
+      /^\/(brands|breweries)\/[^/]+\/?$/.test(url.pathname) ||
       /^\/edit\/(shop|brand|brewery)\/[^/]+\/?$/.test(url.pathname)
     ) {
       const shell = new URL("/", url);
