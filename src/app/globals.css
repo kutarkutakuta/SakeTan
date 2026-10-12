@@ -1242,7 +1242,7 @@ nav {
 .shop-map-marker-label-wrap {
   position: absolute;
   bottom: 100%;
-  left: 0;
+  left: 50%;
   display: none;
   align-items: center;
   gap: 5px;
@@ -1255,6 +1255,7 @@ nav {
   border-radius: 3px;
   background: white;
   box-shadow: 0 2px 4px rgb(37 37 34 / 20%);
+  transform: translateX(-50%);
   pointer-events: none;
 }
 .shop-map-marker-info-flag {
