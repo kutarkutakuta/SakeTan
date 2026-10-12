@@ -17,6 +17,8 @@
 
 Cloudflare用のビルドは `npm run build:cloudflare` です。静的ページのHTMLとRSCを `.open-next/assets` へコピーし、`wrangler.jsonc` のアセット優先設定を使います。IDを含むURLへのリンクは通常のHTMLナビゲーションにし、Next.jsのRSC要求がWorkerを呼ばないようにします。軽量ルーターは `src/cloudflare-router.ts` にあり、`/auth/*` のときだけOpenNextを読み込みます。新しいDB操作を追加するときは、ブラウザーにサーバー用Secret keyを含めず、RLSとRPCで権限・入力・回数制限を確認してください。
 
+ビルド前のサイトマップ生成は `NEXT_PUBLIC_SUPABASE_URL` と `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` で公開情報を取得します。`SUPABASE_SECRET_KEY` は不要です。Supabaseが `JWT issued at future` を返した場合は、同じ取得ページを1秒・2秒・4秒後に再試行します。解消しなければビルドを停止し、不完全なサイトマップで上書きしません。取込・更新用の管理スクリプトには引き続き `SUPABASE_SECRET_KEY` が必要です。
+
 ## セットアップ
 
 ### 1. インストール

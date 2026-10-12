@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { adminClient, paged } from "./supabase-admin";
+import { publicClient, paged } from "./supabase-admin";
 
 const siteUrl = (process.env.SITE_URL ?? "https://xn--l8jsqp0k5g.jp").replace(
   /\/$/u,
@@ -71,7 +71,7 @@ function rowsToEntries(rows: SitemapRow[], prefix: string): SitemapEntry[] {
 }
 
 async function generateSitemap() {
-  const db = adminClient();
+  const db = publicClient();
   const [brands, breweries, shops] = await Promise.all([
     paged<SitemapRow>((from, to) =>
       db
