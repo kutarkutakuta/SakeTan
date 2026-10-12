@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Search, X } from "lucide-react";
@@ -35,6 +35,13 @@ export function EntityDirectory({ type }: { type: EntityType }) {
     () => directoryFilters(new URLSearchParams(searchParams.toString()), type),
     [searchParams, type],
   );
+  const [query, setQuery] = useState(filters.query);
+  const composing = useRef(false);
+
+  useEffect(() => {
+    if (!composing.current) setQuery(filters.query);
+  }, [filters.query]);
+
   const [items, setItems] = useState<DirectoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -151,11 +158,9 @@ export function EntityDirectory({ type }: { type: EntityType }) {
       type,
     );
     const next = directorySearchParams({ ...current, page: 1, ...patch }, type);
-    window.history.replaceState(
-      null,
-      "",
-      pathname + (next.size ? `?${next}` : ""),
-    );
+    const href = pathname + (next.size ? `?${next}` : "");
+    if (href === window.location.pathname + window.location.search) return;
+    window.history.replaceState(null, "", href);
   }
 
   function pageHref(page: number) {
@@ -175,9 +180,22 @@ export function EntityDirectory({ type }: { type: EntityType }) {
         <label className="searchbox">
           <Search size={19} aria-hidden="true" />
           <input
-            value={filters.query}
+            value={query}
             maxLength={150}
-            onChange={(event) => updateFilters({ query: event.target.value })}
+            onChange={(event) => {
+              const value = event.currentTarget.value;
+              setQuery(value);
+              if (!composing.current) updateFilters({ query: value });
+            }}
+            onCompositionStart={() => {
+              composing.current = true;
+            }}
+            onCompositionEnd={(event) => {
+              composing.current = false;
+              const value = event.currentTarget.value;
+              setQuery(value);
+              updateFilters({ query: value });
+            }}
             placeholder={
               type === "brand"
                 ? "銘柄名・酒蔵名・かなで検索"
@@ -189,10 +207,13 @@ export function EntityDirectory({ type }: { type: EntityType }) {
                 : `${label}名・かなで検索`
             }
           />
-          {filters.query && (
+          {query && (
             <button
               type="button"
-              onClick={() => updateFilters({ query: "" })}
+              onClick={() => {
+                setQuery("");
+                updateFilters({ query: "" });
+              }}
               aria-label="検索をクリア"
             >
               <X size={18} />
