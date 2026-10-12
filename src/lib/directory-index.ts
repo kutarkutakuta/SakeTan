@@ -13,7 +13,12 @@ import {
 import { normalizeKanaSearchText } from "./search-text";
 import type { Brand, Brewery, EntityType, Shop } from "./types";
 
-export type DirectoryItem = Brand | Brewery | Shop;
+export type DirectoryItemByType = {
+  brand: Brand;
+  brewery: Brewery;
+  shop: Shop;
+};
+export type DirectoryItem = DirectoryItemByType[EntityType];
 export type DirectoryFilters = {
   query: string;
   status: "all" | "pending" | "approved";
@@ -112,6 +117,7 @@ export function directoryPage(
   items: DirectoryItem[],
   filters: DirectoryFilters,
 ) {
+  const query = normalize(filters.query);
   const matching = items.filter((item) => {
     if (type === "brand") {
       const brand = item as Brand;
@@ -144,9 +150,7 @@ export function directoryPage(
       item.name,
       item.name_kana,
       ...(type === "shop" ? [(item as Shop).city] : []),
-    ].some(
-      (value) => value && normalize(value).includes(normalize(filters.query)),
-    );
+    ].some((value) => value && normalize(value).includes(query));
   });
   const sorted =
     type === "brand"

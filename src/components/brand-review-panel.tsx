@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { BrandReviewActions } from "./brand-review-actions";
 import { errorMessage, fetchJson } from "@/lib/client";
-import type { BrandStatusItem } from "@/lib/types";
+import type { BrandReviewItem } from "@/lib/types";
 
 export function BrandReviewPanel({
   brandId,
@@ -14,11 +14,11 @@ export function BrandReviewPanel({
   pending: boolean;
   onReviewed: () => void;
 }) {
-  const [brand, setBrand] = useState<BrandStatusItem | null>(null);
+  const [brand, setBrand] = useState<BrandReviewItem | null>(null);
   const [error, setError] = useState("");
   useEffect(() => {
     const controller = new AbortController();
-    void fetchJson<{ items: BrandStatusItem[]; admin: boolean }>(
+    void fetchJson<{ items: BrandReviewItem[]; admin: boolean }>(
       `/api/brand-statuses?id=${encodeURIComponent(brandId)}`,
       { signal: controller.signal, cache: "no-store" },
       "申請情報を取得できませんでした",

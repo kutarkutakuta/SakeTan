@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { authorization, supabase } from "@/lib/supabase/browser";
-import type { Brand, BrandStatusItem, BrandStatusShop } from "@/lib/types";
+import type { Brand, BrandReviewItem } from "@/lib/types";
 
 const querySchema = z.object({
   q: z.string().trim().max(150).default(""),
@@ -8,12 +8,6 @@ const querySchema = z.object({
   page: z.coerce.number().int().min(1).max(10000).default(1),
   id: z.uuid().optional(),
 });
-
-type RelationRow = {
-  brand_id: string;
-  status: "available" | "unavailable" | "incorrect";
-  shops: { id: string; name: string; is_active: boolean } | null;
-};
 
 export async function GET(request: Request) {
   const parsed = querySchema.safeParse(
@@ -70,50 +64,28 @@ export async function GET(request: Request) {
       { status: 500 },
     );
 
-  const brands = (brandResult.data ?? []) as unknown as BrandStatusItem[];
+  const brands = (brandResult.data ?? []) as unknown as BrandReviewItem[];
   const ids = brands.map((brand) => brand.id);
-  const [relationResult, applicationResult] = await Promise.all([
-    ids.length
-      ? db
-          .from("shop_brands")
-          .select("brand_id,status,shops!inner(id,name,is_active)")
-          .in("brand_id", ids)
-          .eq("status", "available")
-          .eq("shops.is_active", true)
-      : Promise.resolve({ data: [], error: null }),
-    account.admin && ids.length
-      ? db
-          .from("brand_applications")
-          .select("brand_id,reason")
-          .in("brand_id", ids)
-      : Promise.resolve({ data: [], error: null }),
-  ]);
-  if (relationResult.error || applicationResult.error)
+  const applicationResult = await (account.admin && ids.length
+    ? db
+        .from("brand_applications")
+        .select("brand_id,reason")
+        .in("brand_id", ids)
+    : Promise.resolve({ data: [], error: null }));
+  if (applicationResult.error)
     return Response.json(
       { error: "銘柄の関連情報を取得できませんでした" },
       { status: 500 },
     );
 
-  const shopsByBrand = new Map<string, BrandStatusShop[]>();
-  for (const row of (relationResult.data ?? []) as unknown as RelationRow[]) {
-    if (!row.shops || row.status === "incorrect") continue;
-    const shops = shopsByBrand.get(row.brand_id) ?? [];
-    shops.push({ id: row.shops.id, name: row.shops.name, status: row.status });
-    shopsByBrand.set(row.brand_id, shops);
-  }
   const reasons = new Map<string, string>(
     (applicationResult.data ?? []).map(
       (item: { brand_id: string; reason: string }) =>
         [item.brand_id, item.reason] as const,
     ),
   );
-  const items: BrandStatusItem[] = brands.map((brand) => ({
-    ...(brand as Brand),
-    registration_status: brand.registration_status,
-    created_at: brand.created_at,
-    shops: (shopsByBrand.get(brand.id) ?? []).sort((a, b) =>
-      a.name.localeCompare(b.name, "ja"),
-    ),
+  const items: BrandReviewItem[] = brands.map((brand) => ({
+    ...brand,
     ...(account.admin
       ? { application_reason: reasons.get(brand.id) ?? null }
       : {}),

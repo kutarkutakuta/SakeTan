@@ -294,9 +294,6 @@ nav {
 .nav-help:hover > svg {
   color: #814800;
 }
-.header-registration-menu {
-  position: relative;
-}
 .header-directory-links {
   display: flex;
   align-items: center;
@@ -331,64 +328,12 @@ nav {
     max-width: 100px;
   }
 }
-.header-registration-trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  min-height: 42px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  font-weight: 500;
-  cursor: pointer;
-  list-style: none;
-}
-.header-registration-trigger::-webkit-details-marker,
 .mobile-menu-trigger::-webkit-details-marker {
   display: none;
 }
-.header-registration-trigger:hover,
-.header-registration-menu[open] .header-registration-trigger {
-  color: var(--primary);
-}
-.header-registration-trigger svg {
-  transition: transform 160ms ease;
-}
-.header-registration-menu[open] .header-registration-trigger svg {
-  transform: rotate(180deg);
-}
-.header-registration-submenu {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: -12px;
-  z-index: 10;
-  display: grid;
-  width: 220px;
-  padding: 8px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: white;
-  box-shadow: 0 14px 36px rgba(45, 35, 25, 0.14);
-}
-.header-registration-menu:not([open]) .header-registration-submenu,
 .mobile-header-details:not([open]) .mobile-menu-backdrop,
 .mobile-header-details:not([open]) .mobile-header-menu {
   display: none;
-}
-.header-registration-submenu a {
-  padding: 11px 12px;
-  border-radius: 8px;
-  color: var(--text);
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.5;
-}
-.header-registration-submenu a:hover,
-.header-registration-submenu a[aria-current="page"] {
-  background: var(--tint);
-  color: var(--primary);
 }
 .mobile-menu-trigger,
 .mobile-header-menu,
@@ -651,84 +596,8 @@ nav {
 .result-heading-copy {
   min-width: 0;
 }
-.listing-notice {
-  flex: none;
-  margin-left: auto;
-}
 .result-heading .desktop-result-count {
   margin-left: auto;
-}
-.listing-notice-trigger,
-.listing-notice-close {
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  transition:
-    background 0.15s ease,
-    color 0.15s ease;
-}
-.listing-notice-trigger {
-  width: 40px;
-  height: 40px;
-  border: 0;
-  background: transparent;
-  color: #995700;
-}
-.listing-notice-trigger:hover,
-.listing-notice-trigger:focus-visible,
-.listing-notice-trigger[aria-expanded="true"] {
-  background: #fff0cf;
-  color: #814800;
-}
-.listing-notice-backdrop {
-  display: none;
-}
-.listing-notice-dialog {
-  position: fixed;
-  z-index: 1350;
-  padding: 18px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: white;
-  box-shadow: 0 14px 42px #2525222b;
-}
-.listing-notice-head,
-.listing-notice-head > div {
-  display: flex;
-  align-items: center;
-}
-.listing-notice-head {
-  justify-content: space-between;
-  gap: 14px;
-}
-.listing-notice-head > div {
-  min-width: 0;
-  gap: 8px;
-  color: #995700;
-}
-.listing-notice-head > div > svg {
-  flex: none;
-}
-.listing-notice-head h2 {
-  min-width: 0;
-  color: var(--text);
-  font-size: 16px;
-}
-.listing-notice-close {
-  flex: 0 0 36px;
-  width: 36px;
-  height: 36px;
-  color: var(--muted);
-}
-.listing-notice-close:hover {
-  background: var(--bg);
-  color: var(--text);
-}
-.listing-notice-dialog p {
-  margin-top: 10px;
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.7;
 }
 .count {
   display: inline-flex;
@@ -3237,20 +3106,17 @@ nav {
   flex-wrap: wrap;
   gap: 6px;
 }
-.prefecture-radio-tags label,
-.brand-review-brewery-modes label {
+.prefecture-radio-tags label {
   position: relative;
   cursor: pointer;
 }
-.prefecture-radio-tags input,
-.brand-review-brewery-modes input {
+.prefecture-radio-tags input {
   position: absolute;
   width: 1px;
   height: 1px;
   opacity: 0;
 }
-.prefecture-radio-tags span,
-.brand-review-brewery-modes span {
+.prefecture-radio-tags span {
   display: inline-flex;
   min-height: 38px;
   align-items: center;
@@ -3262,15 +3128,13 @@ nav {
   font-size: 14px;
   line-height: 1.4;
 }
-.prefecture-radio-tags input:checked + span,
-.brand-review-brewery-modes input:checked + span {
+.prefecture-radio-tags input:checked + span {
   border-color: var(--primary);
   background: var(--tint);
   color: var(--primary);
   font-weight: 600;
 }
-.prefecture-radio-tags input:focus-visible + span,
-.brand-review-brewery-modes input:focus-visible + span {
+.prefecture-radio-tags input:focus-visible + span {
   outline: 3px solid color-mix(in srgb, var(--primary) 28%, transparent);
   outline-offset: 2px;
 }
@@ -3653,146 +3517,9 @@ nav {
     justify-content: space-between;
   }
 }
-.brand-status-controls {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 180px;
-  align-items: end;
-  gap: 16px;
-  padding: 18px;
-}
-.brand-status-controls > label:last-child {
-  display: grid;
-  gap: 7px;
-  font-size: 14px;
-  font-weight: 600;
-}
-.brand-status-controls select {
-  min-height: 48px;
-}
-.brand-status-summary {
-  margin: -4px 0 12px;
-  color: var(--muted);
-  font-size: 14px;
-  text-align: right;
-}
-.brand-status-list {
-  display: grid;
-  gap: 16px;
-}
-.brand-status-card {
-  margin-bottom: 0;
-}
-.brand-status-card-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20px;
-}
-.brand-status-card-head .status-badge {
-  margin: 0 0 8px;
-}
-.brand-status-card-head h2 {
-  margin: 0;
-  font-size: 22px;
-  line-height: 1.45;
-}
-.brand-status-kana {
-  margin-left: 8px;
-  color: var(--muted);
-  font-size: 14px;
-  font-weight: 400;
-  white-space: nowrap;
-}
-.brand-status-card-head p {
-  margin-top: 4px;
-  color: var(--muted);
-  font-size: 16px;
-}
-.brand-status-card-links {
-  display: flex;
-  flex: none;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px 16px;
-  font-size: 14px;
-}
-.brand-status-card-links a,
-.brand-status-shops a {
-  color: var(--primary);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.brand-status-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px 30px;
-  margin-top: 18px;
-}
-.brand-status-meta div {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-.brand-status-meta dt {
-  color: var(--muted);
-  font-size: 14px;
-}
-.brand-status-meta dd {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-}
-.brand-status-shops {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 18px;
-  margin-top: 14px;
-  font-size: 14px;
-  line-height: 1.6;
-}
-.brand-status-admin {
-  margin-top: 20px;
-  padding-top: 18px;
-  border-top: 1px solid var(--line);
-}
-.brand-status-admin > p {
-  margin-bottom: 14px;
-  font-size: 14px;
-  line-height: 1.65;
-}
 .brand-review-actions {
   display: grid;
   gap: 14px;
-}
-.brand-review-brewery {
-  display: grid;
-  gap: 14px;
-  padding: 16px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--bg);
-}
-.brand-review-brewery h3 {
-  margin: 0;
-  font-size: 18px;
-  line-height: 1.5;
-}
-.brand-review-brewery .hint {
-  margin-top: 4px;
-  line-height: 1.6;
-}
-.brand-review-brewery-modes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.brand-review-brewery-existing,
-.brand-review-brewery-form {
-  display: grid;
-  gap: 12px;
-}
-.brand-review-brewery-form {
-  padding-top: 2px;
 }
 .button.ghost.danger {
   border-color: #dfb4ad;
@@ -3824,34 +3551,16 @@ nav {
 .brand-merge-results button:hover {
   border-color: var(--primary);
 }
-.brand-merge-results button[aria-pressed="true"] {
-  border-color: var(--primary);
-  background: var(--tint);
-  color: var(--primary);
-}
 .brand-merge-results span {
   color: var(--muted);
   font-size: 14px;
 }
-.brand-status-paging {
-  justify-content: center;
-  margin-top: 20px;
-}
 @media (max-width: 800px) {
-  .brand-status-controls {
-    grid-template-columns: 1fr;
-  }
   .brand-application-fields {
     grid-template-columns: 1fr;
   }
   .brand-application-fields > label:last-child {
     grid-column: auto;
-  }
-  .brand-status-card-head {
-    display: grid;
-  }
-  .brand-status-card-links {
-    justify-content: flex-start;
   }
   .brand-review-actions > .actions > .button {
     flex: 1 1 150px;

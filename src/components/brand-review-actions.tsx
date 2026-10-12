@@ -3,14 +3,14 @@
 import { useEffect, useState } from "react";
 import { Search, X } from "lucide-react";
 import { errorMessage, fetchJson, mutate } from "@/lib/client";
-import type { Brand, BrandStatusItem } from "@/lib/types";
+import type { Brand, BrandReviewItem } from "@/lib/types";
 import { useToast } from "@/components/toast-provider";
 
 export function BrandReviewActions({
   brand,
   onReviewed,
 }: {
-  brand: BrandStatusItem;
+  brand: BrandReviewItem;
   onReviewed: () => void | Promise<void>;
 }) {
   const { showToast } = useToast();

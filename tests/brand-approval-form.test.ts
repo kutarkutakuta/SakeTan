@@ -38,7 +38,6 @@ function markup(
               ...initial,
               brewery_id: selectedBrewery?.id ?? null,
               created_at: "2026-10-12T00:00:00Z",
-              shops: [],
             },
             onReviewed: () => undefined,
           }),

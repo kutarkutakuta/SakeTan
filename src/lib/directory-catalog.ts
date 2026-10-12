@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase/browser";
-import { directoryLabels, type DirectoryItem } from "./directory-index";
+import { directoryLabels, type DirectoryItemByType } from "./directory-index";
 import type { EntityType } from "./types";
 
 const catalogs = {
@@ -15,15 +15,15 @@ const catalogs = {
   },
 } as const;
 
-export async function loadDirectoryCatalog(
-  type: EntityType,
+export async function loadDirectoryCatalog<T extends EntityType>(
+  type: T,
   signal: AbortSignal,
-): Promise<DirectoryItem[]> {
+): Promise<DirectoryItemByType[T][]> {
   const db = await supabase();
   const label = `${directoryLabels[type]}一覧`;
   if (!db) throw new Error(`${label}の接続先が設定されていません`);
   const catalog = catalogs[type];
-  const items: DirectoryItem[] = [];
+  const items: DirectoryItemByType[T][] = [];
   const pageSize = 1000;
   let lastId: string | undefined;
   while (!signal.aborted) {
@@ -38,9 +38,10 @@ export async function loadDirectoryCatalog(
       query = query.in("registration_status", ["pending", "approved"]);
     if (lastId) query = query.gt("id", lastId);
     const { data, error } = await query;
+    signal.throwIfAborted();
     if (error)
       throw new Error(`${label}を取得できませんでした`, { cause: error });
-    const page = (data ?? []) as unknown as DirectoryItem[];
+    const page = (data ?? []) as unknown as DirectoryItemByType[T][];
     items.push(...page);
     if (page.length < pageSize) return items;
     lastId = page[page.length - 1].id;

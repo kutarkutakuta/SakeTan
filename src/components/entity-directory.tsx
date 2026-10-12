@@ -4,30 +4,22 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Search, X } from "lucide-react";
+import { DirectoryCard } from "./directory-card";
+import {
+  useDirectoryCatalog,
+  useDirectoryRelatedData,
+} from "./use-directory-data";
 import { BrandFilterControls } from "./brand-filter-controls";
-import { BrandInfoLink } from "./brand-info-link";
-import { loadDirectoryCatalog } from "@/lib/directory-catalog";
 import {
   directoryFilters,
   directoryLabels,
   directoryPage,
   directoryPaths,
-  directoryPrefecture,
   directorySearchParams,
   type DirectoryFilters,
-  type DirectoryItem,
 } from "@/lib/directory-index";
 import type { BrandCatalogSort } from "@/lib/brand-index";
-import { masterDetailHref } from "@/lib/master-navigation";
-import { supabase } from "@/lib/supabase/browser";
-import { loadBrandShopCounts } from "@/lib/brand-shops";
-import { loadBreweryBrands, type BreweryBrand } from "@/lib/brewery-brands";
-import {
-  shopBrandRankingLabel,
-  shopBrandRankingTag,
-} from "@/lib/shop-brand-order";
-import { errorMessage, fetchJson } from "@/lib/client";
-import type { Brand, EntityType, Shop } from "@/lib/types";
+import type { EntityType } from "@/lib/types";
 
 export function EntityDirectory({ type }: { type: EntityType }) {
   const searchParams = useSearchParams();
@@ -42,99 +34,19 @@ export function EntityDirectory({ type }: { type: EntityType }) {
     if (!composing.current) setQuery(filters.query);
   }, [filters.query]);
 
-  const [items, setItems] = useState<DirectoryItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [revision, setRevision] = useState(0);
-  const [relatedData, setRelatedData] = useState<{
-    key: string;
-    counts: Record<string, number>;
-    brands?: Record<string, BreweryBrand[]>;
-    error: string;
-  }>({ key: "", counts: {}, error: "" });
-  const [relatedRetry, setRelatedRetry] = useState(0);
+  const { items, loading, error, retry } = useDirectoryCatalog(type);
   const label = directoryLabels[type];
   const pathname = directoryPaths[type];
-
-  useEffect(() => {
-    const controller = new AbortController();
-    setLoading(true);
-    setError("");
-    void loadDirectoryCatalog(type, controller.signal)
-      .then((result) => {
-        if (!controller.signal.aborted) setItems(result);
-      })
-      .catch((reason) => {
-        if (!controller.signal.aborted)
-          setError(errorMessage(reason, `${label}一覧を取得できませんでした`));
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
-      });
-    return () => controller.abort();
-  }, [type, label, revision]);
 
   const result = useMemo(
     () => directoryPage(type, items, filters),
     [type, items, filters],
   );
-  const relatedIds =
-    !loading && !error
-      ? result.items
-          .map((item) => item.id)
-          .sort()
-          .join(",")
-      : "";
-  const relatedKey = relatedIds ? `${type}:${relatedIds}` : "";
-  const relatedErrorMessage =
-    type === "shop"
-      ? "取扱銘柄数を取得できませんでした"
-      : type === "brewery"
-        ? "酒蔵の銘柄を取得できませんでした"
-        : "取扱店舗数を取得できませんでした";
-  useEffect(() => {
-    if (!relatedIds) return;
-    const controller = new AbortController();
-    void (async () => {
-      let counts: Record<string, number>;
-      let brands: Record<string, BreweryBrand[]> | undefined;
-      if (type === "shop") {
-        counts = await fetchJson<Record<string, number>>(
-          `/api/shops/brand-totals?ids=${encodeURIComponent(relatedIds)}`,
-          { signal: controller.signal },
-          relatedErrorMessage,
-        );
-      } else {
-        const db = await supabase();
-        if (!db) throw new Error("接続先が設定されていません");
-        if (type === "brewery") {
-          brands = await loadBreweryBrands(
-            db,
-            relatedIds.split(","),
-            controller.signal,
-          );
-          counts = {};
-        } else {
-          counts = await loadBrandShopCounts(
-            db,
-            relatedIds.split(","),
-            controller.signal,
-          );
-        }
-      }
-      if (!controller.signal.aborted)
-        setRelatedData({ key: relatedKey, counts, brands, error: "" });
-    })().catch((reason) => {
-      if (!controller.signal.aborted)
-        setRelatedData({
-          key: relatedKey,
-          counts: {},
-          error: errorMessage(reason, relatedErrorMessage),
-        });
-    });
-    return () => controller.abort();
-  }, [relatedIds, relatedKey, type, relatedErrorMessage, relatedRetry]);
-  const relatedError = relatedData.key === relatedKey ? relatedData.error : "";
+  const relatedData = useDirectoryRelatedData(
+    type,
+    !loading && !error ? result.items.map((item) => item.id) : [],
+  );
+
   const returnParams = directorySearchParams(
     { ...filters, page: result.page },
     type,
@@ -260,11 +172,7 @@ export function EntityDirectory({ type }: { type: EntityType }) {
       {error && (
         <div className="notice error" role="alert">
           {error}
-          <button
-            className="button small ghost"
-            type="button"
-            onClick={() => setRevision((value) => value + 1)}
-          >
+          <button className="button small ghost" type="button" onClick={retry}>
             再読み込み
           </button>
         </div>
@@ -284,159 +192,27 @@ export function EntityDirectory({ type }: { type: EntityType }) {
           </p>
           <div className="brand-list directory-list">
             {result.items.map((item) => {
-              const brand = type === "brand" ? (item as Brand) : null;
-              const rankingTag = brand ? shopBrandRankingTag(brand) : null;
-              const relatedCount =
-                relatedData.key === relatedKey
-                  ? relatedData.counts[item.id]
-                  : undefined;
-              const breweryBrands =
-                relatedData.key === relatedKey
-                  ? relatedData.brands?.[item.id]
-                  : undefined;
-              const prefecture = directoryPrefecture(type, item);
-              const breweryName =
-                brand?.breweries?.name ||
-                brand?.requested_brewery_name ||
-                "酒蔵未登録";
-              const href =
-                type === "shop"
-                  ? `/shops/${item.id}?${new URLSearchParams({ return_to: returnTo })}`
-                  : masterDetailHref(type, item.id, returnTo);
               return (
-                <article
-                  className={`brand-item directory-item${type === "shop" ? " directory-shop-item" : ""}`}
+                <DirectoryCard
                   key={item.id}
-                >
-                  {brand?.registration_status === "pending" && (
-                    <span className="status-badge pending directory-pending-badge">
-                      申請中
-                    </span>
-                  )}
-                  <div className="brand-item-copy">
-                    <div className="brand-item-meta">
-                      {prefecture && (
-                        <>
-                          <button
-                            type="button"
-                            aria-label={`${prefecture}で絞り込む`}
-                            onClick={() =>
-                              updateFilters({
-                                prefectures: new Set([prefecture]),
-                              })
-                            }
-                          >
-                            {prefecture}
-                          </button>
-                          {(brand || type === "shop") && (
-                            <span aria-hidden="true">·</span>
-                          )}
-                        </>
-                      )}
-                      {brand && breweryName !== "酒蔵未登録" ? (
-                        <button
-                          type="button"
-                          aria-label={`${breweryName}の銘柄に絞り込む`}
-                          onClick={() => updateFilters({ query: breweryName })}
-                        >
-                          {breweryName}
-                        </button>
-                      ) : brand ? (
-                        <span>酒蔵未登録</span>
-                      ) : type === "shop" ? (
-                        <span>{(item as Shop).city || "所在地未登録"}</span>
-                      ) : !prefecture ? (
-                        <span>所在地未登録</span>
-                      ) : null}
-                      {rankingTag && (
-                        <span
-                          className={`brand-ranking-tag is-${rankingTag.kind}-ranked`}
-                          title={shopBrandRankingLabel(brand!) ?? undefined}
-                        >
-                          {rankingTag.label}
-                        </span>
-                      )}
-                    </div>
-                    {type === "shop" && (
-                      <span className="directory-related-count">
-                        取扱銘柄{" "}
-                        {relatedCount !== undefined
-                          ? `${relatedCount}件`
-                          : relatedError
-                            ? "不明"
-                            : "確認中"}
-                      </span>
-                    )}
-                    <div className="brand-item-name">
-                      {brand ? (
-                        <BrandInfoLink
-                          brandId={item.id}
-                          brandName={item.name}
-                          returnTo={returnTo}
-                        />
-                      ) : (
-                        <a className="brand-name-link" href={href}>
-                          <strong>{item.name}</strong>
-                        </a>
-                      )}
-                      {item.name_kana && (
-                        <span className="brand-item-kana">
-                          {item.name_kana}
-                        </span>
-                      )}
-                      {brand && (
-                        <span className="directory-related-count">
-                          取扱{" "}
-                          {relatedCount !== undefined
-                            ? `${relatedCount}店`
-                            : relatedError
-                              ? "不明"
-                              : "確認中"}
-                        </span>
-                      )}
-                    </div>
-                    {type === "brewery" &&
-                      (breweryBrands?.length ? (
-                        <ul
-                          className="directory-brewery-brands"
-                          aria-label={`${item.name}の銘柄`}
-                        >
-                          {breweryBrands.map((breweryBrand) => (
-                            <li key={breweryBrand.id}>
-                              <a
-                                className="brand-name-link"
-                                href={masterDetailHref(
-                                  "brand",
-                                  breweryBrand.id,
-                                  returnTo,
-                                )}
-                              >
-                                {breweryBrand.name}
-                              </a>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className="directory-brewery-brands-status">
-                          {breweryBrands
-                            ? "登録銘柄なし"
-                            : relatedError
-                              ? "銘柄を取得できませんでした"
-                              : "銘柄を確認中…"}
-                        </p>
-                      ))}
-                  </div>
-                </article>
+                  type={type}
+                  item={item}
+                  returnTo={returnTo}
+                  relatedCount={relatedData.counts[item.id]}
+                  breweryBrands={relatedData.brands[item.id]}
+                  error={Boolean(relatedData.error)}
+                  onFilterChange={updateFilters}
+                />
               );
             })}
           </div>
-          {relatedError && (
+          {relatedData.error && (
             <div className="notice error" role="alert">
-              {relatedError}
+              {relatedData.error}
               <button
                 className="button small ghost"
                 type="button"
-                onClick={() => setRelatedRetry((value) => value + 1)}
+                onClick={relatedData.retry}
               >
                 再読み込み
               </button>

@@ -29,16 +29,8 @@ export type Brand = {
   created_at?: string;
 };
 
-export type BrandStatusShop = {
-  id: string;
-  name: string;
-  status: "available" | "unavailable";
-};
-
-export type BrandStatusItem = Brand & {
+export type BrandReviewItem = Brand & {
   registration_status: "pending" | "approved";
-  created_at: string;
-  shops: BrandStatusShop[];
   application_reason?: string | null;
 };
 export type Shop = {
