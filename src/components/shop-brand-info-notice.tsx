@@ -20,5 +20,10 @@ export function ShopBrandInfoNotice({
       </span>
     );
 
-  return <span className="shop-brand-info-notice">銘柄情報求む</span>;
+  return (
+    <span className="shop-brand-info-notice">
+      <Flag size={16} strokeWidth={2} aria-hidden="true" />
+      銘柄情報求む
+    </span>
+  );
 }

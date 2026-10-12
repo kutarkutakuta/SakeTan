@@ -19,7 +19,6 @@ export function dateLabel(value: string) {
     timeZone: "Asia/Tokyo",
   }).format(new Date(value));
 }
-const GOOGLE_GEOCODE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 export function hasUsableCoordinates<
   T extends {
     latitude: number | null;
@@ -27,10 +26,7 @@ export function hasUsableCoordinates<
     geocode_source?: string | null;
     geocoded_at?: string | null;
   },
->(
-  value: T,
-  now = Date.now(),
-): value is T & { latitude: number; longitude: number } {
+>(value: T): value is T & { latitude: number; longitude: number } {
   if (
     typeof value.latitude !== "number" ||
     typeof value.longitude !== "number" ||
@@ -38,12 +34,7 @@ export function hasUsableCoordinates<
     !Number.isFinite(value.longitude)
   )
     return false;
-  if (value.geocode_source !== "google") return true;
-  if (!value.geocoded_at) return false;
-  const geocodedAt = Date.parse(value.geocoded_at);
-  return (
-    Number.isFinite(geocodedAt) && now - geocodedAt <= GOOGLE_GEOCODE_MAX_AGE_MS
-  );
+  return true;
 }
 
 export function googleMapsShopUrl(shop: {

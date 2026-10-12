@@ -299,31 +299,24 @@ test("Google Maps shop links prefer a Place ID", () => {
   assert.equal(url.searchParams.get("query"), "地図酒店");
   assert.equal(url.searchParams.get("query_place_id"), "place-1");
 });
-test("Google coordinates expire after 30 days while independent coordinates remain usable", () => {
-  const now = Date.parse("2026-09-11T00:00:00Z");
+test("saved coordinates remain usable after a Google geocode becomes old", () => {
   const point = { latitude: 35.68, longitude: 139.76 };
-  assert.equal(hasUsableCoordinates(point, now), true);
+  assert.equal(hasUsableCoordinates(point), true);
   assert.equal(
-    hasUsableCoordinates(
-      {
-        ...point,
-        geocode_source: "google",
-        geocoded_at: "2026-08-13T00:00:01Z",
-      },
-      now,
-    ),
+    hasUsableCoordinates({
+      ...point,
+      geocode_source: "google",
+      geocoded_at: "2026-08-13T00:00:01Z",
+    }),
     true,
   );
   assert.equal(
-    hasUsableCoordinates(
-      {
-        ...point,
-        geocode_source: "google",
-        geocoded_at: "2026-08-11T00:00:00Z",
-      },
-      now,
-    ),
-    false,
+    hasUsableCoordinates({
+      ...point,
+      geocode_source: "google",
+      geocoded_at: "2026-08-11T00:00:00Z",
+    }),
+    true,
   );
 });
 test("import resolves prefecture and nullable brewery without guessing kana or URLs", () => {

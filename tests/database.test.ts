@@ -1581,7 +1581,7 @@ test("source shops without required search fields stay out of search results", a
   );
 });
 
-test("Google geocodes receive a server timestamp and expire from bounded map results", async () => {
+test("Google geocodes receive a server timestamp and remain visible after expiry", async () => {
   await asUser(alice);
   const googleShop = await scalar("select public.save_master('shop',null,$1)", [
     JSON.stringify({
@@ -1624,7 +1624,7 @@ test("Google geocodes receive a server timestamp and expire from bounded map res
         [googleShop],
       )
     ).rows.length,
-    0,
+    1,
   );
   assert.equal(
     (

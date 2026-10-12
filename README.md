@@ -156,7 +156,7 @@ Google Cloudで課金を有効にし、**Maps JavaScript API** と **Places API 
 1. Maps JavaScript APIとPlaces API (New)だけを許可し、Webサイト（HTTPリファラー）で制限した公開キーを `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` に設定します。
 2. Google Cloud ConsoleでMap IDを作成し、`NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID` に設定します。ローカル確認だけなら未設定時にGoogleのデモMap IDを使います。
 
-Googleから取得した店舗座標には取得日時と精度を保存し、30日を超えた座標は地図とエリア検索から除外します。継続表示する場合は期限内に再取得してください。料金、保存期間、表示条件は運用開始前にも最新のGoogle Maps Platform規約を確認してください。
+Googleから取得した店舗座標には取得日時と精度を保存します。登録済みの緯度・経度がある店舗は、Google座標の取得日時が古くなっても地図とエリア検索に表示します。料金、保存期間、表示条件は運用開始前にも最新のGoogle Maps Platform規約を確認してください。
 
 ### 8. 匿名操作とソーシャルログイン
 
@@ -211,7 +211,7 @@ npm start
 主要テーブルは `users`、`breweries`、`brands`、`shops`、`shop_brands`、`sightings`、`change_histories`、`brand_applications` の8系統です。PostGISは不要です。
 
 - 閲覧と取扱情報の追加・変更は画面上のログインなしで可能です。変更時にはSupabaseの匿名セッションを自動発行し、1時間単位の変更上限をDBで適用します。
-- 管理者は店舗編集画面で「銘柄情報求む」を付け外しできます。店舗一覧には小さな旗アイコン、店舗詳細には「銘柄情報求む」の文字で表示します。`shops.seeking_brand_info` の初期値は `false` で、銘柄の追加後も管理者が手動で解除します。
+- 管理者は店舗編集画面で「銘柄情報求む」を付け外しできます。店舗一覧には小さな旗アイコン、店舗詳細には旗アイコンと「銘柄情報求む」の文字で表示します。`shops.seeking_brand_info` の初期値は `false` で、銘柄の追加後も管理者が手動で解除します。
 - `shop_brands.status` は `available`（取扱あり）、`unavailable`（現在は取扱なし）、`incorrect`（誤った取扱情報）の3値です。新しい取扱関係の追加ではSightingを作らず、両者を混同しません。
 - ログイン済みユーザーは、1店舗の「取扱あり」を最大10店舗へ一括コピーできます。コピー先の既存情報、発見日、投稿は変更せず、追加分だけを履歴に記録します。
 - 銘柄が見つからない場合は、銘柄名・酒蔵名・任意の理由で登録申請できます。申請中の銘柄は対象店舗へすぐ追加され、公開画面では「申請中」と表示されます。

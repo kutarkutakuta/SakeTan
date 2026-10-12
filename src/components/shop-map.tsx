@@ -34,11 +34,58 @@ function updateShopMarker(
     content.classList.toggle(`shop-map-marker-level-${value}`, value === level);
 }
 
+function createShopInfoFlag() {
+  const flag = document.createElement("span");
+  flag.className = "shop-map-marker-info-flag";
+  flag.setAttribute("role", "img");
+  flag.setAttribute("aria-label", "銘柄情報求む");
+  flag.title = "銘柄情報求む";
+
+  const icon = document.createElementNS(svgNamespace, "svg");
+  icon.setAttribute("viewBox", "0 0 24 24");
+  icon.setAttribute("width", "16");
+  icon.setAttribute("height", "16");
+  icon.setAttribute("aria-hidden", "true");
+  icon.setAttribute("fill", "none");
+  icon.setAttribute("stroke", "currentColor");
+  icon.setAttribute("stroke-width", "2");
+  icon.setAttribute("stroke-linecap", "round");
+  icon.setAttribute("stroke-linejoin", "round");
+
+  const flagShape = document.createElementNS(svgNamespace, "path");
+  flagShape.setAttribute(
+    "d",
+    "M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z",
+  );
+  const pole = document.createElementNS(svgNamespace, "path");
+  pole.setAttribute("d", "M4 22V15");
+  icon.append(flagShape, pole);
+  flag.append(icon);
+  return flag;
+}
+
+function updateShopMarkerLabel(
+  labelWrap: HTMLDivElement,
+  label: HTMLAnchorElement,
+  name: string,
+  href: string,
+  seekingBrandInfo: boolean,
+) {
+  if (label.textContent !== name) label.textContent = name;
+  if (label.getAttribute("href") !== href) label.href = href;
+  const flag = labelWrap.querySelector<HTMLElement>(
+    ".shop-map-marker-info-flag",
+  );
+  if (seekingBrandInfo && !flag) labelWrap.append(createShopInfoFlag());
+  if (!seekingBrandInfo) flag?.remove();
+}
+
 function createShopMarker(
   status: ShopMarkerStatus,
   brandTotal: number | undefined,
   name: string,
   href: string,
+  seekingBrandInfo: boolean,
 ) {
   const content = document.createElement("div");
   content.className = "shop-map-marker";
@@ -69,6 +116,7 @@ function createShopMarker(
   const labelWrap = document.createElement("div");
   labelWrap.className = "shop-map-marker-label-wrap";
   labelWrap.append(label);
+  if (seekingBrandInfo) labelWrap.append(createShopInfoFlag());
 
   icon.append(pin, diamond);
   content.append(icon, labelWrap);
@@ -244,11 +292,17 @@ export default function ShopMap({
         const label = existing.shopContent.querySelector<HTMLAnchorElement>(
           ".shop-map-marker-label",
         );
-        if (label) {
-          if (label.textContent !== shop.name) label.textContent = shop.name;
-          const href = shopHref(shop.id);
-          if (label.getAttribute("href") !== href) label.href = href;
-        }
+        const labelWrap = existing.shopContent.querySelector<HTMLDivElement>(
+          ".shop-map-marker-label-wrap",
+        );
+        if (label && labelWrap)
+          updateShopMarkerLabel(
+            labelWrap,
+            label,
+            shop.name,
+            shopHref(shop.id),
+            shop.seeking_brand_info === true,
+          );
         if (
           existing.latitude !== shop.latitude ||
           existing.longitude !== shop.longitude
@@ -268,6 +322,7 @@ export default function ShopMap({
         brandTotal,
         shop.name,
         shopHref(shop.id),
+        shop.seeking_brand_info === true,
       );
       const label = shopContent.querySelector<HTMLAnchorElement>(
         ".shop-map-marker-label",

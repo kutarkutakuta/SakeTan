@@ -804,6 +804,7 @@ nav {
 .shop-brand-info-notice {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   padding: 3px 8px;
   border-radius: 6px;
   background: var(--tint);
@@ -819,6 +820,7 @@ nav {
   width: 24px;
   height: 24px;
   padding: 0;
+  background: transparent;
   pointer-events: auto;
 }
 .shop-brand-info-notice.compact:focus-visible {
@@ -1220,7 +1222,7 @@ nav {
   --marker-fill: #89837e;
   --marker-stroke: white;
 }
-.shop-map-marker svg {
+.shop-map-marker > svg {
   display: block;
   filter: drop-shadow(0 2px 3px rgb(37 37 34 / 24%));
   transform-origin: center bottom;
@@ -1242,22 +1244,43 @@ nav {
   bottom: 100%;
   left: 0;
   display: none;
+  align-items: center;
+  gap: 5px;
   justify-content: unsafe center;
-  width: 100%;
-  margin-bottom: 3px;
-  pointer-events: none;
-}
-.shop-map-marker-label {
-  display: block;
-  flex: none;
   width: max-content;
-  max-width: min(240px, 70vw);
-  overflow: hidden;
+  max-width: min(280px, 80vw);
+  margin-bottom: 3px;
   padding: 5px 10px;
   border: 1px solid #b6a9a1;
   border-radius: 3px;
   background: white;
   box-shadow: 0 2px 4px rgb(37 37 34 / 20%);
+  pointer-events: none;
+}
+.shop-map-marker-info-flag {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  line-height: 1;
+  pointer-events: none;
+}
+.shop-map-marker-info-flag svg {
+  display: block;
+  filter: none;
+  transform: none;
+}
+.shop-map-marker-label {
+  display: block;
+  flex: 0 1 auto;
+  width: max-content;
+  max-width: min(240px, 70vw);
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
   color: #252522;
   font-family: Meiryo, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
   font-size: 16px;
@@ -1269,7 +1292,6 @@ nav {
 }
 .shop-map-marker-label:hover,
 .shop-map-marker-label:focus-visible {
-  border-color: var(--primary);
   color: #8c3027;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -1296,11 +1318,11 @@ nav {
 .shop-map-marker-unregistered {
   --marker-fill: var(--shop-marker-unregistered);
 }
-.shop-map-marker.is-highlighted svg {
+.shop-map-marker.is-highlighted > svg {
   filter: drop-shadow(0 3px 4px rgb(37 37 34 / 32%));
   transform: scale(1.06);
 }
-.shop-map-marker.is-selected svg {
+.shop-map-marker.is-selected > svg {
   filter: drop-shadow(0 4px 5px rgb(37 37 34 / 34%));
   transform: scale(1.1);
 }
