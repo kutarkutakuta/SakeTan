@@ -3,23 +3,23 @@
 import { useEffect, useState, type FocusEvent, type MouseEvent } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown, CircleQuestionMark, Menu, Search, X } from "lucide-react";
+import { CircleQuestionMark, Menu, Search, X } from "lucide-react";
 import { HeaderAuth, type HeaderViewer } from "@/components/header-auth";
 import { fetchJson } from "@/lib/client";
 
-const registrationLinks = [
-  { href: "/brands", label: "銘柄の状態" },
-  { href: "/edit", label: "登録情報を探す" },
+const directoryLinks = [
+  { href: "/brands", label: "銘柄一覧" },
+  { href: "/breweries", label: "酒蔵一覧" },
+  { href: "/shops", label: "酒屋一覧" },
   { href: "/history", label: "更新履歴" },
 ] as const;
 
-function RegistrationLinks() {
+function DirectoryLinks() {
   const pathname = usePathname();
-  return registrationLinks.map((link) => (
+  return directoryLinks.map((link) => (
     <Link
       key={link.href}
       href={link.href}
-      prefetch={link.href !== "/edit"}
       aria-current={
         pathname === link.href || pathname.startsWith(`${link.href}/`)
           ? "page"
@@ -66,22 +66,13 @@ export function HeaderNavigation() {
   return (
     <nav className="header-navigation" aria-label="メインメニュー">
       <div className="header-desktop-links">
-        <Link href="/help" className="nav-help">
+        <div className="header-directory-links">
+          <DirectoryLinks />
+        </div>
+        <Link href="/help" className="nav-help" aria-label="ヘルプ">
           <CircleQuestionMark size={19} aria-hidden="true" />
           <span>ヘルプ</span>
         </Link>
-        <details
-          className="header-registration-menu"
-          onClick={closeAfterNavigation}
-        >
-          <summary className="header-registration-trigger">
-            登録情報
-            <ChevronDown size={17} aria-hidden="true" />
-          </summary>
-          <div className="header-registration-submenu">
-            <RegistrationLinks />
-          </div>
-        </details>
         <HeaderAuth viewer={viewer} />
       </div>
 
@@ -114,13 +105,13 @@ export function HeaderNavigation() {
         </summary>
         <span className="mobile-menu-backdrop" aria-hidden="true" />
         <div className="mobile-header-menu">
+          <div className="mobile-header-section">
+            <DirectoryLinks />
+          </div>
           <Link href="/help" className="mobile-header-link">
             <CircleQuestionMark size={19} aria-hidden="true" />
             ヘルプ
           </Link>
-          <div className="mobile-header-section">
-            <RegistrationLinks />
-          </div>
           <div className="mobile-header-account">
             <HeaderAuth viewer={viewer} />
           </div>

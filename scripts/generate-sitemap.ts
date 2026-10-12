@@ -103,6 +103,8 @@ async function generateSitemap() {
   const entries: SitemapEntry[] = [
     { path: "/" },
     { path: "/brands" },
+    { path: "/breweries" },
+    { path: "/shops" },
     ...rowsToEntries(brands, "/brands"),
     ...rowsToEntries(breweries, "/breweries"),
     ...rowsToEntries(shops, "/shops"),

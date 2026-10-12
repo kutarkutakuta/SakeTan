@@ -297,6 +297,40 @@ nav {
 .header-registration-menu {
   position: relative;
 }
+.header-directory-links {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.header-directory-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 500;
+}
+.header-directory-links a:hover,
+.header-directory-links a[aria-current="page"] {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 6px;
+}
+@media (min-width: 801px) and (max-width: 1200px) {
+  .header .logo-subtitle {
+    display: none;
+  }
+  .header-desktop-links,
+  .header-directory-links {
+    gap: 12px;
+  }
+  .header .nav-help span {
+    display: none;
+  }
+  .header .account-name {
+    max-width: 100px;
+  }
+}
 .header-registration-trigger {
   display: inline-flex;
   align-items: center;
@@ -1406,12 +1440,9 @@ nav {
   align-items: center;
 }
 .page {
-  max-width: 960px;
+  max-width: 1200px;
   padding: 34px 24px 40px;
   margin: auto;
-}
-.page.narrow {
-  max-width: 660px;
 }
 .back {
   display: inline-flex;
@@ -1467,11 +1498,7 @@ nav {
   white-space: nowrap;
 }
 .info-page {
-  max-width: 1120px;
   padding-bottom: 64px;
-}
-.policy-page {
-  max-width: 1040px;
 }
 .info-hero {
   margin-bottom: 42px;
@@ -1890,9 +1917,6 @@ nav {
 .brand-item.is-unavailable .brand-item-kana {
   text-decoration: line-through;
   text-decoration-thickness: 1.5px;
-}
-.shop-page {
-  max-width: 1200px;
 }
 .shop-tabs {
   margin-top: 22px;
@@ -2549,7 +2573,6 @@ nav {
   }
 }
 .post-page {
-  max-width: 1200px;
   padding-top: 18px;
   padding-bottom: 16px;
 }
@@ -3181,6 +3204,25 @@ nav {
   font-size: 14px;
   line-height: 1.6;
 }
+.brewery-create-entry {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  margin: 12px 0;
+}
+.brewery-create-panel {
+  min-width: 0;
+  margin: 12px 0 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fbfaf7;
+}
+.brewery-create-panel > legend {
+  padding: 0 6px;
+  font-size: 16px;
+  font-weight: 600;
+}
 .prefecture-radio-field {
   min-width: 0;
   margin: 0;
@@ -3445,8 +3487,171 @@ nav {
   background: #edf8ef;
   color: #28623a;
 }
-.registration-page {
-  max-width: 960px;
+.directory-description {
+  margin-top: 6px;
+  color: #5f5c55;
+  font-size: 16px;
+  line-height: 1.7;
+}
+.directory-page-head {
+  display: block;
+}
+.directory-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.directory-title-row h1 {
+  min-width: 0;
+}
+.directory-registration-button {
+  flex: none;
+  min-height: 44px;
+  font-size: 14px;
+}
+.directory-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.directory-toolbar > .searchbox {
+  flex: 1 1 280px;
+}
+.directory-status-select {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+.directory-status-select select {
+  width: auto;
+  min-height: 46px;
+}
+.directory-count {
+  margin-top: 16px;
+  color: #5f5c55;
+  font-size: 14px;
+  text-align: right;
+}
+.directory-list {
+  align-items: start;
+}
+.directory-list .brand-item-meta,
+.directory-list .brand-item-kana {
+  color: #5f5c55;
+}
+.directory-item {
+  position: relative;
+  background: var(--surface);
+}
+.directory-pending-badge {
+  position: absolute;
+  top: 9px;
+  right: 12px;
+  margin: 0;
+}
+.directory-item:has(.directory-pending-badge) .brand-item-meta {
+  min-height: 26px;
+  padding-inline-end: 74px;
+}
+.directory-item .status-badge {
+  font-size: 14px;
+}
+.directory-item .brand-ranking-tag {
+  font-size: 14px;
+}
+.directory-related-count {
+  margin-inline-start: auto;
+  flex: none;
+  white-space: nowrap;
+  color: #5f5c55;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.directory-shop-item .brand-item-copy {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 12px;
+}
+.directory-shop-item .brand-item-meta {
+  grid-column: 1;
+  grid-row: 1;
+}
+.directory-shop-item .brand-item-name {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
+}
+.directory-shop-item .brand-name-link {
+  grid-column: 1 / -1;
+}
+.directory-shop-item .brand-item-kana {
+  grid-column: 1;
+  grid-row: 2;
+  overflow-wrap: anywhere;
+}
+.directory-shop-item .directory-related-count {
+  grid-column: 2;
+  grid-row: 1;
+}
+.directory-brewery-brands {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 16px;
+  line-height: 1.7;
+}
+.directory-brewery-brands li {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.directory-brewery-brands-status {
+  margin-top: 8px;
+  color: #5f5c55;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.brand-review-panel > p {
+  margin-bottom: 12px;
+  overflow-wrap: anywhere;
+}
+.directory-feedback {
+  margin-top: 20px;
+}
+.directory-paging {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+  margin-top: 24px;
+  font-size: 14px;
+}
+.directory-paging > :first-child {
+  justify-self: start;
+}
+.directory-paging > :last-child {
+  justify-self: end;
+}
+@media (max-width: 800px) {
+  .mobile-header-menu .mobile-header-section:first-child {
+    padding-top: 0;
+    border-top: 0;
+  }
+  .directory-toolbar > .searchbox {
+    flex-basis: 100%;
+  }
+  .directory-status-select {
+    width: 100%;
+    justify-content: space-between;
+  }
 }
 .brand-status-controls {
   display: grid;

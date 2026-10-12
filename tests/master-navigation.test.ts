@@ -30,6 +30,8 @@ test("master links preserve the originating detail and its return context", () =
 test("master return paths retain list searches and shop posting context", () => {
   for (const path of [
     "/brands",
+    "/breweries?prefectures=%E6%96%B0%E6%BD%9F%E7%9C%8C&page=2",
+    "/shops?q=%E9%85%92%E5%B1%8B&page=3",
     "/edit",
     "/edit?type=brand&q=%E5%B8%82",
     `/brands/${brandId}?shop_id=${breweryId}`,

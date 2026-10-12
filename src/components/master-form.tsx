@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { errorMessage, fetchJson, mutate } from "@/lib/client";
 import { changeReasonError } from "@/lib/change-reason";
 import { mapReturnPath } from "@/lib/map-view";
@@ -8,6 +8,7 @@ import { masterDetailHref, masterDetailPath } from "@/lib/master-navigation";
 import type { Brewery, EntityType } from "@/lib/types";
 import { LocationPicker } from "@/components/location-picker";
 import { PrefectureRadioGroup } from "@/components/prefecture-radio-group";
+import { BreweryCreateFields } from "@/components/brewery-create-fields";
 import { useToast } from "@/components/toast-provider";
 const entityLabels = { shop: "酒屋", brand: "銘柄", brewery: "酒蔵" };
 export function MasterForm({
@@ -34,11 +35,32 @@ export function MasterForm({
   admin: boolean;
 }) {
   const { showToast } = useToast();
+  const approving =
+    type === "brand" &&
+    Boolean(id) &&
+    admin &&
+    initial.registration_status === "pending" &&
+    initial.is_active !== false;
+  const submitLabel = approving
+    ? "保存して承認"
+    : id
+      ? "変更を保存"
+      : `${entityLabels[type]}を登録`;
   const [searchError, setSearchError] = useState("");
   const [busy, setBusy] = useState(false);
   const [brewery, setBrewery] = useState(initialBrewery);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(
+    type === "brand" && !initialBrewery
+      ? String(initial.requested_brewery_name ?? "")
+      : "",
+  );
   const [results, setResults] = useState<Brewery[]>([]);
+  const [brewerySearching, setBrewerySearching] = useState(false);
+  const [searchedBreweryQuery, setSearchedBreweryQuery] = useState<
+    string | null
+  >(null);
+  const [creatingBrewery, setCreatingBrewery] = useState(false);
+  const [createdBreweryId, setCreatedBreweryId] = useState<string | null>(null);
   const [shopName, setShopName] = useState(String(initial.name ?? ""));
   const [shopPrefecture, setShopPrefecture] = useState(
     String(initial.prefecture ?? ""),
@@ -56,13 +78,18 @@ export function MasterForm({
     pending: false,
   });
   useEffect(() => {
-    if (type !== "brand" || !query.trim()) {
+    if (type !== "brand" || brewery || creatingBrewery || !query.trim()) {
       setResults([]);
       setSearchError("");
+      setBrewerySearching(false);
+      setSearchedBreweryQuery(null);
       return;
     }
     const abort = new AbortController();
     setSearchError("");
+    setResults([]);
+    setBrewerySearching(true);
+    setSearchedBreweryQuery(null);
     const timer = setTimeout(async () => {
       try {
         const data = await fetchJson<Brewery[]>(
@@ -71,16 +98,19 @@ export function MasterForm({
           "検索できませんでした",
         );
         setResults(data);
+        setSearchedBreweryQuery(query.trim());
       } catch (e) {
         if (!abort.signal.aborted)
           setSearchError(errorMessage(e, "検索できませんでした"));
+      } finally {
+        if (!abort.signal.aborted) setBrewerySearching(false);
       }
     }, 250);
     return () => {
       clearTimeout(timer);
       abort.abort();
     };
-  }, [query, type]);
+  }, [query, type, brewery, creatingBrewery]);
   const value = (key: string) => String(initial[key] ?? "");
   const destinationAfterSave = (resultId: string) => {
     if (type === "shop") {
@@ -89,6 +119,7 @@ export function MasterForm({
     }
     if (type === "brand" && shopId)
       return "/post?shop_id=" + shopId + "&brand_id=" + resultId;
+    if (approving) return afterSaveHref ?? "/brands";
     return afterSaveHref ?? "/edit?type=" + type;
   };
   async function saveKana(form: HTMLFormElement) {
@@ -123,6 +154,8 @@ export function MasterForm({
     const text = (key: string) => String(f.get(key) ?? "").trim();
     const nullable = (key: string) => text(key) || null;
     try {
+      if (creatingBrewery)
+        throw new Error("酒蔵の登録を完了するか、キャンセルしてください");
       if (type === "shop" && !id && duplicateState.pending)
         throw new Error("登録済み店舗の確認が終わるまでお待ちください");
       if (type === "shop" && !id && duplicateState.blocking)
@@ -132,6 +165,8 @@ export function MasterForm({
       if (type === "shop" && areaState.error)
         throw new Error("地図位置を選び直して地域情報を確認してください");
       let selectedBrewery = brewery?.id ?? null;
+      if (approving && !selectedBrewery)
+        throw new Error("承認する銘柄の酒蔵を選択してください");
       const reasonError = id && !admin && changeReasonError(text("reason"));
       if (reasonError) throw new Error(reasonError);
       const data: Record<string, unknown> = {
@@ -139,7 +174,7 @@ export function MasterForm({
         name_kana: type === "shop" ? text("name_kana") : nullable("name_kana"),
       };
       if (id && (type !== "shop" || canDeactivate))
-        data.is_active = f.get("is_active") === "on";
+        data.is_active = approving || f.get("is_active") === "on";
       if (type === "brand") data.brewery_id = selectedBrewery;
       else {
         data.prefecture =
@@ -168,17 +203,28 @@ export function MasterForm({
           data.geocode_precision = geocodePrecision;
         }
       }
-      const result = await mutate({
-        kind: "master",
-        type,
-        id,
-        data,
-        reason: nullable("reason"),
-      });
+      const result = await mutate(
+        approving
+          ? {
+              kind: "brand_application_approve",
+              brand_id: id,
+              data,
+              reason: nullable("reason"),
+            }
+          : {
+              kind: "master",
+              type,
+              id,
+              data,
+              reason: nullable("reason"),
+            },
+      );
       showToast(
-        id
-          ? `${entityLabels[type]}の変更を保存しました`
-          : `${entityLabels[type]}を登録しました`,
+        approving
+          ? "銘柄の編集内容を保存し、申請を承認しました"
+          : id
+            ? `${entityLabels[type]}の変更を保存しました`
+            : `${entityLabels[type]}を登録しました`,
       );
       window.location.assign(destinationAfterSave(result.id));
     } catch (e) {
@@ -344,7 +390,7 @@ export function MasterForm({
               )}
             </div>
           )}
-          {!brewery && (
+          {!brewery && !creatingBrewery && (
             <>
               <label className="searchbox" style={{ marginTop: 8 }}>
                 <Search size={18} />
@@ -353,6 +399,7 @@ export function MasterForm({
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="酒蔵名・かなを検索"
                   aria-label="酒蔵名・かなを検索"
+                  maxLength={150}
                 />
               </label>
               {results.map((b) => (
@@ -363,6 +410,7 @@ export function MasterForm({
                   onClick={() => {
                     setBrewery(b);
                     setQuery("");
+                    setCreatedBreweryId(null);
                   }}
                 >
                   <span>
@@ -371,10 +419,61 @@ export function MasterForm({
                   </span>
                 </button>
               ))}
+              {brewerySearching && (
+                <p className="hint" role="status">
+                  酒蔵を検索しています…
+                </p>
+              )}
+              {searchedBreweryQuery === query.trim() &&
+                !brewerySearching &&
+                !searchError &&
+                results.length === 0 && (
+                  <p className="hint">該当する酒蔵が見つかりませんでした。</p>
+                )}
+              {admin && !brewerySearching && !searchError && (
+                <div className="brewery-create-entry">
+                  <button
+                    type="button"
+                    className="button small"
+                    onClick={() => setCreatingBrewery(true)}
+                  >
+                    <Plus size={17} aria-hidden="true" />
+                    酒蔵を新規登録
+                  </button>
+                  <p className="hint">
+                    該当する酒蔵がない場合は、このページで登録できます。
+                  </p>
+                </div>
+              )}
               <p className="hint">
-                酒蔵が分からない場合は、未選択で登録できます。
+                {approving
+                  ? "承認には酒蔵の選択が必要です。見つからない場合は新規登録してください。"
+                  : "酒蔵が分からない場合は、未選択で登録できます。"}
               </p>
             </>
+          )}
+          {admin && !brewery && creatingBrewery && (
+            <BreweryCreateFields
+              initialName={query.trim() || value("requested_brewery_name")}
+              onCreated={(created) => {
+                setBrewery(created);
+                setCreatedBreweryId(created.id);
+                setCreatingBrewery(false);
+                setQuery("");
+                showToast(
+                  approving
+                    ? "酒蔵を登録しました。申請内容を確認して承認してください"
+                    : "酒蔵を登録しました。銘柄の変更を保存してください",
+                );
+              }}
+              onCancel={() => setCreatingBrewery(false)}
+            />
+          )}
+          {brewery && brewery.id === createdBreweryId && (
+            <p className="hint">
+              この酒蔵との紐付けは「{submitLabel}
+              」で確定します。
+            </p>
           )}
         </div>
       ) : (
@@ -421,25 +520,26 @@ export function MasterForm({
       )}
       {id && (
         <>
-          {type !== "shop" || canDeactivate ? (
-            <>
-              <label className="check-label">
-                <input
-                  type="checkbox"
-                  name="is_active"
-                  defaultChecked={initial.is_active !== false}
-                />
-                {entityLabels[type]}を有効にする
-              </label>
+          {!approving &&
+            (type !== "shop" || canDeactivate ? (
+              <>
+                <label className="check-label">
+                  <input
+                    type="checkbox"
+                    name="is_active"
+                    defaultChecked={initial.is_active !== false}
+                  />
+                  {entityLabels[type]}を有効にする
+                </label>
+                <p className="hint">
+                  チェックを外すと検索・取扱情報に表示されなくなります。履歴は残ります。
+                </p>
+              </>
+            ) : (
               <p className="hint">
-                チェックを外すと検索・取扱情報に表示されなくなります。履歴は残ります。
+                店舗の無効化は登録者本人または管理者だけ実行できます。
               </p>
-            </>
-          ) : (
-            <p className="hint">
-              店舗の無効化は登録者本人または管理者だけ実行できます。
-            </p>
-          )}
+            ))}
           <label>
             変更理由{" "}
             <span className={admin ? "muted" : "required"}>
@@ -468,6 +568,8 @@ export function MasterForm({
       <button
         disabled={
           busy ||
+          creatingBrewery ||
+          (approving && !brewery) ||
           (type === "shop" && (areaState.pending || areaState.error)) ||
           (type === "shop" &&
             !id &&
@@ -477,7 +579,9 @@ export function MasterForm({
         className="button full"
       >
         {busy
-          ? "保存しています…"
+          ? approving
+            ? "承認しています…"
+            : "保存しています…"
           : type === "shop" && areaState.pending
             ? "地域情報を確認中…"
             : type === "shop" && areaState.error
@@ -486,9 +590,7 @@ export function MasterForm({
                 ? "登録済み店舗を確認中…"
                 : type === "shop" && !id && duplicateState.blocking
                   ? "登録済みの店舗です"
-                  : id
-                    ? "変更を保存"
-                    : entityLabels[type] + "を登録"}
+                  : submitLabel}
       </button>
     </form>
   );

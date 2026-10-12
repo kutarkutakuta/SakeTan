@@ -75,6 +75,12 @@ export async function POST(request: Request) {
       p_reason: p.reason,
       p_shop_id: p.shop_id,
     });
+  else if (p.kind === "brand_application_approve")
+    result = await db.rpc("save_and_approve_brand_application", {
+      p_brand_id: p.brand_id,
+      p_data: p.data,
+      p_reason: p.reason,
+    });
   else if (p.kind === "brand_application_review")
     result = await db.rpc("review_brand_application", {
       p_brand_id: p.brand_id,

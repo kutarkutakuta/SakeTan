@@ -262,6 +262,7 @@ export function sortBrands(
   query = "",
 ) {
   return [...brands].sort((a, b) => {
+    if (by === "ranking") return compareShopBrands(a, b);
     const aRank = brandSearchRank(a, query);
     const bRank = brandSearchRank(b, query);
     if (aRank && bRank) {

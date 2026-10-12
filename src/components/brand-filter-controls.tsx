@@ -39,6 +39,7 @@ export function BrandFilterControls({
   sortOptions = defaultSortOptions,
   emphasizePrefectures = false,
   emphasizeKana = false,
+  showTargets = true,
 }: {
   selectedPrefectures: ReadonlySet<string>;
   onPrefecturesChange: (value: Set<string>) => void;
@@ -51,6 +52,7 @@ export function BrandFilterControls({
   sortOptions?: Array<[BrandCatalogSort, string]>;
   emphasizePrefectures?: boolean;
   emphasizeKana?: boolean;
+  showTargets?: boolean;
 }) {
   const [prefecturesOpen, setPrefecturesOpen] = useState(false);
   const [kanaOpen, setKanaOpen] = useState(false);
@@ -137,18 +139,23 @@ export function BrandFilterControls({
       <div
         id={kanaOptionsId}
         className={`filter-links combined-filter-links kana-links${kanaOpen ? " open" : ""}${emphasizeKana ? " filter-attention" : ""}`}
-        aria-label="銘柄・蔵元と頭文字で絞り込む"
+        aria-label={
+          showTargets ? "銘柄・蔵元と頭文字で絞り込む" : "頭文字で絞り込む"
+        }
       >
-        {(["brand", "brewery"] as const).map((value) => (
-          <button
-            type="button"
-            key={value}
-            aria-pressed={selectedTargets.has(value)}
-            onClick={() => onTargetsChange(toggleValue(selectedTargets, value))}
-          >
-            {value === "brand" ? "銘柄" : "蔵元"}
-          </button>
-        ))}
+        {showTargets &&
+          (["brand", "brewery"] as const).map((value) => (
+            <button
+              type="button"
+              key={value}
+              aria-pressed={selectedTargets.has(value)}
+              onClick={() =>
+                onTargetsChange(toggleValue(selectedTargets, value))
+              }
+            >
+              {value === "brand" ? "銘柄" : "蔵元"}
+            </button>
+          ))}
         {kanaGroups.map((value) => (
           <button
             type="button"
@@ -183,6 +190,7 @@ export function BrandFilterControls({
           )}
           <label className="sort-select">
             <select
+              aria-label="並び順"
               value={sort}
               onChange={(event) =>
                 onSortChange(event.target.value as BrandCatalogSort)

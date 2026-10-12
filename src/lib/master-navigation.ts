@@ -4,7 +4,8 @@ export function masterReturnPath(value: string | null | undefined) {
   if (!value || !value.startsWith("/") || /[\\\u0000-\u0020]/u.test(value))
     return undefined;
   const pathname = value.split(/[?#]/u, 1)[0];
-  if (pathname === "/brands" || pathname === "/edit") return value;
+  if (["/brands", "/breweries", "/shops", "/edit"].includes(pathname))
+    return value;
   if (pathname === "/post") {
     const shopId = new URL(value, "https://example.test").searchParams.get(
       "shop_id",
@@ -13,7 +14,7 @@ export function masterReturnPath(value: string | null | undefined) {
   }
   const detail =
     /^\/(?:edit\/(?:brand|brewery|shop)|shops|brands|breweries)\/([^/]+)$/u.exec(
-    pathname,
+      pathname,
     );
   return detail && z.uuid().safeParse(detail[1]).success ? value : undefined;
 }

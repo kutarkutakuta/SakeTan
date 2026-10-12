@@ -1,0 +1,49 @@
+import { supabase } from "@/lib/supabase/browser";
+import { directoryLabels, type DirectoryItem } from "./directory-index";
+import type { EntityType } from "./types";
+
+const catalogs = {
+  brand: {
+    table: "brands",
+    fields:
+      "id,name,name_kana,brewery_id,registration_status,requested_brewery_name,sakenowa_rank,sakenowa_area_rank,sakenowa_area_name,breweries(id,name,name_kana,prefecture)",
+  },
+  brewery: { table: "breweries", fields: "id,name,name_kana,prefecture" },
+  shop: {
+    table: "shops",
+    fields: "id,name,name_kana,prefecture,city,is_active",
+  },
+} as const;
+
+export async function loadDirectoryCatalog(
+  type: EntityType,
+  signal: AbortSignal,
+): Promise<DirectoryItem[]> {
+  const db = await supabase();
+  const label = `${directoryLabels[type]}一覧`;
+  if (!db) throw new Error(`${label}の接続先が設定されていません`);
+  const catalog = catalogs[type];
+  const items: DirectoryItem[] = [];
+  const pageSize = 1000;
+  let lastId: string | undefined;
+  while (!signal.aborted) {
+    let query = db
+      .from(catalog.table)
+      .select(catalog.fields)
+      .eq("is_active", true)
+      .order("id")
+      .limit(pageSize)
+      .abortSignal(signal);
+    if (type === "brand")
+      query = query.in("registration_status", ["pending", "approved"]);
+    if (lastId) query = query.gt("id", lastId);
+    const { data, error } = await query;
+    if (error)
+      throw new Error(`${label}を取得できませんでした`, { cause: error });
+    const page = (data ?? []) as unknown as DirectoryItem[];
+    items.push(...page);
+    if (page.length < pageSize) return items;
+    lastId = page[page.length - 1].id;
+  }
+  throw new DOMException(`${label}の取得を中止しました`, "AbortError");
+}

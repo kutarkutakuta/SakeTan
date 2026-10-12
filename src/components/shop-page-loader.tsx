@@ -15,6 +15,7 @@ import {
   isMissingPageError,
 } from "@/lib/client";
 import { safeMapReturnPath } from "@/lib/map-view";
+import { masterReturnPath } from "@/lib/master-navigation";
 import { shopPageTitle } from "@/lib/shop-page-title";
 import type { Shop, ShopBrand } from "@/lib/types";
 import { googleMapsShopUrl } from "@/lib/utils";
@@ -100,13 +101,19 @@ export function ShopPageLoader({
     (query === undefined
       ? searchParams.get("return_to")
       : new URLSearchParams(query).get("return_to")) ?? undefined;
+  const directoryReturn =
+    returnTo?.split("?", 1)[0] === "/shops"
+      ? masterReturnPath(returnTo)
+      : undefined;
+  const backHref = directoryReturn ?? safeMapReturnPath(returnTo, id);
+  const backLabel = directoryReturn ? "酒屋一覧に戻る" : "地図に戻る";
   if (missing) return <HomeRedirect />;
   if (!data)
     return (
       <main id="main" className="page shop-page">
-        <Link href={safeMapReturnPath(returnTo, id)} className="back">
+        <Link href={backHref} className="back">
           <ArrowLeft size={17} />
-          地図に戻る
+          {backLabel}
         </Link>
         {loading && <p className="muted">酒屋情報を読み込んでいます…</p>}
         {error && (
@@ -136,9 +143,9 @@ export function ShopPageLoader({
 
   return (
     <main id="main" className="page shop-page">
-      <Link href={safeMapReturnPath(returnTo, id)} className="back">
+      <Link href={backHref} className="back">
         <ArrowLeft size={17} />
-        地図に戻る
+        {backLabel}
       </Link>
       <div className="page-head shop-head">
         <div>

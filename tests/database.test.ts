@@ -452,6 +452,149 @@ test("brand applications are public, immediately attach to a shop, and can be ap
     [pendingBrand],
   );
 });
+test("saving an application also approves the edited name, kana and brewery atomically", async () => {
+  await asUser(bob);
+  const pendingId = await scalar(
+    "select public.submit_brand_application('一括承認前の酒','入力された酒蔵','店頭で確認',$1)",
+    [shop],
+  );
+  const data = {
+    name: "一括承認後の酒",
+    name_kana: "いっかつしょうにん",
+    brewery_id: brewery,
+    is_active: true,
+  };
+  await asUser(admin);
+  assert.equal(
+    await scalar(
+      "select public.save_and_approve_brand_application($1,$2,'表記と酒蔵を確認')",
+      [pendingId, JSON.stringify(data)],
+    ),
+    pendingId,
+  );
+  assert.deepEqual(
+    (
+      await db.query(
+        "select b.name,b.name_kana,b.brewery_id,b.registration_status,b.registered_at is not null as registered,a.resolution,a.reviewed_by from public.brands b join public.brand_applications a on a.brand_id=b.id where b.id=$1",
+        [pendingId],
+      )
+    ).rows,
+    [
+      {
+        name: data.name,
+        name_kana: data.name_kana,
+        brewery_id: brewery,
+        registration_status: "approved",
+        registered: true,
+        resolution: "approved",
+        reviewed_by: admin,
+      },
+    ],
+  );
+  await assert.rejects(
+    db.query("select public.save_and_approve_brand_application($1,$2)", [
+      pendingId,
+      JSON.stringify({ ...data, name: "再承認で書き換え" }),
+    ]),
+    /有効な申請中/,
+  );
+  assert.equal(
+    await scalar("select name from public.brands where id=$1", [pendingId]),
+    data.name,
+  );
+  await db.query(
+    "select public.set_shop_brand_status($1,$2,'incorrect','テスト後に無効化')",
+    [shop, pendingId],
+  );
+  await db.query(
+    "select public.save_master('brand',$1,'{\"is_active\":false}')",
+    [pendingId],
+  );
+});
+
+test("failed approval rolls back edited fields and history, and only administrators can approve", async () => {
+  await asUser(bob);
+  const pendingId = await scalar(
+    "select public.submit_brand_application('一括承認失敗前の酒','未確定の酒蔵','店頭で確認',$1)",
+    [shop],
+  );
+  const data = {
+    name: "試験の酒",
+    name_kana: "書き換えてはいけない",
+    brewery_id: brewery,
+    is_active: true,
+  };
+  await assert.rejects(
+    db.query("select public.save_and_approve_brand_application($1,$2)", [
+      pendingId,
+      JSON.stringify(data),
+    ]),
+    /管理者のみ承認/,
+  );
+  await asUser(guest);
+  await assert.rejects(
+    db.query("select public.save_and_approve_brand_application($1,$2)", [
+      pendingId,
+      JSON.stringify(data),
+    ]),
+    /管理者のみ承認/,
+  );
+  await asUser(null);
+  await assert.rejects(
+    db.query("select public.save_and_approve_brand_application($1,$2)", [
+      pendingId,
+      JSON.stringify(data),
+    ]),
+  );
+  await asUser(admin);
+  const historyCount = await scalar<number>(
+    "select count(*)::integer from public.change_histories where entity_id=$1",
+    [pendingId],
+  );
+  await assert.rejects(
+    db.query("select public.save_and_approve_brand_application($1,$2)", [
+      pendingId,
+      JSON.stringify(data),
+    ]),
+    /同じ銘柄が登録済み/,
+  );
+  await assert.rejects(
+    db.query("select public.save_and_approve_brand_application($1,$2)", [
+      pendingId,
+      JSON.stringify({ ...data, brewery_id: null }),
+    ]),
+    /酒蔵を選択/,
+  );
+  assert.deepEqual(
+    (
+      await db.query(
+        "select b.name,b.name_kana,b.brewery_id,b.registration_status,b.registered_at,a.resolution from public.brands b join public.brand_applications a on a.brand_id=b.id where b.id=$1",
+        [pendingId],
+      )
+    ).rows,
+    [
+      {
+        name: "一括承認失敗前の酒",
+        name_kana: null,
+        brewery_id: null,
+        registration_status: "pending",
+        registered_at: null,
+        resolution: "pending",
+      },
+    ],
+  );
+  assert.equal(
+    await scalar<number>(
+      "select count(*)::integer from public.change_histories where entity_id=$1",
+      [pendingId],
+    ),
+    historyCount,
+  );
+  await db.query("select public.review_brand_application($1,'reject')", [
+    pendingId,
+  ]);
+});
+
 test("brand applications retain kana and an existing brewery selection", async () => {
   await asUser(bob);
   const pendingBrand = await scalar(

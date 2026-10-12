@@ -5,6 +5,7 @@ import { ArrowLeft, History } from "lucide-react";
 import { z } from "zod";
 import { HomeRedirect } from "@/components/home-redirect";
 import { BrandShopList } from "@/components/brand-shop-list";
+import { BrandReviewPanel } from "@/components/brand-review-panel";
 import { LoginRequired } from "@/components/login-required";
 import { MasterForm } from "@/components/master-form";
 import { sortBrands } from "@/lib/brand-index";
@@ -58,6 +59,7 @@ export function EditDetailClient({
     (nextParams.size ? `?${nextParams.toString()}` : "");
   const [state, setState] = useState<DetailState | null>(null);
   const [error, setError] = useState("");
+  const [revision, setRevision] = useState(0);
 
   useEffect(() => {
     if (id && !z.uuid().safeParse(id).success) return;
@@ -73,7 +75,8 @@ export function EditDetailClient({
       if (id && db) {
         const fields = {
           shop: "id,name,name_kana,prefecture,city,latitude,longitude,google_place_id,geocode_source,geocode_precision,is_active,seeking_brand_info,created_by",
-          brand: "id,name,name_kana,brewery_id,is_active",
+          brand:
+            "id,name,name_kana,brewery_id,is_active,registration_status,requested_brewery_name",
           brewery:
             "id,name,name_kana,prefecture,website_url,is_active,brands(id,name,name_kana,brewery_id,registration_status)",
         }[type];
@@ -130,7 +133,7 @@ export function EditDetailClient({
     return () => {
       active = false;
     };
-  }, [entity.table, id, requestedName, type]);
+  }, [entity.table, id, requestedName, type, revision]);
 
   const publicRecord =
     id && state?.found && !error && type !== "shop" ? state.initial : null;
@@ -264,8 +267,22 @@ export function EditDetailClient({
         </section>
       )}
       {recordName && type === "brand" && id && (
-        <BrandShopList key={id} brandId={id} />
+        <BrandShopList key={`brand-shops-${id}-${revision}`} brandId={id} />
       )}
+      {recordName &&
+        type === "brand" &&
+        id &&
+        state?.admin &&
+        publicRecord?.is_active !== false &&
+        (publicRecord?.registration_status === "pending" ||
+          publicRecord?.registration_status === "approved") && (
+          <BrandReviewPanel
+            key={`brand-review-${id}-${revision}`}
+            brandId={id}
+            pending={publicRecord.registration_status === "pending"}
+            onReviewed={() => setRevision((value) => value + 1)}
+          />
+        )}
       {error ? (
         <p className="notice error" role="alert">
           {error}
@@ -282,9 +299,17 @@ export function EditDetailClient({
       ) : state.signedIn ? (
         <>
           {recordName && (
-            <h2 className="master-edit-heading">{entity.name}を編集</h2>
+            <h2 className="master-edit-heading">
+              {type === "brand" &&
+              state.admin &&
+              state.initial.registration_status === "pending" &&
+              state.initial.is_active !== false
+                ? "申請内容を確認して承認"
+                : `${entity.name}を編集`}
+            </h2>
           )}
           <MasterForm
+            key={`${type}-${id}-${revision}`}
             type={type}
             id={id}
             initial={state.initial}

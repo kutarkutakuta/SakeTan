@@ -68,6 +68,15 @@ export const observedDate = z.iso
   );
 export const actionSchema = z.discriminatedUnion("kind", [
   z.object({
+    kind: z.literal("brand_application_approve"),
+    brand_id: z.uuid(),
+    data: masterSchemas.brand.extend({
+      brewery_id: z.uuid(),
+      is_active: z.literal(true).optional(),
+    }),
+    reason: z.string().trim().max(500).nullable().default(null),
+  }),
+  z.object({
     kind: z.literal("post"),
     shop_id: z.uuid(),
     brand_id: z.uuid(),

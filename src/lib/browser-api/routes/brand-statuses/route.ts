@@ -6,6 +6,7 @@ const querySchema = z.object({
   q: z.string().trim().max(150).default(""),
   status: z.enum(["all", "pending", "approved"]).default("all"),
   page: z.coerce.number().int().min(1).max(10000).default(1),
+  id: z.uuid().optional(),
 });
 
 type RelationRow = {
@@ -24,7 +25,7 @@ export async function GET(request: Request) {
   const db = await supabase();
   if (!db) return Response.json({ items: [], count: 0, page: 1, admin: false });
 
-  const { q, status, page } = parsed.data;
+  const { q, status, page, id } = parsed.data;
   const pageSize = 30;
   let matchingIds: string[] | null = null;
   if (q) {
@@ -56,6 +57,7 @@ export async function GET(request: Request) {
   if (status !== "all")
     brandQuery = brandQuery.eq("registration_status", status);
   if (matchingIds) brandQuery = brandQuery.in("id", matchingIds);
+  if (id) brandQuery = brandQuery.eq("id", id);
   brandQuery = brandQuery.range((page - 1) * pageSize, page * pageSize - 1);
 
   const [brandResult, account] = await Promise.all([

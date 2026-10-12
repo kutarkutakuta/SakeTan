@@ -35,6 +35,48 @@ import {
 import { changeReasonError } from "../src/lib/change-reason";
 import { addressComponent, municipality } from "../src/lib/google-address";
 
+test("save-and-approve validates the complete edited brand and requires an active brewery selection", () => {
+  const id = "10000000-0000-4000-8000-000000000001";
+  const body = {
+    kind: "brand_application_approve",
+    brand_id: id,
+    data: {
+      name: "修正後の酒",
+      name_kana: "しゅうせいごのさけ",
+      brewery_id: id,
+      is_active: true,
+    },
+    reason: null,
+  };
+  assert.equal(actionSchema.safeParse(body).success, true);
+  assert.equal(
+    actionSchema.safeParse({
+      ...body,
+      data: { ...body.data, brewery_id: null },
+    }).success,
+    false,
+  );
+  assert.equal(
+    actionSchema.safeParse({
+      ...body,
+      data: { ...body.data, is_active: false },
+    }).success,
+    false,
+  );
+  assert.equal(
+    actionSchema.safeParse({
+      ...body,
+      data: { ...body.data, registration_status: "approved" },
+    }).success,
+    false,
+  );
+  assert.equal(
+    actionSchema.safeParse({ ...body, data: { ...body.data, name: " " } })
+      .success,
+    false,
+  );
+});
+
 test("change reasons reject blanks and repeated characters without blocking concise reasons", () => {
   assert.equal(changeReasonError(" "), "変更理由を入力してください");
   assert.match(changeReasonError("あ") ?? "", /具体的/);

@@ -1,9 +1,66 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createClient } from "@supabase/supabase-js";
-import { groupBrandShops, loadBrandShops } from "../src/lib/brand-shops";
+import {
+  groupBrandShops,
+  loadBrandShops,
+  loadBrandShopCounts,
+} from "../src/lib/brand-shops";
 
 const brandId = "12958fa6-062a-4b2e-9962-49e859a69b7c";
+test("brand shop counts batch the page and count only distinct active available shops", async () => {
+  const requests: URL[] = [];
+  const rows = Array.from({ length: 1001 }, (_, index) => ({
+    brand_id: brandId,
+    shop_id: `shop-${index}`,
+  }));
+  rows.push(rows[0]);
+  const db = client(async (input) => {
+    const url = new URL(String(input));
+    requests.push(url);
+    const offset = Number(url.searchParams.get("offset"));
+    return Response.json(rows.slice(offset, offset + 1000));
+  });
+  const counts = await loadBrandShopCounts(
+    db,
+    [brandId, "empty", brandId],
+    new AbortController().signal,
+  );
+  assert.deepEqual(counts, { [brandId]: 1001, empty: 0 });
+  assert.equal(requests.length, 2);
+  const params = requests[0].searchParams;
+  assert.equal(params.get("brand_id"), `in.(${brandId},empty)`);
+  assert.equal(params.get("is_active"), "eq.true");
+  assert.equal(params.get("status"), "eq.available");
+  assert.equal(params.get("shops.is_active"), "eq.true");
+  assert.equal(requests[1].searchParams.get("offset"), "1000");
+  assert.deepEqual(
+    await loadBrandShopCounts(db, [], new AbortController().signal),
+    {},
+  );
+  assert.equal(requests.length, 2);
+});
+
+test("brand shop count errors and aborted pages never become zero counts", async () => {
+  await assert.rejects(
+    loadBrandShopCounts(
+      client(async () =>
+        Response.json({ message: "unavailable" }, { status: 500 }),
+      ),
+      [brandId],
+      new AbortController().signal,
+    ),
+    /取扱店舗数を取得できませんでした/,
+  );
+  const controller = new AbortController();
+  const db = client(async () => {
+    controller.abort();
+    return Response.json([]);
+  });
+  await assert.rejects(loadBrandShopCounts(db, [brandId], controller.signal), {
+    name: "AbortError",
+  });
+});
 const shops = Array.from({ length: 21 }, (_, index) => ({
   id: `shop-${index}`,
   name: `酒屋${index}`,

@@ -14,6 +14,8 @@ for (const route of [
   "index",
   "account",
   "brands",
+  "breweries",
+  "shops",
   "edit",
   "help",
   "history",
