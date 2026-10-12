@@ -63,6 +63,7 @@ export type Shop = {
     | "USER_ADJUSTED"
     | null;
   geocoded_at?: string | null;
+  seeking_brand_info?: boolean;
   is_active: boolean;
 };
 export type ShopBrand = {

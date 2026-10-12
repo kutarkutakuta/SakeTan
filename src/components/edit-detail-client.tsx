@@ -72,7 +72,7 @@ export function EditDetailClient({
       let canDeactivate = type !== "shop" || access.admin;
       if (id && db) {
         const fields = {
-          shop: "id,name,name_kana,prefecture,city,latitude,longitude,google_place_id,geocode_source,geocode_precision,is_active,created_by",
+          shop: "id,name,name_kana,prefecture,city,latitude,longitude,google_place_id,geocode_source,geocode_precision,is_active,seeking_brand_info,created_by",
           brand: "id,name,name_kana,brewery_id,is_active",
           brewery:
             "id,name,name_kana,prefecture,website_url,is_active,brands(id,name,name_kana,brewery_id,registration_status)",

@@ -149,6 +149,8 @@ export function MasterForm({
         if (type === "brewery") data.website_url = nullable("website_url");
       }
       if (type === "shop") {
+        if (admin)
+          data.seeking_brand_info = f.get("seeking_brand_info") === "on";
         const latitude = text("latitude");
         const longitude = text("longitude");
         if (!latitude || !longitude)
@@ -401,6 +403,21 @@ export function MasterForm({
             </label>
           )}
         </>
+      )}
+      {type === "shop" && admin && (
+        <div>
+          <label className="check-label">
+            <input
+              type="checkbox"
+              name="seeking_brand_info"
+              defaultChecked={initial.seeking_brand_info === true}
+            />
+            銘柄情報求む
+          </label>
+          <p className="hint">
+            取扱銘柄の情報が不足している店舗に表示します。情報が充実したらチェックを外してください。
+          </p>
+        </div>
       )}
       {id && (
         <>

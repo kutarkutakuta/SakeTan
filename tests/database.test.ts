@@ -94,6 +94,99 @@ before(async () => {
   ]);
 });
 after(() => db.close());
+test("only admins can request brand information, while public browsing and ordinary edits preserve it", async () => {
+  await asUser(alice);
+  assert.equal(
+    await scalar<boolean>(
+      "select seeking_brand_info from public.shops where id=$1",
+      [shop],
+    ),
+    false,
+  );
+  for (const id of [null, guest, alice, bob]) {
+    await asUser(id);
+    for (const value of [true, false])
+      await assert.rejects(
+        db.query("select public.save_master('shop',$1,$2,'情報不足を確認')", [
+          shop,
+          JSON.stringify({ seeking_brand_info: value }),
+        ]),
+      );
+  }
+  await asUser(alice);
+  await assert.rejects(
+    db.query("select public.save_master('shop',null,$1)", [
+      JSON.stringify({ name: "不正な情報募集", seeking_brand_info: true }),
+    ]),
+    /管理者だけ変更/,
+  );
+  await assert.rejects(
+    db.query("update public.shops set seeking_brand_info=true where id=$1", [
+      shop,
+    ]),
+  );
+
+  await asUser(admin);
+  await db.query("select public.save_master('shop',$1,$2)", [
+    shop,
+    JSON.stringify({ seeking_brand_info: true }),
+  ]);
+  const history = await scalar(
+    "select id from public.change_histories where entity_id=$1 and after_data->>'seeking_brand_info'='true' order by created_at desc limit 1",
+    [shop],
+  );
+  assert.equal(
+    await scalar<boolean>(
+      "select (before_data->>'seeking_brand_info')::boolean from public.change_histories where id=$1",
+      [history],
+    ),
+    false,
+  );
+  await asUser(null);
+  assert.equal(
+    await scalar<boolean>(
+      "select seeking_brand_info from public.search_shops() where id=$1",
+      [shop],
+    ),
+    true,
+  );
+  await asUser(alice);
+  await db.query("select public.save_master('shop',$1,$2,'読みを確認')", [
+    shop,
+    JSON.stringify({ name_kana: "てすとさかや" }),
+  ]);
+  assert.equal(
+    await scalar<boolean>(
+      "select seeking_brand_info from public.shops where id=$1",
+      [shop],
+    ),
+    true,
+  );
+  await asUser(admin);
+  await db.query("select public.save_master('shop',$1,$2)", [
+    shop,
+    JSON.stringify({ seeking_brand_info: false }),
+  ]);
+  assert.equal(
+    await scalar<boolean>(
+      "select seeking_brand_info from public.shops where id=$1",
+      [shop],
+    ),
+    false,
+  );
+  await db.query("select public.restore_history($1)", [history]);
+  assert.equal(
+    await scalar<boolean>(
+      "select seeking_brand_info from public.shops where id=$1",
+      [shop],
+    ),
+    true,
+  );
+  await db.query("select public.save_master('shop',$1,$2)", [
+    shop,
+    JSON.stringify({ seeking_brand_info: false }),
+  ]);
+});
 test("Google metadata cannot promote users; email is not public; raw writes denied", async () => {
   await asUser(alice);
   assert.equal(await scalar<boolean>("select public.is_admin()"), false);

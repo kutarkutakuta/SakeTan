@@ -39,6 +39,7 @@ export const masterSchemas = {
       latitude: z.number().min(-90).max(90),
       longitude: z.number().min(-180).max(180),
       google_place_id: optionalText,
+      seeking_brand_info: z.boolean().optional(),
       geocode_source: z.literal("google").optional(),
       geocode_precision: z
         .enum([

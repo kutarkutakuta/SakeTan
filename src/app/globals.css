@@ -797,6 +797,52 @@ nav {
   line-height: 1.45;
   overflow-wrap: anywhere;
 }
+.shop-card h3 .shop-brand-info-notice {
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.shop-brand-info-notice {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--tint);
+  color: var(--primary);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.shop-brand-info-notice.compact {
+  position: relative;
+  flex: none;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  pointer-events: auto;
+}
+.shop-brand-info-notice.compact:focus-visible {
+  outline: 3px solid #b84a3a90;
+  outline-offset: 3px;
+}
+.shop-brand-info-tooltip {
+  display: none;
+  position: absolute;
+  z-index: 3;
+  top: calc(100% + 4px);
+  left: 0;
+  width: max-content;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--text);
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.shop-brand-info-notice.compact:hover .shop-brand-info-tooltip,
+.shop-brand-info-notice.compact:focus .shop-brand-info-tooltip {
+  display: block;
+}
 .shop-card-location {
   display: block;
   margin-top: 2px;
@@ -1902,13 +1948,24 @@ nav {
 }
 .shop-brands-heading {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 10px;
 }
 .shop-brands-heading h2 {
   min-width: 0;
+  margin-bottom: 0;
+}
+.shop-brands-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.shop-brands-title .shop-brand-info-notice {
+  flex: none;
 }
 .shop-links {
   display: flex;

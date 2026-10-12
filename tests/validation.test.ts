@@ -260,6 +260,33 @@ test("validation rejects unsafe URL, invalid coordinates, future or nonexistent 
     false,
   );
 });
+test("shop information requests accept only booleans and appear in history changes", () => {
+  const shop = {
+    name: "情報募集酒店",
+    name_kana: "じょうほうぼしゅうさけてん",
+    prefecture: null,
+    city: null,
+    latitude: 35.68,
+    longitude: 139.76,
+    google_place_id: null,
+  };
+  for (const value of [true, false])
+    assert.equal(
+      masterSchemas.shop.safeParse({ ...shop, seeking_brand_info: value })
+        .success,
+      true,
+    );
+  for (const value of [null, "true", 1])
+    assert.equal(
+      masterSchemas.shop.safeParse({ ...shop, seeking_brand_info: value })
+        .success,
+      false,
+    );
+  assert.deepEqual(
+    changedFields({ seeking_brand_info: false }, { seeking_brand_info: true }),
+    ["seeking_brand_info"],
+  );
+});
 test("Google Maps shop links prefer a Place ID", () => {
   const url = new URL(
     googleMapsShopUrl({

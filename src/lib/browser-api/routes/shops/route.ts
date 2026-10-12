@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     const { data, error, count } = await db
       .rpc("search_shops", params, { count: "exact" })
       .select(
-        "id,name,name_kana,prefecture,city,latitude,longitude,google_place_id,geocode_source,geocoded_at,is_active",
+        "id,name,name_kana,prefecture,city,latitude,longitude,google_place_id,geocode_source,geocoded_at,is_active,seeking_brand_info",
       )
       .order("name")
       .order("id")

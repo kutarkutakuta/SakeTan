@@ -72,6 +72,7 @@ export const labels: Record<string, string> = {
   website_url: "公式サイト",
   brewery_id: "酒蔵",
   is_active: "有効",
+  seeking_brand_info: "銘柄情報求む",
   first_seen_at: "最初に見つけた日",
   last_seen_at: "最後に見つけた日",
   shop_id: "酒屋",

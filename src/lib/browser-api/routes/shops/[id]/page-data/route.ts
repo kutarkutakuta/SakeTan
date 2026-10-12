@@ -18,7 +18,9 @@ export async function GET(
   const [shopResult, relationsResult, commentCountResult] = await Promise.all([
     db
       .from("shops")
-      .select("id,name,name_kana,prefecture,city,google_place_id,is_active")
+      .select(
+        "id,name,name_kana,prefecture,city,google_place_id,is_active,seeking_brand_info",
+      )
       .eq("id", id.data)
       .maybeSingle(),
     db

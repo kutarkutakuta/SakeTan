@@ -6,6 +6,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { ArrowLeft, ExternalLink, History, Pencil, Plus } from "lucide-react";
 import { ShopBrandList } from "@/components/shop-brand-list";
 import { ShopPageTabs } from "@/components/shop-page-tabs";
+import { ShopBrandInfoNotice } from "@/components/shop-brand-info-notice";
 import { HomeRedirect } from "@/components/home-redirect";
 import {
   errorMessage,
@@ -28,6 +29,7 @@ type ShopPageData = {
     | "city"
     | "google_place_id"
     | "is_active"
+    | "seeking_brand_info"
   >;
   relations: ShopBrand[];
   commentCount: number;
@@ -194,11 +196,22 @@ export function ShopPageLoader({
           <div className="shop-content">
             <section className="card shop-brands-card">
               {listedBrands.length ? (
-                <ShopBrandList items={listedBrands} title="取扱銘柄" />
+                <ShopBrandList
+                  items={listedBrands}
+                  title="取扱銘柄"
+                  seekingBrandInfo={
+                    data.shop.is_active && data.shop.seeking_brand_info
+                  }
+                />
               ) : (
                 <>
                   <div className="shop-brands-heading">
-                    <h2>取扱銘柄</h2>
+                    <div className="shop-brands-title">
+                      <h2>取扱銘柄</h2>
+                      {data.shop.is_active && data.shop.seeking_brand_info && (
+                        <ShopBrandInfoNotice />
+                      )}
+                    </div>
                     <span className="brand-filter-count">0件</span>
                   </div>
                   <p className="muted">まだ取扱銘柄の登録がありません。</p>

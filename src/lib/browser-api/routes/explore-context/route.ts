@@ -30,7 +30,7 @@ export async function GET(request: Request) {
       ? db
           .from("shops")
           .select(
-            "id,name,name_kana,prefecture,city,latitude,longitude,google_place_id,source,source_id,source_url,geocode_source,geocode_precision,geocoded_at,is_active",
+            "id,name,name_kana,prefecture,city,latitude,longitude,google_place_id,source,source_id,source_url,geocode_source,geocode_precision,geocoded_at,is_active,seeking_brand_info",
           )
           .eq("id", parsed.data.shop_id)
           .eq("is_active", true)

@@ -17,6 +17,7 @@ import {
 } from "@/lib/shop-brand-order";
 import { BrandFilterControls, BrandFilterCount } from "./brand-filter-controls";
 import { BrandInfoLink } from "./brand-info-link";
+import { ShopBrandInfoNotice } from "./shop-brand-info-notice";
 
 const shopSortOptions: Array<[BrandCatalogSort, string]> = [
   ["ranking", "ランキング順"],
@@ -30,10 +31,12 @@ export function ShopBrandList({
   description,
   items,
   title,
+  seekingBrandInfo = false,
 }: {
   description?: string;
   items: ShopBrand[];
   title: string;
+  seekingBrandInfo?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [selectedPrefectures, setSelectedPrefectures] = useState<Set<string>>(
@@ -70,7 +73,10 @@ export function ShopBrandList({
   return (
     <>
       <div className="shop-brands-heading">
-        <h2>{title}</h2>
+        <div className="shop-brands-title">
+          <h2>{title}</h2>
+          {seekingBrandInfo && <ShopBrandInfoNotice />}
+        </div>
         <BrandFilterCount
           visibleCount={visible.length}
           totalCount={items.length}
