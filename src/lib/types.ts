@@ -5,6 +5,7 @@ export type Brewery = {
   prefecture: string | null;
   website_url?: string | null;
   is_active?: boolean;
+  created_at?: string;
 };
 export type Brand = {
   id: string;
@@ -57,6 +58,7 @@ export type Shop = {
   geocoded_at?: string | null;
   seeking_brand_info?: boolean;
   is_active: boolean;
+  created_at?: string;
 };
 export type ShopBrand = {
   id: string;

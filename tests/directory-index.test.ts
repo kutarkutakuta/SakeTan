@@ -189,3 +189,104 @@ test("brewery and shop directories filter names and locations with the same pagi
   assert.equal(empty.page, 1);
   assert.equal(empty.items.length, 0);
 });
+
+test("registration order survives filter URLs and paging for all directories", () => {
+  for (const type of ["brand", "brewery", "shop"] as const) {
+    const filters = directoryFilters(
+      new URLSearchParams("q=酒&prefectures=新潟県&sort=recent&page=2"),
+      type,
+    );
+    assert.equal(filters.sort, "recent");
+    assert.deepEqual(
+      directoryFilters(directorySearchParams(filters, type), type),
+      filters,
+    );
+  }
+});
+
+test("brand registration order uses approval dates and pending creation dates even during search", () => {
+  const items = [
+    brand(1, {
+      name: "酒",
+      sakenowa_rank: 1,
+      created_at: "2026-10-13T00:00:00Z",
+      registered_at: "2026-10-13T00:00:00Z",
+    }),
+    brand(2, {
+      name: "新しい酒",
+      created_at: "2026-09-01T00:00:00Z",
+      registered_at: "2026-10-14T00:00:00Z",
+    }),
+    brand(3, {
+      name: "申請中の酒",
+      registration_status: "pending",
+      created_at: "2026-10-15T00:00:00Z",
+      registered_at: null,
+    }),
+  ];
+  const filters = directoryFilters(new URLSearchParams("q=酒&sort=recent"));
+  assert.deepEqual(
+    directoryPage("brand", items, filters).items.map((item) => item.id),
+    ["3", "2", "1"],
+  );
+  assert.deepEqual(
+    directoryPage("brand", items, { ...filters, status: "approved" }).items.map(
+      (item) => item.id,
+    ),
+    ["2", "1"],
+  );
+  assert.deepEqual(
+    items.map((item) => item.id),
+    ["1", "2", "3"],
+  );
+});
+
+test("registration order sorts the full brewery and shop catalogs before pagination", () => {
+  for (const type of ["brewery", "shop"] as const) {
+    const items = Array.from({ length: 35 }, (_, index): Shop => ({
+      id: String(index),
+      name: `酒${index}`,
+      name_kana: `さけ${String(index).padStart(3, "0")}`,
+      prefecture: "新潟県",
+      city: null,
+      latitude: null,
+      longitude: null,
+      is_active: true,
+      created_at: new Date(Date.UTC(2026, 8, index + 1)).toISOString(),
+    }));
+    const filters = directoryFilters(
+      new URLSearchParams("q=酒&prefectures=新潟県&sort=recent"),
+      type,
+    );
+    const first = directoryPage(type, items, filters);
+    const second = directoryPage(type, items, { ...filters, page: 2 });
+    assert.equal(first.count, 35);
+    assert.equal(first.items[0].id, "34");
+    assert.equal(first.items[29].id, "5");
+    assert.deepEqual(
+      second.items.map((item) => item.id),
+      ["4", "3", "2", "1", "0"],
+    );
+  }
+});
+
+test("registration date ties are stable and missing dates appear last", () => {
+  const items = [
+    brand(3, { name_kana: "あ", registered_at: "2026-10-14T00:00:00Z" }),
+    brand(1, { name_kana: "あ", registered_at: "2026-10-14T09:00:00+09:00" }),
+    brand(2, { name_kana: "い", registered_at: "2026-10-14T00:00:00Z" }),
+    brand(4, { name_kana: "あ", created_at: "invalid" }),
+    brand(5, { name_kana: "い" }),
+  ];
+  const filters = directoryFilters(new URLSearchParams("sort=recent"));
+  const ids = directoryPage("brand", items, filters).items.map(
+    (item) => item.id,
+  );
+  assert.deepEqual(ids, ["1", "3", "2", "4", "5"]);
+  assert.deepEqual(
+    directoryPage("brand", [...items].reverse(), filters).items.map(
+      (item) => item.id,
+    ),
+    ids,
+  );
+});

@@ -6,12 +6,15 @@ const catalogs = {
   brand: {
     table: "brands",
     fields:
-      "id,name,name_kana,brewery_id,registration_status,requested_brewery_name,sakenowa_rank,sakenowa_area_rank,sakenowa_area_name,breweries(id,name,name_kana,prefecture)",
+      "id,name,name_kana,brewery_id,registration_status,requested_brewery_name,registered_at,created_at,sakenowa_rank,sakenowa_area_rank,sakenowa_area_name,breweries(id,name,name_kana,prefecture)",
   },
-  brewery: { table: "breweries", fields: "id,name,name_kana,prefecture" },
+  brewery: {
+    table: "breweries",
+    fields: "id,name,name_kana,prefecture,created_at",
+  },
   shop: {
     table: "shops",
-    fields: "id,name,name_kana,prefecture,city,is_active",
+    fields: "id,name,name_kana,prefecture,city,is_active,created_at",
   },
 } as const;
 

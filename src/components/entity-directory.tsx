@@ -61,6 +61,7 @@ export function EntityDirectory({ type }: { type: EntityType }) {
       ? [["brewery", "蔵元順"] as [BrandCatalogSort, string]]
       : []),
     ["region", "県順"],
+    ["recent", "登録順"],
   ];
 
   function updateFilters(patch: Partial<DirectoryFilters>) {

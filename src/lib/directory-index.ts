@@ -74,6 +74,7 @@ export function directoryFilters(
       sort === "brand" ||
       sort === "brewery" ||
       sort === "region" ||
+      sort === "recent" ||
       (sort === "ranking" && type === "brand")
         ? sort
         : type === "brand"
@@ -111,6 +112,15 @@ const collator = new Intl.Collator("ja", {
 });
 const normalize = (value: string) =>
   normalizeKanaSearchText(value.normalize("NFKC").trim().toLocaleLowerCase());
+
+function registrationTime(type: EntityType, item: DirectoryItem) {
+  const date =
+    type === "brand"
+      ? ((item as Brand).registered_at ?? item.created_at)
+      : item.created_at;
+  const time = date ? Date.parse(date) : NaN;
+  return Number.isFinite(time) ? time : 0;
+}
 
 export function directoryPage(
   type: EntityType,
@@ -153,27 +163,33 @@ export function directoryPage(
     ].some((value) => value && normalize(value).includes(query));
   });
   const sorted =
-    type === "brand"
-      ? sortBrands(
-          matching as Brand[],
-          filters.sort === "recent" ? "brand" : filters.sort,
-          filters.query,
-        )
-      : [...matching].sort((a, b) => {
-          if (filters.sort === "region") {
-            const region = collator.compare(
-              directoryPrefecture(type, a) ?? "",
-              directoryPrefecture(type, b) ?? "",
-            );
-            if (region) return region;
-          }
-          return (
+    filters.sort === "recent"
+      ? [...matching].sort(
+          (a, b) =>
+            registrationTime(type, b) - registrationTime(type, a) ||
             collator.compare(
               a.name_kana?.trim() || a.name,
               b.name_kana?.trim() || b.name,
-            ) || a.id.localeCompare(b.id)
-          );
-        });
+            ) ||
+            a.id.localeCompare(b.id),
+        )
+      : type === "brand"
+        ? sortBrands(matching as Brand[], filters.sort, filters.query)
+        : [...matching].sort((a, b) => {
+            if (filters.sort === "region") {
+              const region = collator.compare(
+                directoryPrefecture(type, a) ?? "",
+                directoryPrefecture(type, b) ?? "",
+              );
+              if (region) return region;
+            }
+            return (
+              collator.compare(
+                a.name_kana?.trim() || a.name,
+                b.name_kana?.trim() || b.name,
+              ) || a.id.localeCompare(b.id)
+            );
+          });
   const pageCount = Math.max(1, Math.ceil(sorted.length / directoryPageSize));
   const page = Math.min(filters.page, pageCount);
   const start = (page - 1) * directoryPageSize;
