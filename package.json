@@ -12,6 +12,7 @@
     "format": "prettier --write src scripts tests package.json tsconfig.json next.config.ts README.md",
     "db:migrate": "tsx --env-file=.env.local scripts/migrate.ts",
     "generate:sitemap": "tsx --env-file-if-exists=.env.local scripts/generate-sitemap.ts",
+    "verify:static-seo": "node scripts/verify-static-seo.mjs",
     "test": "tsx --test tests/*.test.ts",
     "report:sakenowa": "tsx --env-file=.env.local scripts/import-sakenowa.ts",
     "sync:sakenowa-rankings": "tsx --env-file=.env.local scripts/sync-sakenowa-rankings.ts",

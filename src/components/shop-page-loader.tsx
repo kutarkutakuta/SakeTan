@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams, useSearchParams } from "next/navigation";
 import { ArrowLeft, ExternalLink, History, Pencil, Plus } from "lucide-react";
 import { ShopBrandList } from "@/components/shop-brand-list";
 import { ShopPageTabs } from "@/components/shop-page-tabs";
@@ -17,37 +16,24 @@ import {
 import { safeMapReturnPath } from "@/lib/map-view";
 import { masterReturnPath } from "@/lib/master-navigation";
 import { shopPageTitle } from "@/lib/shop-page-title";
-import type { Shop, ShopBrand } from "@/lib/types";
+import type { PublicShopData } from "@/lib/public-detail";
+import { useBrowserQuery } from "./use-browser-query";
+import { useDetailCanonical } from "./use-detail-canonical";
 import { googleMapsShopUrl } from "@/lib/utils";
-
-type ShopPageData = {
-  shop: Pick<
-    Shop,
-    | "id"
-    | "name"
-    | "name_kana"
-    | "prefecture"
-    | "city"
-    | "google_place_id"
-    | "is_active"
-    | "seeking_brand_info"
-  >;
-  relations: ShopBrand[];
-  commentCount: number;
-  error?: string;
-};
 
 export function ShopPageLoader({
   shopId,
   query,
+  initialData,
 }: {
-  shopId?: string;
+  shopId: string;
   query?: string;
-} = {}) {
-  const params = useParams<{ id: string }>();
-  const searchParams = useSearchParams();
-  const id = shopId ?? params.id;
-  const [data, setData] = useState<ShopPageData | null>(null);
+  initialData?: PublicShopData;
+}) {
+  const searchParams = useBrowserQuery(query);
+  const id = shopId;
+  const [data, setData] = useState<PublicShopData | null>(initialData ?? null);
+  useDetailCanonical(`/shops/${encodeURIComponent(id)}`);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [missing, setMissing] = useState(false);
@@ -58,7 +44,7 @@ export function ShopPageLoader({
       setError("");
       setMissing(false);
       try {
-        const result = await fetchJson<ShopPageData>(
+        const result = await fetchJson<PublicShopData>(
           `/api/shops/${id}/page-data`,
           { cache: "no-store", signal },
           "酒屋情報を読み込めませんでした",

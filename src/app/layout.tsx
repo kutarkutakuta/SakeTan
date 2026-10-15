@@ -27,9 +27,6 @@ export const metadata: Metadata = {
     template: "%s - さけのありか",
   },
   description,
-  alternates: {
-    canonical: siteUrl,
-  },
   openGraph: {
     title,
     description,

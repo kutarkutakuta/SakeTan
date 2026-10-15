@@ -8,8 +8,14 @@ import {
 } from "@/lib/brand-shops";
 import { supabase } from "@/lib/supabase/browser";
 
-export function BrandShopList({ brandId }: { brandId: string }) {
-  const [shops, setShops] = useState<BrandShop[]>([]);
+export function BrandShopList({
+  brandId,
+  initialShops,
+}: {
+  brandId: string;
+  initialShops?: BrandShop[];
+}) {
+  const [shops, setShops] = useState<BrandShop[]>(initialShops ?? []);
   const [selectedPrefectures, setSelectedPrefectures] = useState<Set<string>>(
     () => new Set(),
   );

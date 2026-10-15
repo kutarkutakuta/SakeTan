@@ -1,6 +1,12 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { publicClient, paged } from "./supabase-admin";
+import type { Brand, Brewery } from "../src/lib/types";
+import {
+  buildPublicDetails,
+  type PublicShop,
+  type PublicRelation,
+} from "./public-details";
 
 const siteUrl = (process.env.SITE_URL ?? "https://xn--l8jsqp0k5g.jp").replace(
   /\/$/u,
@@ -72,29 +78,52 @@ function rowsToEntries(rows: SitemapRow[], prefix: string): SitemapEntry[] {
 
 async function generateSitemap() {
   const db = publicClient();
-  const [brands, breweries, shops] = await Promise.all([
-    paged<SitemapRow>((from, to) =>
+  const [brands, breweries, shops, relations, comments] = await Promise.all([
+    paged<Brand & SitemapRow>((from, to) =>
       db
         .from("brands")
-        .select("id,updated_at")
+        .select(
+          "id,name,name_kana,brewery_id,is_active,registration_status,registered_at,sakenowa_rank,sakenowa_area_rank,sakenowa_area_name,updated_at",
+        )
         .eq("is_active", true)
         .eq("registration_status", "approved")
         .order("id")
         .range(from, to),
     ),
-    paged<SitemapRow>((from, to) =>
+    paged<Brewery & SitemapRow>((from, to) =>
       db
         .from("breweries")
-        .select("id,updated_at")
+        .select("id,name,name_kana,prefecture,website_url,is_active,updated_at")
         .eq("is_active", true)
         .order("id")
         .range(from, to),
     ),
-    paged<SitemapRow>((from, to) =>
+    paged<PublicShop & SitemapRow>((from, to) =>
       db
         .from("shops")
-        .select("id,updated_at")
+        .select(
+          "id,name,name_kana,prefecture,city,google_place_id,is_active,seeking_brand_info,updated_at",
+        )
         .eq("is_active", true)
+        .order("id")
+        .range(from, to),
+    ),
+    paged<PublicRelation>((from, to) =>
+      db
+        .from("shop_brands")
+        .select(
+          "id,shop_id,brand_id,is_active,status,first_seen_at,last_seen_at",
+        )
+        .eq("is_active", true)
+        .in("status", ["available", "unavailable"])
+        .order("id")
+        .range(from, to),
+    ),
+    paged<{ shop_id: string }>((from, to) =>
+      db
+        .from("shop_comments")
+        .select("shop_id")
+        .eq("is_deleted", false)
         .order("id")
         .range(from, to),
     ),
@@ -111,9 +140,16 @@ async function generateSitemap() {
   ];
 
   await mkdir(publicDirectory, { recursive: true });
+  await mkdir(join(process.cwd(), ".generated"), { recursive: true });
   await Promise.all([
     writeFile(join(publicDirectory, "sitemap.xml"), toSitemapXml(entries)),
     writeFile(join(publicDirectory, "robots.txt"), toRobotsTxt()),
+    writeFile(
+      join(process.cwd(), ".generated/public-details.json"),
+      JSON.stringify(
+        buildPublicDetails(shops, brands, breweries, relations, comments),
+      ),
+    ),
   ]);
 
   console.log(

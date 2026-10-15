@@ -26,7 +26,12 @@ test("ID pages serve the static shell while missing pages redirect home", async 
     );
     assert.equal(await response.text(), "static shell");
   }
-  assert.deepEqual(fetched, ["/", "/", "/", "/"]);
+  assert.deepEqual(fetched, [
+    "/detail-shell",
+    "/detail-shell",
+    "/detail-shell",
+    "/detail-shell",
+  ]);
 
   const missing = await router.fetch(
     new Request("https://example.com/unknown"),

@@ -16,6 +16,9 @@ import {
 } from "@/lib/master-navigation";
 import { authorization, configured, supabase } from "@/lib/supabase/browser";
 import type { Brand, Brewery, EntityType } from "@/lib/types";
+import type { PublicMasterData } from "@/lib/public-detail";
+import { useBrowserQuery } from "./use-browser-query";
+import { useDetailCanonical } from "./use-detail-canonical";
 
 const entities = {
   shop: { table: "shops", name: "酒屋" },
@@ -37,12 +40,14 @@ export function EditDetailClient({
   type,
   recordId,
   query,
+  initialData,
 }: {
   type: EntityType;
   recordId: string;
-  query: string;
+  query?: string;
+  initialData?: PublicMasterData;
 }) {
-  const params = new URLSearchParams(query);
+  const params = useBrowserQuery(query);
   const shopId = params.get("shop_id") ?? undefined;
   const requestedName = params.get("name")?.slice(0, 150) ?? "";
   const returnTo = masterReturnPath(params.get("return_to"));
@@ -57,9 +62,22 @@ export function EditDetailClient({
       ? masterDetailPath(type, recordId)
       : `/edit/shop/${recordId}`) +
     (nextParams.size ? `?${nextParams.toString()}` : "");
-  const [state, setState] = useState<DetailState | null>(null);
+  const [state, setState] = useState<DetailState | null>(() =>
+    initialData
+      ? {
+          initial: initialData.initial,
+          brewery: initialData.brewery,
+          brands: initialData.brands,
+          signedIn: false,
+          admin: false,
+          canDeactivate: false,
+          found: true,
+        }
+      : null,
+  );
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
+  useDetailCanonical(id && type !== "shop" ? masterDetailPath(type, id) : null);
 
   useEffect(() => {
     if (id && !z.uuid().safeParse(id).success) return;
@@ -267,7 +285,11 @@ export function EditDetailClient({
         </section>
       )}
       {recordName && type === "brand" && id && (
-        <BrandShopList key={`brand-shops-${id}-${revision}`} brandId={id} />
+        <BrandShopList
+          key={`brand-shops-${id}-${revision}`}
+          brandId={id}
+          initialShops={initialData?.shops}
+        />
       )}
       {recordName &&
         type === "brand" &&

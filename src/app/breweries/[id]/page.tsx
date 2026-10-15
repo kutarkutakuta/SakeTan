@@ -1,26 +1,39 @@
-import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { EditDetailClient } from "@/components/edit-detail-client";
+import { staticDetails } from "@/lib/static-details";
+import { publicMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "酒蔵情報",
-  description: "酒蔵の情報と所属する銘柄を確認できます。",
-};
+export const dynamicParams = false;
+export const dynamic = "error";
+
+export function generateStaticParams() {
+  return Object.keys(staticDetails().breweries).map((id) => ({ id }));
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const data = staticDetails().breweries[id];
+  if (!data) notFound();
+  const name = String(data.initial.name);
+  const location = data.initial.prefecture as string | null;
+  return publicMetadata(
+    `/breweries/${id}`,
+    `${name}${location ? `｜${location}` : ""}`,
+    `${name}${location ? `（${location}）` : ""}の酒蔵情報と日本酒銘柄。日本酒を探せる酒屋マップ「さけのありか」。`,
+  );
+}
 
 export default async function BreweryDetailPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await params;
-  const values = await searchParams;
-  const query = new URLSearchParams();
-  for (const key of ["shop_id", "name", "return_to"]) {
-    const value = values[key];
-    if (typeof value === "string" && value) query.set(key, value);
-  }
-  return (
-    <EditDetailClient type="brewery" recordId={id} query={query.toString()} />
-  );
+  const data = staticDetails().breweries[id];
+  if (!data) notFound();
+  return <EditDetailClient type="brewery" recordId={id} initialData={data} />;
 }

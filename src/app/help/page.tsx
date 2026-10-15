@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/help" },
   title: "ヘルプ",
   description:
     "さけのありかの特徴、掲載情報についての注意点、ログインの有無で利用できる機能をご案内します。",

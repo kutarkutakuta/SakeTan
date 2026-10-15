@@ -13,11 +13,13 @@
 - Noto Sans JP（ローカル配信）、生成り・白・墨色・朱のモバイルUI
 - Node.js 22以上推奨（検証: Node.js 24）、npm
 
-`/`、`/account`、`/brands`、`/edit`、`/help`、`/history`、`/login`、`/post`、`/privacy` は静的アセットとして配信します。店舗詳細と個別編集のURLは軽量ルーターが共通の静的画面を返し、ブラウザーでURLを解釈します。画面の閲覧・検索・投稿はブラウザーからSupabaseへ直接接続し、DB側のRLSとRPCの権限チェックを適用します。Cloudflare WorkerはID付きURLの静的画面への振り分けと、OAuth・ログアウト・連携解除等の `/auth/*` で使用します。Next.jsのサーバー処理を実行するのは `/auth/*` のみです。
+`/`、`/account`、`/brands`、`/edit`、`/help`、`/history`、`/login`、`/post`、`/privacy` は静的アセットとして配信します。店舗・銘柄・酒蔵の公開詳細も、ビルド時に個別のHTMLとして生成します。各HTMLは自己URLのcanonical、名前入りのtitle・description・OGP、名称・所在地・取扱情報の初期本文を持ち、Cloudflareのアセット優先配信でWorkerを呼ばずに表示します。画面の閲覧・検索・投稿はブラウザーからSupabaseへ直接接続し、DB側のRLSとRPCの権限チェックを適用します。新規登録直後でまだ静的HTMLがない詳細と個別編集は、軽量ルーターがcanonicalなしの `/detail-shell` を返し、ブラウザーでURLを解釈します。Next.jsのサーバー処理を実行するのはOAuth等の `/auth/*` のみです。
 
 Cloudflare用のビルドは `npm run build:cloudflare` です。静的ページのHTMLとRSCを `.open-next/assets` へコピーし、`wrangler.jsonc` のアセット優先設定を使います。IDを含むURLへのリンクは通常のHTMLナビゲーションにし、Next.jsのRSC要求がWorkerを呼ばないようにします。軽量ルーターは `src/cloudflare-router.ts` にあり、`/auth/*` のときだけOpenNextを読み込みます。新しいDB操作を追加するときは、ブラウザーにサーバー用Secret keyを含めず、RLSとRPCで権限・入力・回数制限を確認してください。
 
 ビルド前のサイトマップ生成は `NEXT_PUBLIC_SUPABASE_URL` と `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` で公開情報を取得します。`SUPABASE_SECRET_KEY` は不要です。Supabaseが `JWT issued at future` を返した場合は、同じ取得ページを1秒・2秒・4秒後に再試行します。解消しなければビルドを停止し、不完全なサイトマップで上書きしません。取込・更新用の管理スクリプトには引き続き `SUPABASE_SECRET_KEY` が必要です。
+
+同じ取得処理で `.generated/public-details.json` に公開用のスナップショットを作り、`generateStaticParams` と `generateMetadata` が参照します。詳細ページは `dynamicParams = false`、`dynamic = "error"` とし、リクエスト時SSR・ISRを行いません。表示後は既存のブラウザー処理で最新データに更新します。新規登録や変更を検索エンジン向けHTMLにも反映するには再ビルド・デプロイが必要です。`npm run dev` の前にも一度 `npm run generate:sitemap` を実行してください。Cloudflareビルド後は `npm run verify:static-seo` で全詳細HTMLを検証できます。アセット合計がWorkers Free上限の20,000ファイルを超える場合はビルドを停止し、有料化を自動的に要求しません。
 
 ## セットアップ
 

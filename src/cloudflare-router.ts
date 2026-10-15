@@ -48,7 +48,9 @@ export default {
       /^\/(brands|breweries)\/[^/]+\/?$/.test(url.pathname) ||
       /^\/edit\/(shop|brand|brewery)\/[^/]+\/?$/.test(url.pathname)
     ) {
-      const shell = new URL("/", url);
+      // Built public details bypass this Worker via asset-first routing.
+      // Only new records and edit URLs need the browser-driven fallback.
+      const shell = new URL("/detail-shell", url);
       return env.ASSETS.fetch(new Request(shell, request));
     }
     // Missing scripts and images must not be replaced by home page HTML.
