@@ -14,6 +14,10 @@ if (!existsSync(assets)) {
   throw new Error("OpenNextの静的アセットが生成されていません");
 }
 
+// File-based icons are prerendered route bodies, not public/ assets.
+// The asset-first router needs the image at the URL emitted in the HTML.
+copyFileSync(join(source, "icon.png.body"), join(assets, "icon.png"));
+
 // Detail routes are prerendered from the same public snapshot as sitemap.xml.
 // Copy only HTML/RSC, not Next's metadata or segment cache files.
 const snapshot = JSON.parse(

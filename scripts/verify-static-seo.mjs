@@ -75,6 +75,16 @@ for (const [file, path] of [
     readFileSync(join(root, ".open-next/assets", `${file}.html`), "utf8"),
   );
   assert.equal(new URL($("link[rel=canonical]").attr("href")).pathname, path);
+  const icon = $("head link[rel=icon]");
+  assert.equal(icon.length, 1, `favicon: ${path}`);
+  const iconUrl = new URL(icon.attr("href"), "https://xn--l8jsqp0k5g.jp");
+  assert.equal(iconUrl.pathname, "/icon.png", `favicon URL: ${path}`);
+  assert.equal(icon.attr("type"), "image/png", `favicon type: ${path}`);
+  assert.deepEqual(
+    readFileSync(join(root, ".open-next/assets", iconUrl.pathname.slice(1))),
+    readFileSync(join(root, ".next/server/app/icon.png.body")),
+    `favicon asset: ${path}`,
+  );
 }
 const shell = load(
   readFileSync(join(root, ".open-next/assets/detail-shell.html"), "utf8"),
