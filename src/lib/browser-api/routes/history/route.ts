@@ -22,7 +22,7 @@ export async function GET(request: Request) {
   const shopId = requestedShopId ? z.uuid().safeParse(requestedShopId) : null;
   if (shopId && !shopId.success)
     return Response.json({ error: "酒屋IDが不正です" }, { status: 400 });
-  const requestedActor = searchParams.get("actor") ?? "non_admin";
+  const requestedActor = searchParams.get("actor") ?? "all";
   if (!actorFilters.has(requestedActor))
     return Response.json({ error: "ユーザー条件が不正です" }, { status: 400 });
   const page = Math.max(

@@ -1089,7 +1089,7 @@ test("brand, kana, brewery and shop search; bounds and brand filters", async () 
     [shop],
   );
   const kanaVariantBrand = await scalar(
-    "select public.submit_brand_application_v2('づ検索銘柄','つづきのさけ',null,'検索用酒造','かな検索の確認',$1)",
+    "select public.submit_brand_application_v2('づ検索銘柄','つづきのさけとちぢき',null,'検索用酒造','かな検索の確認',$1)",
     [shop],
   );
   await asUser(null);
@@ -1102,6 +1102,14 @@ test("brand, kana, brewery and shop search; bounds and brand filters", async () 
     (
       await db.query<{ name: string }>(
         "select name from public.search_brands('つずきのさけ')",
+      )
+    ).rows.some(({ name }) => name === "づ検索銘柄"),
+    true,
+  );
+  assert.equal(
+    (
+      await db.query<{ name: string }>(
+        "select name from public.search_brands('ちじき')",
       )
     ).rows.some(({ name }) => name === "づ検索銘柄"),
     true,
@@ -1355,7 +1363,7 @@ test("only the registering user or an administrator can deactivate a shop", asyn
     true,
   );
 });
-test("history pages exclude administrator edits by default and can include all users", async () => {
+test("history pages include all users by default and can exclude administrators", async () => {
   await asUser(admin);
   const historyShop = await scalar(
     "select public.save_master('shop',null,$1,'管理者が登録')",
@@ -1382,6 +1390,16 @@ test("history pages exclude administrator edits by default and can include all u
   );
 
   await asUser(null);
+  const allUsersDefault = await db.query<{
+    user_name: string;
+    total_count: number;
+  }>(
+    "select user_name,total_count::integer from public.history_page('shop',$1)",
+    [historyShop],
+  );
+  assert.equal(allUsersDefault.rows.length, 3);
+  assert.ok(allUsersDefault.rows.every((row) => row.total_count === 3));
+
   const nonAdmin = await db.query<{
     user_name: string;
     total_count: number;
@@ -1393,12 +1411,6 @@ test("history pages exclude administrator edits by default and can include all u
   assert.equal(nonAdmin.rows[0].user_name, "Bob");
   assert.equal(nonAdmin.rows[0].total_count, 1);
 
-  const allUsers = await db.query<{ total_count: number }>(
-    "select total_count::integer from public.history_page('shop',$1,null,true,0,30)",
-    [historyShop],
-  );
-  assert.equal(allUsers.rows.length, 3);
-  assert.ok(allUsers.rows.every((row) => row.total_count === 3));
 });
 test("admin restore adds immutable history, ordinary users denied", async () => {
   const history = await scalar(

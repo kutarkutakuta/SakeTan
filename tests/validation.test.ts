@@ -156,6 +156,21 @@ test("kana search treats づ and ず as the same", () => {
   );
 });
 
+test("kana search treats ぢ and じ as the same", () => {
+  assert.equal(
+    matchesBrandQuery(
+      {
+        id: "ji-di",
+        name: "縮みの酒",
+        name_kana: "ちぢみのさけ",
+        brewery_id: null,
+      },
+      "ちじみ",
+    ),
+    true,
+  );
+});
+
 test("OAuth return path stays on origin", () => {
   for (const url of [
     "https://evil.invalid",

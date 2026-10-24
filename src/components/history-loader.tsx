@@ -92,10 +92,11 @@ export function HistoryLoader() {
   const type = searchParams.get("type") ?? "";
   const id = searchParams.get("id") ?? "";
   const shopId = searchParams.get("shop_id") ?? "";
-  const actor = searchParams.get("actor") === "all" ? "all" : "non_admin";
+  const actor =
+    searchParams.get("actor") === "non_admin" ? "non_admin" : "all";
   const changeActor = (value: "non_admin" | "all") => {
     const next = new URLSearchParams(query);
-    if (value === "all") next.set("actor", value);
+    if (value === "non_admin") next.set("actor", value);
     else next.delete("actor");
     next.delete("page");
     const nextQuery = next.toString();
@@ -147,8 +148,8 @@ export function HistoryLoader() {
                 changeActor(event.target.value as "non_admin" | "all")
               }
             >
-              <option value="non_admin">管理者を除く</option>
               <option value="all">全ユーザー</option>
+              <option value="non_admin">管理者を除く</option>
             </select>
           </label>
           {data && (
