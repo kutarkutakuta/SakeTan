@@ -100,3 +100,31 @@ test("ranking tags show national rank first or a short region name for the top f
   assert.equal(tag({ sakenowa_rank: null, sakenowa_area_rank: null }), null);
   assert.equal(tag({}), null);
 });
+
+test("update order uses relation timestamps even when sighting dates or search ranks differ", () => {
+  const items = [
+    {
+      ...relation("older", "さけ"),
+      updated_at: "2026-11-01T08:00:00+09:00",
+      last_seen_at: "2026-11-01",
+    },
+    {
+      ...relation("newer", "さけのわ"),
+      updated_at: "2026-11-01T00:00:00Z",
+      last_seen_at: "2026-01-01",
+    },
+    relation("missing-z", "わ"),
+    relation("missing-a", "あ"),
+  ];
+  const originalOrder = items.map((item) => item.id);
+  for (const query of ["", "さけ"]) {
+    assert.deepEqual(
+      sortShopBrands(items, "recent", query).map((item) => item.id),
+      ["newer", "older", "missing-a", "missing-z"],
+    );
+  }
+  assert.deepEqual(
+    items.map((item) => item.id),
+    originalOrder,
+  );
+});

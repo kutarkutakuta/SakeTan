@@ -26,7 +26,7 @@ export async function GET(
     db
       .from("shop_brands")
       .select(
-        "id,shop_id,brand_id,is_active,status,first_seen_at,last_seen_at,brands(id,name,name_kana,is_active,registration_status,requested_brewery_name,registered_at,sakenowa_rank,sakenowa_area_rank,sakenowa_area_name,breweries(id,name,name_kana,prefecture,is_active))",
+        "id,shop_id,brand_id,is_active,status,first_seen_at,last_seen_at,updated_at,brands(id,name,name_kana,is_active,registration_status,requested_brewery_name,registered_at,sakenowa_rank,sakenowa_area_rank,sakenowa_area_name,breweries(id,name,name_kana,prefecture,is_active))",
       )
       .eq("shop_id", id.data),
     db

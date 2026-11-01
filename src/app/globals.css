@@ -1773,6 +1773,23 @@ nav {
   flex: 1;
   min-width: 0;
 }
+.shop-brand-item .brand-item-copy {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  column-gap: 12px;
+}
+.shop-brand-item .brand-item-meta {
+  grid-column: 1 / -1;
+}
+.record-date {
+  justify-self: end;
+  color: var(--muted);
+  /* Optional record dates are tertiary annotations beside the main details. */
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
 .brand-item-meta .brand-ranking-tag {
   margin-inline-start: auto;
 }
@@ -3448,8 +3465,13 @@ nav {
   grid-column: 1 / -1;
   grid-row: 2;
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 2px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 12px;
+}
+.directory-shop-item .record-date {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: end;
 }
 .directory-shop-item .brand-name-link {
   grid-column: 1 / -1;

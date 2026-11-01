@@ -1,5 +1,6 @@
 "use client";
 import { BrandInfoLink } from "./brand-info-link";
+import { RecordDate } from "./record-date";
 import {
   directoryPrefecture,
   type DirectoryFilters,
@@ -114,6 +115,9 @@ export function DirectoryCard({
           )}
           {item.name_kana && (
             <span className="brand-item-kana">{item.name_kana}</span>
+          )}
+          {type === "shop" && (
+            <RecordDate value={item.created_at} label="登録日" />
           )}
           {brand && (
             <span className="directory-related-count">

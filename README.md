@@ -19,7 +19,7 @@ Cloudflare用のビルドは `npm run build:cloudflare` です。静的ページ
 
 ビルド前のサイトマップ生成は `NEXT_PUBLIC_SUPABASE_URL` と `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` で公開情報を取得します。`SUPABASE_SECRET_KEY` は不要です。Supabaseが `JWT issued at future` を返した場合は、同じ取得ページを1秒・2秒・4秒後に再試行します。解消しなければビルドを停止し、不完全なサイトマップで上書きしません。取込・更新用の管理スクリプトには引き続き `SUPABASE_SECRET_KEY` が必要です。
 
-同じ取得処理で `.generated/public-details.json` に公開用のスナップショットを作り、`generateStaticParams` と `generateMetadata` が参照します。詳細ページは `dynamicParams = false`、`dynamic = "error"` とし、リクエスト時SSR・ISRを行いません。表示後は既存のブラウザー処理で最新データに更新します。新規登録や変更を検索エンジン向けHTMLにも反映するには再ビルド・デプロイが必要です。`npm run dev` の前にも一度 `npm run generate:sitemap` を実行してください。Cloudflareビルド後は `npm run verify:static-seo` で全詳細HTMLを検証できます。アセット合計がWorkers Free上限の20,000ファイルを超える場合はビルドを停止し、有料化を自動的に要求しません。
+同じ取得処理で `.generated/public-details.json` に公開用のスナップショットを作り、`generateStaticParams` と `generateMetadata` が参照します。詳細ページは `dynamicParams = false`、`dynamic = "error"` とし、リクエスト時SSR・ISRを行いません。表示後は既存のブラウザー処理で最新データに更新します。新規登録や変更を検索エンジン向けHTMLにも反映するには再ビルド・デプロイが必要です。`npm run dev` では公開詳細URLを `/detail-shell` へ内部転送し、申請中・新規登録の情報も再ビルドなしでブラウザーから取得します。公開詳細の静的HTMLを確認する場合は `npm run build` と `npm start` を使ってください。Cloudflareビルド後は `npm run verify:static-seo` で全詳細HTMLを検証できます。アセット合計がWorkers Free上限の20,000ファイルを超える場合はビルドを停止し、有料化を自動的に要求しません。
 
 ## セットアップ
 

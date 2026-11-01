@@ -35,6 +35,7 @@ test("public snapshot links only listed records and distinguishes available rela
     status: "available",
     first_seen_at: null,
     last_seen_at: null,
+    updated_at: "2026-11-01T00:00:00Z",
   };
   for (const status of ["available", "unavailable"] as const) {
     const snapshot = buildPublicDetails(
@@ -51,6 +52,10 @@ test("public snapshot links only listed records and distinguishes available rela
       [{ shop_id: "shop" }, { shop_id: "not-public" }],
     );
     assert.equal(snapshot.shops.shop.relations.length, 1);
+    assert.equal(
+      snapshot.shops.shop.relations[0].updated_at,
+      relation.updated_at,
+    );
     assert.equal(
       snapshot.shops.shop.relations[0].brands.breweries?.name,
       "試験酒造",

@@ -69,6 +69,7 @@ export type ShopBrand = {
   status: ShopBrandStatus;
   first_seen_at: string | null;
   last_seen_at: string | null;
+  updated_at?: string;
   brands: Brand;
 };
 export type ShopBrandStatus = "available" | "unavailable" | "incorrect";

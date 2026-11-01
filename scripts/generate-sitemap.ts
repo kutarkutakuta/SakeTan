@@ -112,7 +112,7 @@ async function generateSitemap() {
       db
         .from("shop_brands")
         .select(
-          "id,shop_id,brand_id,is_active,status,first_seen_at,last_seen_at",
+          "id,shop_id,brand_id,is_active,status,first_seen_at,last_seen_at,updated_at",
         )
         .eq("is_active", true)
         .in("status", ["available", "unavailable"])

@@ -18,13 +18,14 @@ import {
 import { BrandFilterControls, BrandFilterCount } from "./brand-filter-controls";
 import { BrandInfoLink } from "./brand-info-link";
 import { ShopBrandInfoNotice } from "./shop-brand-info-notice";
+import { RecordDate } from "./record-date";
 
 const shopSortOptions: Array<[BrandCatalogSort, string]> = [
   ["ranking", "ランキング順"],
   ["brand", "銘柄順"],
   ["brewery", "蔵元順"],
   ["region", "県順"],
-  ["recent", "最近追加順"],
+  ["recent", "更新順"],
 ];
 
 export function ShopBrandList({
@@ -123,7 +124,7 @@ export function ShopBrandList({
           const rankingTag = shopBrandRankingTag(brand);
           return (
             <div
-              className={`brand-item${unavailable ? " is-unavailable" : ""}`}
+              className={`brand-item shop-brand-item${unavailable ? " is-unavailable" : ""}`}
               key={relation.id}
             >
               <span className="brand-item-copy">
@@ -179,6 +180,7 @@ export function ShopBrandList({
                     <span className="brand-item-kana">{brand.name_kana}</span>
                   )}
                 </span>
+                <RecordDate value={relation.updated_at} />
               </span>
             </div>
           );

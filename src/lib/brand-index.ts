@@ -281,6 +281,13 @@ export function sortShopBrands(
 ) {
   return [...items].sort((a, b) => {
     if (by === "ranking") return compareShopBrands(a.brands, b.brands);
+    if (by === "recent") {
+      const recent =
+        (Date.parse(b.updated_at ?? "") || 0) -
+        (Date.parse(a.updated_at ?? "") || 0);
+      if (recent) return recent;
+      return compareBrands(a.brands, b.brands, "brand");
+    }
     const aRank = brandSearchRank(a.brands, query);
     const bRank = brandSearchRank(b.brands, query);
     if (aRank && bRank) {
@@ -288,11 +295,6 @@ export function sortShopBrands(
       if (aRank.ratio !== bRank.ratio) return bRank.ratio - aRank.ratio;
     } else if (aRank) return -1;
     else if (bRank) return 1;
-    if (by === "recent") {
-      const recent = (b.last_seen_at ?? "").localeCompare(a.last_seen_at ?? "");
-      if (recent) return recent;
-      return compareBrands(a.brands, b.brands, "brand");
-    }
     return compareBrands(a.brands, b.brands, by);
   });
 }
