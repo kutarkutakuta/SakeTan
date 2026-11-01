@@ -1,5 +1,7 @@
 "use client";
 import { BrandInfoLink } from "./brand-info-link";
+import { BrandCardArt } from "./brand-card-art";
+import { PlaceCardArt } from "./place-card-art";
 import { RecordDate } from "./record-date";
 import {
   directoryPrefecture,
@@ -42,12 +44,17 @@ export function DirectoryCard({
       : masterDetailHref(type, item.id, returnTo);
   return (
     <article
-      className={`brand-item directory-item${type === "shop" ? " directory-shop-item" : ""}`}
+      className={`brand-item directory-item has-brand-art${type === "shop" ? " directory-shop-item" : ""}`}
     >
       {brand?.registration_status === "pending" && (
         <span className="status-badge pending directory-pending-badge">
           申請中
         </span>
+      )}
+      {brand ? (
+        <BrandCardArt />
+      ) : (
+        <PlaceCardArt type={type === "shop" ? "shop" : "brewery"} />
       )}
       <div className="brand-item-copy">
         <div className="brand-item-meta">

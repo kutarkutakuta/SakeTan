@@ -1700,6 +1700,22 @@ nav {
   align-items: center;
   gap: 12px;
 }
+.brand-card-art {
+  display: block;
+  flex: none;
+  width: 40px;
+  height: 48px;
+}
+.brand-item.has-brand-art {
+  gap: 10px;
+}
+.place-card-art {
+  align-self: flex-start;
+  margin-top: 2px;
+}
+.brand-item.is-unavailable .brand-card-art {
+  opacity: 0.55;
+}
 .brand-item-meta,
 .brand-option-meta {
   display: flex;
@@ -4402,6 +4418,13 @@ nav {
   }
   .brand-list {
     grid-template-columns: 1fr;
+  }
+  .brand-card-art {
+    width: 32px;
+    height: 42px;
+  }
+  .brand-item.has-brand-art {
+    gap: 8px;
   }
   .shop-tabs {
     margin-top: 18px;

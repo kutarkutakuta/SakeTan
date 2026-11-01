@@ -19,6 +19,7 @@ import { BrandFilterControls, BrandFilterCount } from "./brand-filter-controls";
 import { BrandInfoLink } from "./brand-info-link";
 import { ShopBrandInfoNotice } from "./shop-brand-info-notice";
 import { RecordDate } from "./record-date";
+import { BrandCardArt } from "./brand-card-art";
 
 const shopSortOptions: Array<[BrandCatalogSort, string]> = [
   ["ranking", "ランキング順"],
@@ -124,9 +125,10 @@ export function ShopBrandList({
           const rankingTag = shopBrandRankingTag(brand);
           return (
             <div
-              className={`brand-item shop-brand-item${unavailable ? " is-unavailable" : ""}`}
+              className={`brand-item shop-brand-item has-brand-art${unavailable ? " is-unavailable" : ""}`}
               key={relation.id}
             >
+              <BrandCardArt />
               <span className="brand-item-copy">
                 <span className="brand-item-meta">
                   {prefecture && (
