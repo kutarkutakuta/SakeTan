@@ -133,23 +133,6 @@ export function EntityDirectory({ type }: { type: EntityType }) {
             </button>
           )}
         </label>
-        {type === "brand" && (
-          <label className="directory-status-select">
-            <span>登録状態</span>
-            <select
-              value={filters.status}
-              onChange={(event) =>
-                updateFilters({
-                  status: event.target.value as DirectoryFilters["status"],
-                })
-              }
-            >
-              <option value="all">すべて</option>
-              <option value="approved">登録済み</option>
-              <option value="pending">申請中</option>
-            </select>
-          </label>
-        )}
       </div>
       <BrandFilterControls
         selectedPrefectures={filters.prefectures}
@@ -164,6 +147,14 @@ export function EntityDirectory({ type }: { type: EntityType }) {
         sortOptions={sortOptions}
         emphasizePrefectures={filterConflict && filters.prefectures.size > 0}
         emphasizeKana={filterConflict && filters.kana.size > 0}
+        registrationFilter={
+          type === "brand"
+            ? {
+                value: filters.status,
+                onChange: (status) => updateFilters({ status }),
+              }
+            : undefined
+        }
       />
       {loading && (
         <p className="directory-feedback" role="status">

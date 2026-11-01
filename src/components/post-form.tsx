@@ -415,6 +415,7 @@ export function PostForm({
         onPrefecturesChange={setSelectedPrefectures}
         selectedTargets={selectedTargets}
         onTargetsChange={setSelectedTargets}
+        defaultTargets={["brand", "brewery"]}
         selectedKana={selectedKana}
         onKanaChange={setSelectedKana}
         sort={sort}

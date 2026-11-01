@@ -2188,14 +2188,87 @@ nav {
 }
 .brand-filter-panel {
   display: grid;
-  gap: 10px;
-  padding: 12px;
+  gap: 12px;
+}
+.filter-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.filter-toggle:hover,
+.filter-toggle[aria-expanded="true"] {
+  border-color: #cbb8a0;
+  background: #fbf8f1;
+}
+.filter-toggle svg {
+  flex: none;
+  color: #736451;
+}
+.filter-toggle[aria-expanded="true"] .filter-toggle-chevron {
+  transform: rotate(180deg);
+}
+.filter-selection-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 23px;
+  padding-inline: 5px;
+  border-radius: 999px;
+  background: var(--tint);
+  color: var(--primary);
+  font-weight: 500;
+}
+.filter-options {
+  padding: 16px;
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: #fbfaf7;
+  background: #fffdf9;
 }
-.prefecture-filter-toggle {
+.filter-options[hidden] {
   display: none;
+}
+.filter-options-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin-bottom: 12px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.filter-options-label {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.6;
+}
+.filter-detail-options {
+  display: grid;
+  gap: 16px;
+}
+.filter-detail-options .filter-options-label {
+  margin-bottom: 6px;
+}
+.filter-registration-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
 }
 .filter-links {
   display: flex;
@@ -2205,12 +2278,26 @@ nav {
 }
 .filter-links button {
   flex: 0 0 auto;
-  min-height: 38px;
+  min-height: 42px;
   padding: 5px 11px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: white;
+  font-size: 14px;
+  line-height: 1.6;
   white-space: nowrap;
+}
+.filter-region-options {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  max-height: min(45dvh, 360px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.filter-region-options button {
+  min-width: 0;
+  padding-inline: 4px;
 }
 .filter-links button[aria-pressed="true"] {
   border-color: var(--primary);
@@ -2219,7 +2306,7 @@ nav {
   font-weight: 600;
 }
 .filter-links.filter-attention button[aria-pressed="true"],
-.prefecture-filter-toggle.filter-attention {
+.filter-toggle.filter-attention {
   border-color: #a94a1f;
   background: #fff0c9;
   color: #713515;
@@ -2235,34 +2322,53 @@ nav {
 }
 @media (prefers-reduced-motion: reduce) {
   .filter-links.filter-attention button[aria-pressed="true"],
-  .prefecture-filter-toggle.filter-attention {
+  .filter-toggle.filter-attention {
     animation: none;
   }
 }
 .kana-links button {
   min-width: 42px;
 }
-.combined-filter-links {
-  padding-top: 10px;
-  border-top: 1px solid var(--line);
-}
-.filter-summary {
+.filter-selected {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  padding-top: 10px;
-  border-top: 1px solid var(--line);
+  gap: 6px;
   font-size: 14px;
+  line-height: 1.6;
 }
-.filter-summary-actions,
+.filter-selected-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  max-width: 100%;
+  padding: 5px 10px;
+  border: 1px solid #e2d3c0;
+  border-radius: 999px;
+  background: #f4eee3;
+  color: #685236;
+  text-align: left;
+}
+.filter-selected-chip:hover {
+  background: #ebe0cd;
+}
+.filter-selected-chip svg {
+  flex: none;
+}
 .sort-select {
   display: flex;
   align-items: center;
   gap: 9px;
 }
+.filter-toolbar .sort-select {
+  margin-inline-start: auto;
+}
 .clear-filters {
   display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding-inline: 7px;
   color: var(--primary);
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -2271,10 +2377,16 @@ nav {
   color: var(--muted);
   white-space: nowrap;
 }
-.sort-select select {
+.sort-select select,
+.filter-registration-status select {
   width: auto;
-  min-height: 42px;
+  min-height: 44px;
   padding: 7px 34px 7px 11px;
+  border-radius: 999px;
+  font-size: 14px;
+}
+.filter-registration-status select {
+  padding-inline: 10px 26px;
 }
 .brand-list-search {
   margin-bottom: 12px;
@@ -3401,16 +3513,6 @@ nav {
 .directory-toolbar > .searchbox {
   flex: 1 1 280px;
 }
-.directory-status-select {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-}
-.directory-status-select select {
-  width: auto;
-  min-height: 46px;
-}
 .directory-count {
   margin-top: 16px;
   color: #5f5c55;
@@ -3533,10 +3635,6 @@ nav {
   }
   .directory-toolbar > .searchbox {
     flex-basis: 100%;
-  }
-  .directory-status-select {
-    width: 100%;
-    justify-content: space-between;
   }
 }
 .brand-review-actions {
@@ -4405,59 +4503,18 @@ nav {
   .filter-links {
     margin-inline: -2px;
   }
-  .prefecture-filter-toggle {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    min-height: 44px;
-    gap: 10px;
-    padding: 7px 10px;
-    border: 1px solid var(--line);
-    border-radius: 9px;
-    background: white;
-    font-size: 14px;
-    text-align: left;
+  .filter-toggle {
+    flex: 1 1 auto;
+    padding-inline: 10px;
   }
-  .prefecture-filter-selection {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    color: var(--muted);
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .prefecture-filter-action {
-    color: var(--primary);
-    font-weight: 600;
-  }
-  .prefecture-links {
-    display: none;
+  .filter-region-options {
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    max-height: min(50dvh, 430px);
-    overflow-y: auto;
-    padding-bottom: 7px;
-    scrollbar-width: thin;
   }
-  .prefecture-links.open {
-    display: grid;
-  }
-  .prefecture-links button {
-    min-width: 0;
-    min-height: 42px;
-    padding-inline: 4px;
-  }
-  .kana-links {
-    display: none;
-  }
-  .kana-links.open {
-    display: flex;
+  .filter-options {
+    padding: 12px;
   }
   .availability-tooltip {
     width: min(260px, calc(100vw - 40px));
-  }
-  .filter-summary-actions {
-    width: 100%;
-    justify-content: space-between;
   }
   .comments-section {
     padding: 17px 15px;
