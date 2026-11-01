@@ -1356,12 +1356,37 @@ nav {
   align-items: baseline;
   gap: 8px;
 }
+.detail-title-name {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+  max-width: 100%;
+}
+.detail-title-name > .brand-card-art {
+  width: 28px;
+  height: 32px;
+  align-self: center;
+  margin: 0;
+}
+.detail-title-name > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .shop-title-kana {
   color: var(--muted);
   font-size: 14px;
   font-weight: 400;
   letter-spacing: 0.04em;
   white-space: nowrap;
+}
+.shop-head > div {
+  min-width: 0;
+  max-width: 100%;
+}
+.shop-head .shop-title-kana {
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .page-head p {
   color: var(--muted);

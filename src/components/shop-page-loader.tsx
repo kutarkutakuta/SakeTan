@@ -6,6 +6,7 @@ import { ArrowLeft, ExternalLink, History, Pencil, Plus } from "lucide-react";
 import { ShopBrandList } from "@/components/shop-brand-list";
 import { ShopPageTabs } from "@/components/shop-page-tabs";
 import { ShopBrandInfoNotice } from "@/components/shop-brand-info-notice";
+import { PlaceCardArt } from "@/components/place-card-art";
 import { HomeRedirect } from "@/components/home-redirect";
 import {
   errorMessage,
@@ -136,7 +137,10 @@ export function ShopPageLoader({
       <div className="page-head shop-head">
         <div>
           <h1 className="shop-title">
-            <span>{data.shop.name}</span>
+            <span className="detail-title-name">
+              <PlaceCardArt type="shop" />
+              <span>{data.shop.name}</span>
+            </span>
             {data.shop.name_kana?.trim() && (
               <span className="shop-title-kana">{data.shop.name_kana}</span>
             )}

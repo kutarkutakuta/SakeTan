@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, History } from "lucide-react";
 import { z } from "zod";
 import { HomeRedirect } from "@/components/home-redirect";
+import { BrandCardArt } from "@/components/brand-card-art";
+import { PlaceCardArt } from "@/components/place-card-art";
 import { BrandShopList } from "@/components/brand-shop-list";
 import { BrandReviewPanel } from "@/components/brand-review-panel";
 import { LoginRequired } from "@/components/login-required";
@@ -206,7 +208,14 @@ export function EditDetailClient({
           <h1 className={recordName ? "shop-title" : undefined}>
             {recordName ? (
               <>
-                <span>{recordName}</span>
+                <span className="detail-title-name">
+                  {type === "brand" ? (
+                    <BrandCardArt />
+                  ) : (
+                    <PlaceCardArt type="brewery" />
+                  )}
+                  <span>{recordName}</span>
+                </span>
                 {recordKana && (
                   <span className="shop-title-kana">{recordKana}</span>
                 )}
