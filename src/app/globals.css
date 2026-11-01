@@ -503,11 +503,27 @@ nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   text-align: left;
   width: 100%;
   padding: 13px 5px;
   border-bottom: 1px solid var(--line);
+}
+.search-results .brand-card-art,
+.shop-card-main .brand-card-art {
+  width: 22px;
+  height: 26px;
+  align-self: flex-start;
+  margin: 0;
+  pointer-events: none;
+}
+.search-result-copy {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.search-result-arrow {
+  flex: none;
 }
 .search-result:hover {
   background: var(--bg);
@@ -528,7 +544,9 @@ nav {
   padding: 0;
 }
 .search-result-select {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   flex: 1;
   min-width: 0;
   padding: 12px 8px 12px 5px;
@@ -678,6 +696,7 @@ nav {
   display: flex;
   flex: 1;
   align-items: flex-start;
+  gap: 8px;
   min-width: 0;
   width: 100%;
   min-height: 56px;

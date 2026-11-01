@@ -27,6 +27,8 @@ import {
   useShopCommentPopover,
 } from "./home/shop-comment-popover";
 import { ShopListCard } from "./home/shop-list-card";
+import { BrandCardArt } from "./brand-card-art";
+import { PlaceCardArt } from "./place-card-art";
 import { useShopMetadata } from "./home/use-shop-metadata";
 import { useToast } from "./toast-provider";
 import { errorMessage, fetchJson } from "@/lib/client";
@@ -638,7 +640,8 @@ export function Home({
                     aria-label={`${b.name}${b.registration_status === "pending" ? "（申請中）" : ""} ${b.brewery_name ?? "酒蔵未登録"} / ${b.prefecture ?? "地域未登録"}`}
                     onClick={() => chooseBrand(b)}
                   >
-                    <span>
+                    <BrandCardArt />
+                    <span className="search-result-copy">
                       <strong>
                         {b.name}
                         {b.registration_status === "pending" && (
@@ -657,7 +660,7 @@ export function Home({
                         {b.prefecture ?? "地域未登録"}
                       </small>
                     </span>
-                    <ArrowRight size={18} />
+                    <ArrowRight size={18} className="search-result-arrow" />
                   </button>
                 ))}
                 <h3 className="search-results-heading">
@@ -688,7 +691,8 @@ export function Home({
                         aria-label={`${s.name}を地図で表示`}
                         onClick={() => chooseShop(s)}
                       >
-                        <span>
+                        <PlaceCardArt type="shop" />
+                        <span className="search-result-copy">
                           <strong>{s.name}</strong>
                           <span className="search-shop-result-meta">
                             <small>

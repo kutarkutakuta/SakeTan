@@ -1,6 +1,7 @@
 import { ChevronRight, MessageCircle } from "lucide-react";
 import type { Brand, Shop } from "@/lib/types";
 import { ShopBrandInfoNotice } from "@/components/shop-brand-info-notice";
+import { PlaceCardArt } from "@/components/place-card-art";
 import { ShopBrandTags } from "./shop-brand-tags";
 import type { ShopBrandPreview } from "./use-shop-metadata";
 
@@ -62,6 +63,7 @@ export function ShopListCard({
       />
       <div className="shop-card-head">
         <div className="shop-card-main">
+          <PlaceCardArt type="shop" />
           <span className="shop-card-copy">
             <h3>
               {shop.name}
